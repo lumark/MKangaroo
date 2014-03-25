@@ -13,7 +13,7 @@
 #include <boost/gil/extension/io/png_io.hpp>
 #endif // HAVE_PNG
 
-void SaveGIL(const std::string filename, const roo::Image<uchar3,roo::TargetHost>& image)
+inline void SaveGIL(const std::string filename, const roo::Image<uchar3,roo::TargetHost>& image)
 {
     boost::gil::rgb8_view_t v = boost::gil::interleaved_view(image.w, image.h, reinterpret_cast<boost::gil::rgb8_ptr_t>(image.ptr), image.pitch);
     

@@ -138,7 +138,7 @@ void SdfFuse(
 
 
 //--the following add by luma-----------------------------------------------------------------------------------------------------------------------------
-
+// do SDF fusion without consideing void (zero intensity) pixels
 __global__ void KernSdfFuseDirectGrey(
         BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
         Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics K,
@@ -182,8 +182,9 @@ __global__ void KernSdfFuseDirectGrey(
                 else
                 {
         //        }else if(sd < 5*trunc_dist) {
-                    if(/*sd < 5*trunc_dist && */isfinite(md) && md!=0 && costheta > mincostheta )
+                    if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
                     {
+//                        printf("md %f,", md);
                         const SDF_t curvol = vol(x,y,z);
                         SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w); // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
                         sdf += curvol;

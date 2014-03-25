@@ -24,8 +24,8 @@ inline pangolin::View& SetupPangoGL(int w, int h, int ui_width = 180, std::strin
     if(ui_width != 0) {
         pangolin::CreatePanel("ui")
             .SetBounds(0.0, 1.0, 0.0, pangolin::Attach::Pix(ui_width));
-//        pangolin::CreatePanel("ui1")
-//            .SetBounds(0.0, 1.0, pangolin::Attach::Pix(180), pangolin::Attach::Pix(360));
+//        pangolin::CreatePanel("uiParams")
+//            .SetBounds(0.0, 1.0, 0.15, 0.35);
     }
 
     pangolin::View& container = pangolin::CreateDisplay()
@@ -54,4 +54,6 @@ inline void SetupContainer(pangolin::View& container, int num_views, float aspec
         pangolin::RegisterKeyPressCallback(keyShowHide[v], [&container,v](){container[v].ToggleShow();} );
         pangolin::RegisterKeyPressCallback(keySave[v], [&container,v](){container[v].SaveRenderNow("screenshot",4);} );
     }
+
+
 }

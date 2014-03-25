@@ -115,7 +115,7 @@ public:
     }
 };
 
-void RenderImageSelect(const ImageSelect& is, int imgw, int imgh, int inputlevel = 0)
+inline void RenderImageSelect(const ImageSelect& is, int imgw, int imgh, int inputlevel = 0)
 {
     if(is.IsSelected()) {
         glColor3f(1,0,0);
@@ -127,7 +127,7 @@ void RenderImageSelect(const ImageSelect& is, int imgw, int imgh, int inputlevel
     }
 }
 
-void RenderToViewport(const GlTexture& glTex, bool flipy, float pixScale)
+inline void RenderToViewport(const GlTexture& glTex, bool flipy, float pixScale)
 {
     if(pixScale!=1.0) {
         GlSlUtilities::Scale(pixScale);

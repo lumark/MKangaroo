@@ -15,11 +15,11 @@ struct KinectKeyframe
     {
     }
 
-    Sophus::SE3d T_iw;
     roo::Image<uchar3, roo::TargetDevice, roo::Manage> img;
+    Sophus::SE3d T_iw;
 };
 
-void SaveMeshlab(roo::BoundedVolume<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol, boost::ptr_vector<KinectKeyframe>& keyframes, float fu, float fv, float u0, float v0)
+inline void SaveMeshlab(roo::BoundedVolume<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol, boost::ptr_vector<KinectKeyframe>& keyframes, float fu, float fv, float u0, float v0)
 {
     Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
     Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
@@ -54,7 +54,7 @@ void SaveMeshlab(roo::BoundedVolume<roo::SDF_t, roo::TargetDevice, roo::Manage>&
     of << " </MeshGroup>" << std::endl;
 
     of << " <RasterGroup>" << std::endl;
-    for(int i=0; i<keyframes.size(); ++i) {
+    for(unsigned int i=0; i<keyframes.size(); ++i) {
         const KinectKeyframe& kf = keyframes[i];
         const Eigen::Matrix4d T = T_ml_vis * kf.T_iw.matrix();
 //        const Eigen::Matrix4d T = kf.T_iw.inverse().matrix() * T_vis_gl;

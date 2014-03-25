@@ -5,7 +5,7 @@
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
-inline pangolin::View& SetupPangoGLWithCuda(int w, int h, int ui_width = 180, std::string window_title = "-", int min_gpu_mem_mb = 900 )
+inline pangolin::View& SetupPangoGLWithCuda(int w, int h, int ui_width = 180, std::string window_title = "-", unsigned int min_gpu_mem_mb = 500 )
 {
     pangolin::View& container = SetupPangoGL(w,h,ui_width, window_title);
 
@@ -20,9 +20,11 @@ inline pangolin::View& SetupPangoGLWithCuda(int w, int h, int ui_width = 180, st
         std::cerr << "Unable to get available memory" << std::endl;
         exit(-1);
     }
-    std::cout << cu_mem_start/bytes_per_mb << " MB Video Memory Available." << std::endl;
-    if( cu_mem_start < (min_gpu_mem_mb/ bytes_per_mb) ) {
-        std::cerr << "Not enough memory to proceed. Require At least "<< min_gpu_mem_mb * bytes_per_mb << std::endl;
+
+    std::cout << cu_mem_start/bytes_per_mb << " MB Video Memory Available. Require At least "<< min_gpu_mem_mb<<" mb Video Memory" << std::endl;
+
+    if( (cu_mem_start/bytes_per_mb) < min_gpu_mem_mb ) {
+        std::cerr << "Fatal Error! Not enough memory to run RTL. Require At least "<< min_gpu_mem_mb << std::endl;
         exit(-1);
     }
     return container;
