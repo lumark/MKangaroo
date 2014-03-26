@@ -112,7 +112,7 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const 
 }
 
 //////////////////////////////////////////////////////
-// Raycast Color SDF
+// Raycast Grey SDF
 //////////////////////////////////////////////////////
 
 __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<float> img, const BoundedVolume<SDF_t> vol, const BoundedVolume<float> colorVol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
@@ -193,6 +193,99 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const 
     KernRaycastSdf<<<gridDim,blockDim>>>(depth, norm, img, vol, colorVol, T_wc, K, near, far, trunc_dist, subpix);
     GpuCheckErrors();
 }
+
+
+//////////////////////////////////////////////////////
+// Raycast Color SDF  (RGB)
+//////////////////////////////////////////////////////
+
+__global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<uchar3> imgrgb,
+                               const BoundedVolume<SDF_t> vol, const BoundedVolume<uchar3> colorVol,
+                               const Mat<float,3,4> T_wc, ImageIntrinsics K,
+                               float near, float far, float trunc_dist, bool subpix )
+{
+    const int u = blockIdx.x*blockDim.x + threadIdx.x;
+    const int v = blockIdx.y*blockDim.y + threadIdx.y;
+
+    if( u < imgrgb.w && v < imgrgb.h ) {
+        const float3 c_w = SE3Translation(T_wc);
+        const float3 ray_c = K.Unproject(u,v);
+        const float3 ray_w = mulSO3(T_wc, ray_c);
+
+        // Raycast bounding box to find valid ray segment of sdf
+        // http://www.cs.utah.edu/~awilliam/box/box.pdf
+        const float3 tminbound = (vol.bbox.Min() - c_w) / ray_w;
+        const float3 tmaxbound = (vol.bbox.Max() - c_w) / ray_w;
+        const float3 tmin = fminf(tminbound,tmaxbound);
+        const float3 tmax = fmaxf(tminbound,tmaxbound);
+        const float max_tmin = fmaxf(fmaxf(fmaxf(tmin.x, tmin.y), tmin.z), near);
+        const float min_tmax = fminf(fminf(fminf(tmax.x, tmax.y), tmax.z), far);
+
+        float depth = 0.0f;
+
+        // If ray intersects bounding box
+        if(max_tmin < min_tmax ) {
+            // Go between max_tmin and min_tmax
+            float lambda = max_tmin;
+            float last_sdf = 0.0f/0.0f;
+            float min_delta_lambda = vol.VoxelSizeUnits().x;
+            float delta_lambda = 0;
+
+            // March through space
+            while(lambda < min_tmax) {
+                const float3 pos_w = c_w + lambda * ray_w;
+                const float sdf = vol.GetUnitsTrilinearClamped(pos_w);
+
+                if( sdf <= 0 ) {
+                    if( last_sdf > 0) {
+                        // surface!
+                        if(subpix) {
+                            lambda = lambda + delta_lambda * sdf / (last_sdf - sdf);
+                        }
+                        depth = lambda;
+                    }
+                    break;
+                }
+                delta_lambda = sdf > 0 ? fmaxf(sdf, min_delta_lambda) : trunc_dist;
+                lambda += delta_lambda;
+                last_sdf = sdf;
+            }
+        }
+
+        // Compute normal
+        const float3 pos_w = c_w + depth * ray_w;
+        const float3 _n_w = vol.GetUnitsBackwardDiffDxDyDz(pos_w);
+//        const float c = colorVol.GetUnitsTrilinearClamped(pos_w);
+        const uchar3 c = colorVol.Get(int(pos_w.x), int(pos_w.y), int(pos_w.z));
+
+        const float len_n_w = length(_n_w);
+        const float3 n_w = len_n_w > 0 ? _n_w / len_n_w : make_float3(0,0,1);
+        const float3 n_c = mulSO3inv(T_wc,n_w);
+
+        if(depth > 0 ) {
+            imgdepth(u,v) = depth;
+            imgrgb(u,v) = c;
+//            printf("(u,v)=(%d,%d) read:(%d,%d,%d)",u,v,int(c.x), int(c.y) ,int(c.z) );
+            norm(u,v) = make_float4(n_c, 1);
+        }else{
+            imgdepth(u,v) = 0.0f/0.0f;
+            imgrgb(u,v) = make_uchar3(0,0,0);
+            norm(u,v) = make_float4(0,0,0,0);
+        }
+    }
+}
+
+void RaycastSdf(Image<float> depth, Image<float4> norm, Image<uchar3> imgrgb,
+                const BoundedVolume<SDF_t> vol, const BoundedVolume<uchar3> colorVol,
+                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
+{
+    dim3 blockDim, gridDim;
+//    InitDimFromOutputImageOver(blockDim, gridDim, img, 16, 16);
+    InitDimFromOutputImageOver(blockDim, gridDim, imgrgb);
+    KernRaycastSdf<<<gridDim,blockDim>>>(depth, norm, imgrgb, vol, colorVol, T_wc, K, near, far, trunc_dist, subpix);
+    GpuCheckErrors();
+}
+
 
 //////////////////////////////////////////////////////
 // Raycast box

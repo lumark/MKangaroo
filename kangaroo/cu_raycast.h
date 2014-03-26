@@ -9,9 +9,20 @@
 namespace roo
 {
 
-void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const BoundedVolume<SDF_t> vol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix = true);
+void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
+                const BoundedVolume<SDF_t> vol,
+                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
+                float trunc_dist, bool subpix = true);
 
-void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const BoundedVolume<SDF_t> vol, const BoundedVolume<float> colorVol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix = true);
+void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
+                const BoundedVolume<SDF_t> vol, const BoundedVolume<float> colorVol,
+                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
+                float trunc_dist, bool subpix = true);
+
+void RaycastSdf(Image<float> depth, Image<float4> norm, Image<uchar3> imgrgb,
+                const BoundedVolume<SDF_t> vol, const BoundedVolume<uchar3> colorVol,
+                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
+                float trunc_dist, bool subpix = true);
 
 void RaycastBox(Image<float> depth, const Mat<float,3,4> T_wc, ImageIntrinsics K, const BoundingBox bbox );
 
