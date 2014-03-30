@@ -30,13 +30,19 @@ float PhongShade(const float3 p_c, const float3 n_c)
 // Raycast SDF
 //////////////////////////////////////////////////////
 
-__global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<float> img, const BoundedVolume<SDF_t> vol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
+__global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm,
+                               Image<float> img, const BoundedVolume<SDF_t> vol,
+                               const Mat<float,3,4> T_wc, ImageIntrinsics K,
+                               float near, float far, float trunc_dist, bool subpix )
 {
     const int u = blockIdx.x*blockDim.x + threadIdx.x;
     const int v = blockIdx.y*blockDim.y + threadIdx.y;
 
     if( u < img.w && v < img.h ) {
+        // get only translation matirx
         const float3 c_w = SE3Translation(T_wc);
+
+        //
         const float3 ray_c = K.Unproject(u,v);
         const float3 ray_w = mulSO3(T_wc, ray_c);
 
@@ -102,7 +108,9 @@ __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<
     }
 }
 
-void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const BoundedVolume<SDF_t> vol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
+void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
+                const BoundedVolume<SDF_t> vol, const Mat<float,3,4> T_wc,
+                ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
 {
     dim3 blockDim, gridDim;
 //    InitDimFromOutputImageOver(blockDim, gridDim, img, 16, 16);
@@ -115,7 +123,10 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const 
 // Raycast Grey SDF
 //////////////////////////////////////////////////////
 
-__global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<float> img, const BoundedVolume<SDF_t> vol, const BoundedVolume<float> colorVol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
+__global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<float> img,
+                               const BoundedVolume<SDF_t> vol, const BoundedVolume<float> colorVol,
+                               const Mat<float,3,4> T_wc, ImageIntrinsics K,
+                               float near, float far, float trunc_dist, bool subpix )
 {
     const int u = blockIdx.x*blockDim.x + threadIdx.x;
     const int v = blockIdx.y*blockDim.y + threadIdx.y;
@@ -146,11 +157,14 @@ __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<
 
             // March through space
             while(lambda < min_tmax) {
+
                 const float3 pos_w = c_w + lambda * ray_w;
                 const float sdf = vol.GetUnitsTrilinearClamped(pos_w);
 
-                if( sdf <= 0 ) {
+                if( sdf <= 0 )
+                {
                     if( last_sdf > 0) {
+//                      printf("surface!");
                         // surface!
                         if(subpix) {
                             lambda = lambda + delta_lambda * sdf / (last_sdf - sdf);
@@ -177,15 +191,19 @@ __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<
             imgdepth(u,v) = depth;
             img(u,v) = c;
             norm(u,v) = make_float4(n_c, 1);
+//            printf("raycast success.");
         }else{
             imgdepth(u,v) = 0.0f/0.0f;
             img(u,v) = 0;
             norm(u,v) = make_float4(0,0,0,0);
+//            printf("invalid depth.");
         }
     }
 }
 
-void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const BoundedVolume<SDF_t> vol, const BoundedVolume<float> colorVol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
+void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
+                const BoundedVolume<SDF_t> vol, const BoundedVolume<float> colorVol,
+                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
 {
     dim3 blockDim, gridDim;
 //    InitDimFromOutputImageOver(blockDim, gridDim, img, 16, 16);
@@ -196,7 +214,7 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img, const 
 
 
 //////////////////////////////////////////////////////
-// Raycast Color SDF  (RGB)
+// Raycast Color (RGB) SDF
 //////////////////////////////////////////////////////
 
 __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<uchar3> imgrgb,
@@ -253,10 +271,12 @@ __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<
         }
 
         // Compute normal
-        const float3 pos_w = c_w + depth * ray_w;
-        const float3 _n_w = vol.GetUnitsBackwardDiffDxDyDz(pos_w);
+        const float3 pos_w  = c_w + depth * ray_w;
+        const float3 _n_w   = vol.GetUnitsBackwardDiffDxDyDz(pos_w);
 //        const float c = colorVol.GetUnitsTrilinearClamped(pos_w);
-        const uchar3 c = colorVol.Get(int(pos_w.x), int(pos_w.y), int(pos_w.z));
+        const float3 pos_v  = (pos_w - colorVol.bbox.Min()) / (colorVol.bbox.Size());
+        const uchar3 c      = colorVol.Get(pos_v.x,pos_v.y,pos_v.z);
+        printf(";(u,v)=(%d,%d) (r,g,b)=(%d,%d,%d),(x,y,z)=(%f,%f,%f)",u,v,int(c.x), int(c.y) ,int(c.z),pos_v.x,pos_v.y,pos_v.z );
 
         const float len_n_w = length(_n_w);
         const float3 n_w = len_n_w > 0 ? _n_w / len_n_w : make_float3(0,0,1);
@@ -264,13 +284,12 @@ __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<
 
         if(depth > 0 ) {
             imgdepth(u,v) = depth;
-            imgrgb(u,v) = c;
-//            printf("(u,v)=(%d,%d) read:(%d,%d,%d)",u,v,int(c.x), int(c.y) ,int(c.z) );
-            norm(u,v) = make_float4(n_c, 1);
+            imgrgb(u,v)   = c;
+            norm(u,v)     = make_float4(n_c,1);
         }else{
             imgdepth(u,v) = 0.0f/0.0f;
-            imgrgb(u,v) = make_uchar3(0,0,0);
-            norm(u,v) = make_float4(0,0,0,0);
+            imgrgb(u,v)   = make_uchar3(0,0,0);
+            norm(u,v)     = make_float4(0,0,0,0);
         }
     }
 }

@@ -12,7 +12,9 @@ namespace roo
 // http://www.doc.ic.ac.uk/~rnewcomb/
 //////////////////////////////////////////////////////
 
-__global__ void KernSdfFuse(BoundedVolume<SDF_t> vol, Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics K, float trunc_dist, float max_w, float mincostheta )
+__global__ void KernSdfFuse(BoundedVolume<SDF_t> vol, Image<float> depth,
+                            Image<float4> normals, Mat<float,3,4> T_cw,
+                            ImageIntrinsics K, float trunc_dist, float max_w, float mincostheta )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
@@ -51,7 +53,8 @@ __global__ void KernSdfFuse(BoundedVolume<SDF_t> vol, Image<float> depth, Image<
   }
 }
 
-void SdfFuse(BoundedVolume<SDF_t> vol, Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics K, float trunc_dist, float max_w, float mincostheta)
+void SdfFuse(BoundedVolume<SDF_t> vol, Image<float> depth, Image<float4> norm,
+             Mat<float,3,4> T_cw, ImageIntrinsics K, float trunc_dist, float max_w, float mincostheta)
 {
   dim3 blockDim(8,8,8);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y, vol.d / blockDim.z);
@@ -60,7 +63,7 @@ void SdfFuse(BoundedVolume<SDF_t> vol, Image<float> depth, Image<float4> norm, M
 }
 
 //////////////////////////////////////////////////////
-// Color Truncated SDF Fusion
+// Grey Truncated SDF Fusion
 // Similar extension to KinectFusion as described by:
 // Robust Tracking for Real-Time Dense RGB-D Mapping with Kintinous
 // Whelan et. al.
@@ -141,8 +144,8 @@ void SdfFuse(
 // do SDF fusion without consideing void (zero intensity) pixels
 __global__ void KernSdfFuseDirectGrey(
     BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
-    Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics K,
-    Image<float> img, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
+    Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     )
 {
@@ -150,28 +153,44 @@ __global__ void KernSdfFuseDirectGrey(
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
 
   //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
+
+  // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < vol.d; ++z)
   {
+    // See if this voxel is possible to be in the image boundary
+    // Get voxel position in certain radius in world coordinate
     const float3 P_w = vol.VoxelPositionInUnits(x,y,z);
-    const float3 P_c = T_cw * P_w;
-    const float2 p_c = K.Project(P_c);
-    const float3 P_i = T_iw * P_w;
-    const float2 p_i = Kimg.Project(P_i);
+//        printf("loc:%f,%f,%f;",P_w.x,P_w.y,P_w.z);
 
-    if( depth.InBounds(p_c, 2) && img.InBounds(p_i,2) )
+    // Get voxel position in camera coordinate
+    const float3 P_c = T_cw * P_w;
+
+    // Project a 3D voxel point to 2D depth an grey image coordinate
+    const float2 p_c = Kdepth.Project(P_c);
+    const float3 P_i = T_iw * P_w;
+    const float2 p_i = Krgb.Project(P_i);
+
+    // If the voxel is in image coordinate (inside of image boundary), then we
+    // see if we should fuse this voxel
+    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
     {
-      const float c =  img.GetBilinear<float>(p_i);
+      // prepare to fuse a grey pixel into this voxel
+      const float c =  grey.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
       if(c!=0)
       {
-        const float vd = P_c.z;
-        const float md = depth.GetBilinear<float>(p_c);
+        // depth value at camera coorniate
+        const float vd   = P_c.z;
+
+        // depth value at image coordinate
+        const float md   = depth.GetBilinear<float>(p_c);
+
+        // normal value at image coordinate
         const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
 
         const float costheta = dot(mdn, P_c) / -length(P_c);
         const float sd = costheta * (md - vd);
-        //                const float w = 1;
         const float w = costheta * 1.0f/vd;
 
         if(sd <= -trunc_dist)
@@ -183,9 +202,11 @@ __global__ void KernSdfFuseDirectGrey(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
+
+          /// here 0.5 is for kinect sensor
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
-            //                        printf("md %f,", md);
+            //            printf("md %f,", md);
             const SDF_t curvol = vol(x,y,z);
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
             SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
@@ -202,19 +223,119 @@ __global__ void KernSdfFuseDirectGrey(
 
 void SdfFuseDirectGrey(
     BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
-    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics K,
-    Image<float> img, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
+    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     ) {
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
-  KernSdfFuseDirectGrey<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, K, img, T_iw, Kimg, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrey<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 }
 
 
 
-//--the following add by luma-----------------------------------------------------------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//--the following add by luma---------------------------------------------------
+// do SDF fusion without consideing void (zero intensity) pixels
+__global__ void KernSdfFuseDirectGreyOffSet(
+    BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
+    Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta, float3 offset
+    )
+{
+  const int x = blockIdx.x*blockDim.x + threadIdx.x;
+  const int y = blockIdx.y*blockDim.y + threadIdx.y;
+
+  //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
+
+  // For each voxel (x,y,z) we have in a bounded volume
+  for(int z=0; z < vol.d; ++z)
+  {
+    // See if this voxel is possible to be in the image boundary
+    // Get voxel position in certain radius in world coordinate
+    const float3 P_w = vol.VoxelPositionInUnits(x+offset.x,y+offset.y,z+offset.z);
+//        printf("loc:%f,%f,%f;",P_w.x,P_w.y,P_w.z);
+
+    // Get voxel position in camera coordinate
+    const float3 P_c = T_cw * P_w;
+
+    // Project a 3D voxel point to 2D depth an grey image coordinate
+    const float2 p_c = Kdepth.Project(P_c);
+    const float3 P_i = T_iw * P_w;
+    const float2 p_i = Krgb.Project(P_i);
+
+    // If the voxel is in image coordinate (inside of image boundary), then we
+    // see if we should fuse this voxel
+    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+    {
+      // prepare to fuse a grey pixel into this voxel
+      const float c =  grey.GetBilinear<float>(p_i);
+
+      // discard pixel value equals 0
+      if(c!=0)
+      {
+        // depth value at camera coorniate
+        const float vd   = P_c.z;
+
+        // depth value at image coordinate
+        const float md   = depth.GetBilinear<float>(p_c);
+
+        // normal value at image coordinate
+        const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
+
+        const float costheta = dot(mdn, P_c) / -length(P_c);
+        const float sd = costheta * (md - vd);
+        const float w = costheta * 1.0f/vd;
+
+        if(sd <= -trunc_dist)
+        {
+          // Further than truncation distance from surface
+          // We do nothing.
+        }
+        // update SDF
+        else
+        {
+          //        }else if(sd < 5*trunc_dist) {
+
+          /// here 0.5 is for kinect sensor
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          {
+            //            printf("md %f,", md);
+            const SDF_t curvol = vol(x,y,z);
+            // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
+            SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
+            sdf += curvol;
+            sdf.LimitWeight(max_w);
+            vol(x,y,z) = sdf;
+            colorVol(x,y,z) = (w*c + colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+//            printf("fuse:%f,grey:%f,pc:%f,%f-pi:%f,%f;",sdf.val,c,p_c.x, p_c.y,p_i.x,p_i.y);
+//            printf("fuse:%f,grey:%f",sdf.val,colorVol(x,y,z));
+          }
+        }
+      }
+    }
+  }
+}
+
+void SdfFuseDirectGreyOffset(
+    BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
+    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta, float3 offset
+    ) {
+  dim3 blockDim(16,16);
+  dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
+  KernSdfFuseDirectGreyOffSet<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, offset);
+  GpuCheckErrors();
+}
+
+
+
+// -----------------------------------------------------------------------------
+//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 __global__ void KernSdfFuseColor(
     BoundedVolume<SDF_t> vol, BoundedVolume<uchar3> colorVol,
@@ -262,7 +383,6 @@ __global__ void KernSdfFuseColor(
           //        }else if(sd < 5*trunc_dist) {
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
-            //                        printf("md %f,", md);
             const SDF_t curvol = vol(x,y,z);
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
             SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
@@ -270,8 +390,15 @@ __global__ void KernSdfFuseColor(
             sdf.LimitWeight(max_w);
             vol(x,y,z) = sdf;
 
-            //                        printf("(u,v)=(%d,%d) save:(%d,%d,%d)",int(p_i.x),int(p_i.y),int(Imgrgb.Get(int(p_i.x),int(p_i.y)).x), int(Imgrgb.Get(int(p_i.x),int(p_i.y)).y) ,int(Imgrgb.Get(int(p_i.x),int(p_i.y)).z) );
-            colorVol(x,y,z) = make_uchar3( char(Imgrgb.Get(int(p_i.x),int(p_i.y)).x), char(Imgrgb.Get(int(p_i.x),int(p_i.y)).y) ,char(Imgrgb.Get(int(p_i.x),int(p_i.y)).z)) ;
+            //            printf("(u,v)=(%d,%d),(r,g,b)=(%d,%d,%d),(x,y,z)=(%d,%d,%d)",int(p_i.x),int(p_i.y),
+            //                   int(Imgrgb.Get(int(p_i.x),int(p_i.y)).x),
+            //                   int(Imgrgb.Get(int(p_i.x),int(p_i.y)).y),
+            //                   int(Imgrgb.Get(int(p_i.x),int(p_i.y)).z),
+            //                   x,y,z);
+
+            colorVol(x,y,z) = make_uchar3( Imgrgb.Get(int(p_i.x),int(p_i.y)).x,
+                                           Imgrgb.Get(int(p_i.x),int(p_i.y)).y,
+                                           Imgrgb.Get(int(p_i.x),int(p_i.y)).z) ;
           }
         }
       }
