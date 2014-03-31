@@ -239,11 +239,11 @@ void SdfFuseDirectGrey(
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-__global__ void KernSdfFuseDirectGreyOffSet(
-    BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
+__global__ void KernSdfFuseDirectGreyGrid(
+    BoundedVolumeGrid<SDF_t> vol, BoundedVolumeGrid<float> colorVol,
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, float3 offset
+    float trunc_dist, float max_w, float mincostheta
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -256,7 +256,7 @@ __global__ void KernSdfFuseDirectGreyOffSet(
   {
     // See if this voxel is possible to be in the image boundary
     // Get voxel position in certain radius in world coordinate
-    const float3 P_w = vol.VoxelPositionInUnits(x+offset.x,y+offset.y,z+offset.z);
+    const float3 P_w = vol.VoxelPositionInUnits(x,y,z);
 //        printf("loc:%f,%f,%f;",P_w.x,P_w.y,P_w.z);
 
     // Get voxel position in camera coordinate
@@ -320,15 +320,15 @@ __global__ void KernSdfFuseDirectGreyOffSet(
   }
 }
 
-void SdfFuseDirectGreyOffset(
-    BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
+void SdfFuseDirectGreyGrid(
+    BoundedVolumeGrid<SDF_t> vol, BoundedVolumeGrid<float> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, float3 offset
+    float trunc_dist, float max_w, float mincostheta
     ) {
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
-  KernSdfFuseDirectGreyOffSet<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, offset);
+  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 }
 
