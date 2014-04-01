@@ -32,21 +32,21 @@ public:
     {
     }
 
-    inline __host__
+    inline __host__ __device__
     BoundedVolume(unsigned int w, unsigned int h, unsigned int d)
         : Volume<T,Target,Management>(w,h,d),
           bbox(make_float3(-1,-1,-1), make_float3(1,1,1))
     {
     }
 
-    inline __host__
+    inline __host__ __device__
     BoundedVolume(unsigned int w, unsigned int h, unsigned int d, const BoundingBox& bbox )
         : Volume<T,Target,Management>(w,h,d),
           bbox(bbox)
     {
     }
 
-    inline __host__
+    inline __host__ __device__
     BoundedVolume(unsigned int w, unsigned int h, unsigned int d, float3 min_bounds, float3 max_bounds)
         : Volume<T,Target,Management>(w,h,d),
           bbox(min_bounds,max_bounds)

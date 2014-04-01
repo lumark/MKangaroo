@@ -160,7 +160,8 @@ __global__ void KernSdfFuseDirectGrey(
     // See if this voxel is possible to be in the image boundary
     // Get voxel position in certain radius in world coordinate
     const float3 P_w = vol.VoxelPositionInUnits(x,y,z);
-//        printf("loc:%f,%f,%f;",P_w.x,P_w.y,P_w.z);
+    //        printf("loc:%f,%f,%f;",P_w.x,P_w.y,P_w.z);
+    //    printf("x:%d,y:%d,z:%d,loc:%f,%f,%f;",x,y,z,P_w.x,P_w.y,P_w.z);
 
     // Get voxel position in camera coordinate
     const float3 P_c = T_cw * P_w;
@@ -252,12 +253,12 @@ __global__ void KernSdfFuseDirectGreyGrid(
   //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
 
   // For each voxel (x,y,z) we have in a bounded volume
-  for(int z=0; z < vol.d; ++z)
+  for(int z=0; z < vol.m_d; ++z)
   {
     // See if this voxel is possible to be in the image boundary
     // Get voxel position in certain radius in world coordinate
     const float3 P_w = vol.VoxelPositionInUnits(x,y,z);
-//        printf("loc:%f,%f,%f;",P_w.x,P_w.y,P_w.z);
+    //        printf("x:%d,y:%d,z:%d,loc:%f,%f,%f;",x,y,z,P_w.x,P_w.y,P_w.z);
 
     // Get voxel position in camera coordinate
     const float3 P_c = T_cw * P_w;
@@ -304,15 +305,18 @@ __global__ void KernSdfFuseDirectGreyGrid(
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
             //            printf("md %f,", md);
-            const SDF_t curvol = vol(x,y,z);
+            printf("try to get vol value.");
+            const SDF_t curvol = vol.GetElementSdf(x,y,z);
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
             SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
             sdf += curvol;
             sdf.LimitWeight(max_w);
-            vol(x,y,z) = sdf;
-            colorVol(x,y,z) = (w*c + colorVol(x,y,z) * curvol.w) / (w + curvol.w);
-//            printf("fuse:%f,grey:%f,pc:%f,%f-pi:%f,%f;",sdf.val,c,p_c.x, p_c.y,p_i.x,p_i.y);
-//            printf("fuse:%f,grey:%f",sdf.val,colorVol(x,y,z));
+
+            /// set val
+            //            vol.SetElement(x,y,z, sdf);
+            //            colorVol.SetElement(x,y,z, (w*c + colorVol.GetElementFloat(x,y,z) * curvol.w) / (w + curvol.w));
+            //            printf("fuse:%f,grey:%f,pc:%f,%f-pi:%f,%f;",sdf.val,c,p_c.x, p_c.y,p_i.x,p_i.y);
+            printf("fuse:%f,grey:%f",sdf.val,colorVol.GetElementFloat(x,y,z));
           }
         }
       }
@@ -327,7 +331,7 @@ void SdfFuseDirectGreyGrid(
     float trunc_dist, float max_w, float mincostheta
     ) {
   dim3 blockDim(16,16);
-  dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
+  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
   KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 }

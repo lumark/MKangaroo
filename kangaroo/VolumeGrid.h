@@ -14,9 +14,21 @@
 #include "Image.h"
 #include "Mat.h"
 #include "sampling.h"
+#include "BoundedVolume.h"
+#include "Sdf.h"
 
 namespace roo
 {
+
+
+
+
+// A VolumeGrid consist n numbers of single volume. Each volume is d*d*d cube.
+// When init the VolumeGrid, we set the dim of it and set the dim of single volume of it.
+// The initialization of VolumeGrid only init one single volume and a table of active volumes.
+// The table of active volumes is consist the information if a single volume is active or not.
+// When access VolumeGrid(x,y,z), we will return the volume in that single volume.
+// The VolumeGrid itself works like a "volume manager".
 
 template<typename T, typename Target = TargetDevice, typename Management = DontManage>
 struct VolumeGrid
@@ -356,6 +368,12 @@ struct VolumeGrid
     }
 #endif
 
+//    inline __device__ __host__
+//    int ActiveSDFsNum()
+//    {
+//       return ActiveSDFs.size();
+//    }
+
     //////////////////////////////////////////////////////
     // Member variables
     //////////////////////////////////////////////////////
@@ -367,6 +385,7 @@ struct VolumeGrid
 
     size_t img_pitch;
     size_t d;
+
 };
 
 }
