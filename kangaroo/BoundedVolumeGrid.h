@@ -1,46 +1,15 @@
 #pragma once
 
-//#include "VolumeGrid.h"
+#include "VolumeGrid.h"
 #include "BoundingBox.h"
 #include "BoundedVolume.h"
+#include "VolumeGrid.h"
 #include "Sdf.h"
 #include "cu_sdffusion.h"
 
+
 namespace roo
 {
-
-template<typename T, typename Target = TargetDevice, typename Management = DontManage>
-class BasicSDF
-{
-public:
-  inline __host__
-  BasicSDF(T, Target, Management)
-  {}
-
-
-  inline __host__
-  BasicSDF(unsigned int X, unsigned int Y, unsigned int Z, unsigned int nRes, roo::BoundingBox& rbbox)
-    :m_bbox(rbbox),m_Vol(nRes,nRes,nRes,rbbox)
-  {
-    m_X = X;
-    m_Y = Y;
-    m_Z = Z;
-    m_bbox = rbbox;
-    printf("[BasicSDF] init basic bounded volume grid success. bbox min x is %f, input min is %f\n", m_bbox.boxmin.x, rbbox.boxmin.x);
-  }
-
-
-  inline __host__
-  void Reset(){}
-
-public:
-  unsigned int                                      m_X;           // index x
-  unsigned int                                      m_Y;           // index y
-  unsigned int                                      m_Z;           // index z
-
-  roo::BoundedVolume<T, Target, Management>         m_Vol;          // volume
-  roo::BoundingBox                                  m_bbox; // bounding box for volume
-};
 
 // A BoundedVolumeGrid consist n numbers of single volume. Each volume is d*d*d cube.
 // When init the BoundedVolumeGrid, we set the dim of it and set the dim of single volume of it.
@@ -54,60 +23,39 @@ class BoundedVolumeGrid
 {
 public:
 
-  //////////////////////////////////////////////////////
-  // Constructors
-  //////////////////////////////////////////////////////
-
-  template<typename ManagementCopyFrom> inline __host__ __device__
-  BoundedVolumeGrid( const BoundedVolume<T,Target,ManagementCopyFrom>& vol )
-  //    :m_VoidVol(vol),bbox(vol.bbox)
-  {
-    printf("[1]function not support yet!!\n");
-  }
-
-  template<typename ManagementCopyFrom> inline __host__ __device__
-  BoundedVolumeGrid(const Volume<T,Target,ManagementCopyFrom>& vol, const BoundingBox& bbox)
-  //    :m_VoidVol(vol), bbox(bbox)
-  {
-    printf("[2]function not support yet!!\n");
-  }
-
-  inline __host__ __device__
-  BoundedVolumeGrid()
-  {
-  }
-
   inline __host__
-  BoundedVolumeGrid(unsigned int n_w, unsigned int n_h, unsigned int n_d)
-    :m_bbox(make_float3(-1,-1,-1), make_float3(1,1,1))
+  void init(unsigned int n_w, unsigned int n_h, unsigned int n_d, unsigned int n_res, const BoundingBox& r_bbox)
   {
-    m_w=n_w;
-    m_h=n_h;
-    m_d=n_d;
-  }
-
-  inline __host__
-  BoundedVolumeGrid(unsigned int n_w, unsigned int n_h, unsigned int n_d, const BoundingBox& r_bbox )
-    : m_bbox(r_bbox)
-  {
-    m_w=n_w;
-    m_h=n_h;
-    m_d=n_d;
+    m_w    = n_w;
+    m_h    = n_h;
+    m_d    = n_d;
+    m_res  = n_res;
     m_bbox = r_bbox;
 
-    printf("[BoundedVolumeGrid] init bounded volume grid success. x%d,y%d,z%d is, bbox min x is %f, input %f\n",n_w,n_h,n_d, m_bbox.boxmin.x, r_bbox.boxmin.x);
+    for(int i=0;i!=64; i++)
+    {
+      m_GridVolumes[i].InitVolume(m_res,m_res,m_res);
+      SdfReset(m_GridVolumes[i]);
+    }
+
+    printf("[BoundedVolumeGrid] init bounded volume grid success. x=%d,y=%d,z=%d is, bbox min x is %f, input %f\n",
+           m_w,m_h,m_d, m_bbox.boxmin.x, r_bbox.boxmin.x);
   }
 
 
-
-  inline __host__
-  BoundedVolumeGrid(unsigned int n_w, unsigned int n_h, unsigned int n_d, float3 min_bounds, float3 max_bounds)
-    :m_bbox(min_bounds,max_bounds)
+  inline __device__ __host__
+  T GetVal(int x, int y, int z)
   {
-    m_w=n_w;
-    m_h=n_h;
-    m_d=n_d;
+    return m_GridVolumes[0](x,y,z);
   }
+
+
+  inline __device__
+  void SetVal(T val,int x, int y, int z)
+  {
+    m_GridVolumes[0](0,0,0) = val;
+  }
+
 
   //////////////////////////////////////////////////////
   // Dimensions
@@ -140,111 +88,65 @@ public:
   //////////////////////////////////////////////////////
   // Access VolumeGrid in units of Bounding Box
   //////////////////////////////////////////////////////
-
-//  // get element
-//  inline  __device__ __host__
-//  T& operator()(size_t x, size_t y, size_t z)
-//  {
-//    //    // try access element
-//    //    // access element. convert x, y, z to basic sdf index
-//    //    float x_element = x/10;
-//    //    float y_element = y/10;
-//    //    float z_element = z/10;
-
-//    ////    printf("current size is %d",m_mActiveSDFs.size());
-//    //    printf("before iteration.");
-//    //    for(int i=0;i!=m_mActiveSDFs.size();i++)
-//    //    {
-//    //      printf("in iteration;");
-//    //      BasicSDF<T,Target, Management>& rBasicSDF = m_mActiveSDFs[i];
-//    //      if(rBasicSDF.m_X == size_t(x_element) &&
-//    //         rBasicSDF.m_Y == size_t(y_element) &&
-//    //         rBasicSDF.m_Z == size_t(z_element)  )
-//    //      {
-//    //        // access element
-//    //        printf("find element.");
-//    //        return rBasicSDF.m_Vol(x_element,y_element,z_element);
-//    //      }
-//    //    }
-
-//    //    printf("does not find element. return zero");
-
-//    //    return m_VoidVol(0,0,0);
-
-
-//    // try access element
-//    // access element. convert x, y, z to basic sdf index
-//    float x_element = x/32;
-//    float y_element = y/32;
-//    float z_element = z/32;
-
-//    //    printf("current size is %d",m_mActiveSDFs.size());
-//    printf("before iteration.");
-
-//    for(int i=0;i!=m_mActiveSDFsVolum.w; i++)
-//    {
-//      for(int j=0;j!=m_mActiveSDFsVolum.h;j++)
-//      {
-//        for(int k=0;k!=m_mActiveSDFsVolum.d;k++)
-//        {
-//          printf("in iteration;");
-//          BasicSDF<T,Target, Management>& rBasicSDF = m_mActiveSDFsVolum(i,j,k);
-//          if(rBasicSDF.m_X == size_t(x_element) &&
-//             rBasicSDF.m_Y == size_t(y_element) &&
-//             rBasicSDF.m_Z == size_t(z_element)  )
-//          {
-//            // access element
-//            printf("find element.");
-//            return rBasicSDF.m_Vol(x_element,y_element,z_element);
-//          }
-//        }
-//      }
-//    }
-
-//    printf("does not find element. return zero");
-
-//    return m_VoidVol(0,0,0);
-//  }
-
   // get element
   inline  __device__ __host__
   void GetElement(T& r_val, size_t x, size_t y, size_t z)
   {
     // try access element
     // access element. convert x, y, z to basic sdf index
-    float x_element = x/32;
-    float y_element = y/32;
-    float z_element = z/32;
+    //    float x_element = x/m_res;
+    //    float y_element = y/m_res;
+    //    float z_element = z/m_res;
 
-    //    printf("current size is %d",m_mActiveSDFs.size());
-    printf("before iteration.");
+    //    printf("%d;",int(x_element));
 
-    for(int i=0;i!=m_mActiveSDFsVolum.w; i++)
-    {
-      for(int j=0;j!=m_mActiveSDFsVolum.h;j++)
-      {
-        for(int k=0;k!=m_mActiveSDFsVolum.d;k++)
-        {
-          printf("in iteration;");
-          BasicSDF<T,Target, Management>& rBasicSDF = m_mActiveSDFsVolum(i,j,k);
-          if(rBasicSDF.m_X == size_t(x_element) &&
-             rBasicSDF.m_Y == size_t(y_element) &&
-             rBasicSDF.m_Z == size_t(z_element)  )
-          {
-            // access element
-            printf("find element.");
-            r_val = rBasicSDF.m_Vol(x_element,y_element,z_element);
-            break;
-          }
-        }
-      }
-    }
+    //    printf("%d",int(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w));
 
-    printf("get element fail.");
+    //    if(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w == 64)
+    //    {
+    //      printf("find element.");
+
+    //    r_val = m_GridVolume[int(x_element)][int(y_element)][int(z_element)]->Get(x_element,y_element,z_element);
+
+    //    r_val = m_GridVolume[0][0][0]->Get(0,0,0);
+
+    //      //        break;
+    //    }
+
+    //    printf("get element fail.");
   }
 
-  // get element
+
   inline  __device__ __host__
+  void SetElement(T& r_val, size_t x, size_t y, size_t z)
+  {
+    // try access element
+    // access element. convert x, y, z to basic sdf index
+    //    float x_element = x/m_res;
+    //    float y_element = y/m_res;
+    //    float z_element = z/m_res;
+
+    //    printf("%d;",int(x_element));
+
+    //    printf("%d",int(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w));
+
+    //    if(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w == 64)
+    //    {
+    //      printf("find element.");
+
+    //    r_val = m_GridVolume[int(x_element)][int(y_element)][int(z_element)]->Get(x_element,y_element,z_element);
+
+    //    m_GridVolume[0][0][0]->Get(0,0,0) = 1;
+
+    //      //        break;
+    //    }
+
+    //    printf("get element fail.");
+  }
+
+
+  // get element
+  inline  __device__
   float GetElementFloat(size_t x, size_t y, size_t z)
   {
     float fval = 0;
@@ -252,95 +154,76 @@ public:
     return fval;
   }
 
-
   // get element
-  inline  __device__ __host__
+  inline  __device__
   SDF_t GetElementSdf(size_t x, size_t y, size_t z)
   {
-    SDF_t  val;
-    val.val = 0;
+    SDF_t   val;
+    val.val = 1;
     val.w   = 0;
     GetElement(val, x, y, z);
     return val;
   }
 
 
-
-  inline __device__ __host__
-  void SetElement(size_t x, size_t y, size_t z, T val)
+  inline __device__
+  void SetElementVolume(size_t x, size_t y, size_t z, T val)
   {
     // try access element
     // access element. convert x, y, z to basic sdf index
-    float x_element = x/32;
-    float y_element = y/32;
-    float z_element = z/32;
+    float x_element = x/m_res;
+    float y_element = y/m_res;
+    float z_element = z/m_res;
 
-    bool bFlag = false;
+    printf("try to set element;");
 
-    for(int i=0;i!=m_mActiveSDFsVolum.w; i++)
+    for(int i=0;i!=4; i++)
     {
-      for(int j=0;j!=m_mActiveSDFsVolum.h;j++)
+      for(int j=0;j!=4;j++)
       {
-        for(int k=0;k!=m_mActiveSDFsVolum.d;k++)
+        for(int k=0;k!=4;k++)
         {
-          // printf("in iteration;");
-          BasicSDF<T,Target, Management>& rBasicSDF = m_mActiveSDFsVolum(i,j,k);
-          if(rBasicSDF.m_X == size_t(x_element) &&
-             rBasicSDF.m_Y == size_t(y_element) &&
-             rBasicSDF.m_Z == size_t(z_element)  )
-          {
-            // access element
-            // access element
-            printf("set element directlly;");
-            rBasicSDF.m_Vol(x_element,y_element,z_element) = val;
-            bFlag =true;
-          }
+          //          // printf("in iteration;");
+          //          BasicSDF<T,Target, Manage>* rBasicSDF = m_GridVolume(i,j,k);
+          //          if(rBasicSDF->m_X == int(x_element) &&
+          //             rBasicSDF->m_Y == int(y_element) &&
+          //             rBasicSDF->m_Z == int(z_element)  )
+          //          {
+          //            // access element
+          //            rBasicSDF->m_Vol(x_element,y_element,z_element) = val;
+          //            printf("set element val success;");
+          //          }
         }
       }
     }
-
-    // init new basic SDF
-    if(bFlag==false)
-    {
-      printf("try init new sdf for set element;");
-
-      BasicSDF<T, Target, Management> nBasicSDF(size_t(x_element), size_t(y_element), size_t(z_element), m_res, m_bbox);
-      nBasicSDF.m_Vol(x_element,y_element,z_element) = val;
-      m_mActiveSDFsVolum(x,y,z) = nBasicSDF;
-
-      printf("init new sdf for set element success;");
-    }
   }
 
+  inline __device__ __host__
+  int GetValidVolsNum()
+  {
+    int num = 0;
 
-  //  inline  __device__ __host__
-  //  float GetUnitsTrilinearClamped(float3 pos_w) const
-  //  {
-  //    //    const float3 pos_v = (pos_w - bbox.Min()) / (bbox.Size());
-  //    //    return Volume<T,Target,Management>::GetFractionalTrilinearClamped(pos_v);
-  //  }
+//    for(int i=0;i!=m_d/m_res;i++)
+//    {
+//      for(int j=0;j!=m_d/m_res;j++)
+//      {
+//        for(int k=0;k!=m_d/m_res;k++)
+//        {
+//          if(GetSDFByIndex(i,j,k)->d == m_res)
+//          {
+//            num++;
+//          }
+//        }
+//      }
+//    }
 
-  //  inline __device__ __host__
-  //  float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
-  //  {
-  //    //        const float3 pos_v = (pos_w - bbox.Min()) / (bbox.Size());
-  //    //        const float3 deriv = Volume<T,Target,Management>::GetFractionalBackwardDiffDxDyDz(pos_v);
-  //    //        return deriv / VoxelSizeUnits();
-  //  }
-
-  //  inline __device__ __host__
-  //  float3 GetUnitsOutwardNormal(float3 pos_w) const
-  //  {
-  //    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
-  //    return deriv / length(deriv);
-  //  }
+    return num;
+  }
 
   inline __device__ __host__
   float3 VoxelPositionInUnits(int x, int y, int z) const
   {
     const float3 vol_size = m_bbox.Size();
-
-    //    printf("[VoxelPositionInUnits] bbmin_x:%f", m_bbox.Min().x + vol_size.x*x/(float)(m_w-1));
 
     return make_float3(
           m_bbox.Min().x + vol_size.x*x/(float)(m_w-1),
@@ -355,54 +238,18 @@ public:
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
-  //////////////////////////////////////////////////////
-  // Access sub-regions
-  //////////////////////////////////////////////////////
 
-  inline __device__ __host__
-  BoundedVolumeGrid<T,Target,DontManage> SubBoundingVolume(const BoundingBox& region)
-  {
-    //    //        const float3 min_fv = (region.Min() - bbox.Min()) / (bbox.Size());
-    //    //        const float3 max_fv = (region.Max() - bbox.Min()) / (bbox.Size());
+public:
+  size_t                                                m_d;
+  size_t                                                m_w;
+  size_t                                                m_h;
+  size_t                                                m_res;
 
-    //    //        const int3 min_v = make_int3(
-    //    //            fmaxf((Volume<T,Target,Management>::w-1)*min_fv.x, 0),
-    //    //            fmaxf((Volume<T,Target,Management>::h-1)*min_fv.y, 0),
-    //    //            fmaxf((Volume<T,Target,Management>::d-1)*min_fv.z, 0)
-    //    //        );
-    //    //        const int3 max_v = make_int3(
-    //    //            fminf(ceilf((Volume<T,Target,Management>::w-1)*max_fv.x), Volume<T,Target,Management>::w-1),
-    //    //            fminf(ceilf((Volume<T,Target,Management>::h-1)*max_fv.y), Volume<T,Target,Management>::h-1),
-    //    //            fminf(ceilf((Volume<T,Target,Management>::d-1)*max_fv.z), Volume<T,Target,Management>::d-1)
-    //    //        );
-
-    //    //        const int3 size_v = max((max_v - min_v) + make_int3(1,1,1), make_int3(0,0,0) );
-
-    //    //        const BoundingBox nbbox(
-    //    //            VoxelPositionInUnits(min_v),
-    //    //            VoxelPositionInUnits(max_v)
-    //    //        );
-
-    //    //        return BoundedVolumeGrid<T,Target,DontManage>(
-    //    //            Volume<T,Target,Management>::SubVolumeGrid(min_v, size_v),
-    //    //            nbbox
-    //    //        );
-
-    printf("[1]function not support yet!!\n");
-
-    //    return
-
-  }
-
-  size_t                                     m_d;
-  size_t                                     m_w;
-  size_t                                     m_h;
-  size_t                                     m_res;
   // bounding box ofbounded volume grid
-  BoundingBox                                m_bbox;
+  BoundingBox                                           m_bbox;
 
-  size_t                                     m_CubeLength;
-  Volume< BasicSDF<T> >                      m_mActiveSDFsVolum;
+  VolumeGrid<T, TargetDevice, Manage>                   m_GridVolumes[64];
 };
+
 
 }

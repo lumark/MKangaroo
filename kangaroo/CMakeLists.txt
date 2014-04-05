@@ -9,7 +9,7 @@ string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 ################################################################################
 
 list(APPEND SRC_H
-    BoundedVolume.h BoundedVolumeGrid.h   MarchingCubesTables.h cu_deconvolution.h    cu_painting.h             kangaroo.h
+    BoundedVolume.h   BoundedVolumeGrid.h   MarchingCubesTables.h cu_deconvolution.h    cu_painting.h             kangaroo.h
     BoundingBox.h     Mat.h                 cu_dense_stereo.h     cu_plane_fit.h            launch_utils.h
     CostVolElem.h     MatUtils.h            cu_depth_tools.h      cu_raycast.h              patch_score.h
     CudaTimer.h       Pyramid.h             cu_heightmap.h        cu_remap.h                pixel_convert.h

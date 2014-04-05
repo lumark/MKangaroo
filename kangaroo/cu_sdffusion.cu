@@ -136,7 +136,6 @@ void SdfFuse(
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
   KernSdfFuse<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, K, img, T_iw, Kimg, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
-
 }
 
 
@@ -165,6 +164,7 @@ __global__ void KernSdfFuseDirectGrey(
 
     // Get voxel position in camera coordinate
     const float3 P_c = T_cw * P_w;
+    //    printf("P_c x:%f,y:%f,z:%f;",P_c.x,P_c.y,P_c.z);
 
     // Project a 3D voxel point to 2D depth an grey image coordinate
     const float2 p_c = Kdepth.Project(P_c);
@@ -236,16 +236,34 @@ void SdfFuseDirectGrey(
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////// For Grid SDF Fusion /////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_Vol;
+__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_colorVol;
+
+int GetAvailableGPUMemory()
+{
+  const unsigned bytes_per_mb = 1024*1000;
+  size_t cu_mem_start, cu_mem_total;
+  if(cudaMemGetInfo( &cu_mem_start, &cu_mem_total ) != cudaSuccess) {
+    std::cerr << "Unable to get available memory" << std::endl;
+    exit(-1);
+  }
+
+  int LeftMemory = cu_mem_start/bytes_per_mb;
+  return LeftMemory;
+}
 
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-__global__ void KernSdfFuseDirectGreyGrid(
-    BoundedVolumeGrid<SDF_t> vol, BoundedVolumeGrid<float> colorVol,
-    Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
-    )
+__global__ void KernSdfFuseDirectGreyGrid(VolumeGrid<SDF_t, TargetDevice, Manage> testvol,
+                                          Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+                                          Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+                                          float trunc_dist, float max_w, float mincostheta
+                                          )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
@@ -253,25 +271,28 @@ __global__ void KernSdfFuseDirectGreyGrid(
   //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
 
   // For each voxel (x,y,z) we have in a bounded volume
-  for(int z=0; z < vol.m_d; ++z)
+  for(int z=0; z < g_Vol.m_d; ++z)
   {
     // See if this voxel is possible to be in the image boundary
-    // Get voxel position in certain radius in world coordinate
-    const float3 P_w = vol.VoxelPositionInUnits(x,y,z);
-    //        printf("x:%d,y:%d,z:%d,loc:%f,%f,%f;",x,y,z,P_w.x,P_w.y,P_w.z);
+    // Get voxel position in certain radius in world coordinate (good)
+    const float3 P_w = g_Vol.VoxelPositionInUnits(x,y,z);
 
-    // Get voxel position in camera coordinate
+    // Get voxel position in camera coordinate (good)
     const float3 P_c = T_cw * P_w;
 
     // Project a 3D voxel point to 2D depth an grey image coordinate
     const float2 p_c = Kdepth.Project(P_c);
+
     const float3 P_i = T_iw * P_w;
     const float2 p_i = Krgb.Project(P_i);
+
 
     // If the voxel is in image coordinate (inside of image boundary), then we
     // see if we should fuse this voxel
     if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
     {
+
+      //      printf("in bounds.");
       // prepare to fuse a grey pixel into this voxel
       const float c =  grey.GetBilinear<float>(p_i);
 
@@ -304,19 +325,45 @@ __global__ void KernSdfFuseDirectGreyGrid(
           /// here 0.5 is for kinect sensor
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
+            g_Vol.m_GridVolumes[0](0,0,0).val = g_Vol.m_GridVolumes[0](0,0,0).val +1;
+
+            //            printf("val is %f",g_Vol.m_GridVolumes[0](0,0,0).val);
+
+            printf("val is %f",testvol(0,0,0).val);
+
+
+            //            printf("vol is %f, workspace is %f;",vol.m_dSingleVolumeGrid(0,0,0).val, GridSDFWorkSpace[0](0,0,0).val);
+
+            //            printf("workspace is %f;", GridSDFWorkSpace[0](0,0,0).val);
+
+            //            g_Vol.m_GridVolumes[0].Get(0,0,0).val = 1;
+
             //            printf("md %f,", md);
-            printf("try to get vol value.");
-            const SDF_t curvol = vol.GetElementSdf(x,y,z);
+            //            printf("try to get vol value.");
+            //            const SDF_t curvol = vol.GetElementSdf(x,y,z);
+
+            //            const SDF_t curvol= vol.GetVal(x,y,z);
+
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
-            SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
-            sdf += curvol;
-            sdf.LimitWeight(max_w);
+            //            SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
+            //            sdf += curvol;
+            //            sdf.LimitWeight(max_w);
+
+            //            printf("val:%f",pTest->Get(0,0,0).val);
+            //            printf("test num is:%d",testnum);
 
             /// set val
-            //            vol.SetElement(x,y,z, sdf);
-            //            colorVol.SetElement(x,y,z, (w*c + colorVol.GetElementFloat(x,y,z) * curvol.w) / (w + curvol.w));
+            //            vol.SetElement(sdf, x, y, z);
+            //            vol.SetVal(sdf, x,y,z);
+            //            printf("get:%f;",vol.GetVal(x,y,z).val);
+
+            //            printf("get:%f",vol.m_hSingGridVolume->Get(0,0,0).val);
+
+            //            vol.m_GridVolume[0][0][0]->Get(0,0,0) = sdf;
+            //            g_colorVol.SetElement(x,y,z, (w*c + g_colorVol.GetElementFloat(x,y,z) * curvol.w) / (w + curvol.w));
             //            printf("fuse:%f,grey:%f,pc:%f,%f-pi:%f,%f;",sdf.val,c,p_c.x, p_c.y,p_i.x,p_i.y);
-            printf("fuse:%f,grey:%f",sdf.val,colorVol.GetElementFloat(x,y,z));
+            //            printf("fuse:%f,grey:%f",sdf.val,colorVol.GetElementFloat(x,y,z));
+            //            printf("fuse:%f",vol.m_GridVolume[0][0][0]->Get(0,0,0));
           }
         }
       }
@@ -324,16 +371,82 @@ __global__ void KernSdfFuseDirectGreyGrid(
   }
 }
 
+
 void SdfFuseDirectGreyGrid(
-    BoundedVolumeGrid<SDF_t> vol, BoundedVolumeGrid<float> colorVol,
+    BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
+    BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     ) {
+
+  //  int m_res = 4;
+
+  //  BoundedVolume<SDF_t, TargetDevice, Manage>*   d_array;
+
+  ////  int nSize = sizeof(vol.m_GridVolume);
+
+  //  int nSize = sizeof(vol.m_TestVol) * 64;
+
+  //  int nSize = sizeof(vol.m_hSingGridVolume);
+
+  //  printf("each size is %d, %d",nSize);
+
+  //  printf("get val %f",vol.m_hSingGridVolume->Get(0,0,0));
+
+  //  // 1. Allocate device array.
+  //  cudaMalloc((void**) &(d_array), nSize);
+  //  GpuCheckErrors();
+
+  //  // 2. Copy array contents from host to device.
+  //  cudaMemcpy(d_array, vol.m_hSingGridVolume, nSize, cudaMemcpyHostToDevice);
+  //  GpuCheckErrors();
+
+  // 3. Point to device pointer in host struct.
+  //  for(int i=0;i!=4;i++)
+  //  {
+  //    for(int j=0;j!=4;j++)
+  //    {
+  //      for(int k=0;k!=4;k++)
+  //      {
+  //        vol.m_hGridVolume[i + j * m_res + k * m_res * m_res] = d_array[i + j * m_res + k * m_res * m_res];
+  //      }
+  //    }
+  //  }
+
+  //  vol.m_hSingGridVolume = d_array;
+
+  //  d_array->CopyFrom
+
+  //    BoundedVolume<SDF_t, TargetDevice, Manage>* d_array;
+
+  //    int nSize = sizeof(vol.m_TestSDF);
+
+  //    printf("each size is %d, %d",nSize);
+
+  //    // 1. Allocate device array.
+  //    cudaMalloc((void**) &(d_array), nSize);
+  //    GpuCheckErrors();
+
+  //    // 2. Copy array contents from host to device.
+  //    cudaMemcpy(d_array, vol.m_GridVolume, nSize, cudaMemcpyHostToDevice);
+  //    GpuCheckErrors();
+
+
+  cudaMemcpyToSymbol(g_Vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
+  GpuCheckErrors();
+
+  // launch kernel
   dim3 blockDim(16,16);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(vol.m_GridVolumes[0], depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
+
+  // copy data back after launch the kernel
+  for(int i=0;i!=64;i++)
+  {
+    vol.m_GridVolumes[i].MemcpyFromDevice(g_Vol.m_GridVolumes[i]);
+  }
 }
 
 
@@ -484,6 +597,9 @@ __global__ void KernSdfFuseFindOutline(
 
 }
 
+
+
+
 void SdfFuseFindOutline(
     BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics K,
     Image<uchar3> img, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
@@ -572,6 +688,16 @@ void SdfReset(BoundedVolume<float> vol)
 void SdfReset(BoundedVolume<uchar3> vol)
 {
   vol.Fill(make_uchar3( 0,0,0 ));
+}
+
+void SdfReset(VolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol)
+{
+  vol.Fill(SDF_t(1, 1));
+}
+
+void SdfReset(VolumeGrid<float,roo::TargetDevice, roo::Manage> vol)
+{
+  vol.Fill(0.5);
 }
 
 //boxmin and boxmax define the box that is to be kept intact, rest will be cleared. This approach makes if conditions inside simpler.
