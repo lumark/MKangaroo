@@ -54,24 +54,6 @@ public:
     }
 
 
-//    template<typename TargetFrom, typename ManagementFrom>
-//    inline __device__ __host__
-//    void CopyFromBB(const BoundedVolume<T,TargetFrom,ManagementFrom>* pvol)
-//    {
-//      // If these volumes don't have the same height, or have an image pitch different from their height,
-//      // we need to do a copy for each depth layer.
-//      assert(w == pvol->w);
-//      assert(h == pvol->h);
-//      assert(img_pitch == pvol->img_pitch);
-
-//      cudaMemcpy2D(Volume<T,Target,Management>::ptr, Volume<T,Target,Management>::pitch,
-//                   pvol->ptr,pvol->pitch, std::min(pvol->w,Volume<T,Target,Management>::w)*sizeof(T),
-//                   Volume<T,Target,Management>::h*std::min(pvol->d,Volume<T,Target,Management>::d), TargetCopyKind<Target,TargetFrom>() );
-
-//      CopyFrom(pvol->)
-//    }
-
-
     //////////////////////////////////////////////////////
     // Dimensions
     //////////////////////////////////////////////////////

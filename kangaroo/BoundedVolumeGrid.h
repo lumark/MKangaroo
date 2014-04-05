@@ -2,10 +2,8 @@
 
 #include "VolumeGrid.h"
 #include "BoundingBox.h"
-#include "BoundedVolume.h"
-#include "VolumeGrid.h"
 #include "Sdf.h"
-#include "cu_sdffusion.h"
+//#include "cu_sdffusion.h"
 
 
 namespace roo
@@ -29,33 +27,20 @@ public:
     m_w    = n_w;
     m_h    = n_h;
     m_d    = n_d;
-    m_res  = n_res;
+    m_BasicGridRes = n_res;
+    m_WholeGridRes = m_w/n_res;
     m_bbox = r_bbox;
 
+    // init all basic SDFs
     for(int i=0;i!=64; i++)
     {
-      m_GridVolumes[i].InitVolume(m_res,m_res,m_res);
-      SdfReset(m_GridVolumes[i]);
+      m_GridVolumes[i].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
+      //      SdfReset(m_GridVolumes[i]);
     }
 
-    printf("[BoundedVolumeGrid] init bounded volume grid success. x=%d,y=%d,z=%d is, bbox min x is %f, input %f\n",
-           m_w,m_h,m_d, m_bbox.boxmin.x, r_bbox.boxmin.x);
+//    printf("[BoundedVolumeGrid] init bounded volume grid success. x=%d,y=%d,z=%d is, bbox min x is %f, input %f\n",
+//           m_w,m_h,m_d, m_bbox.boxmin.x, r_bbox.boxmin.x);
   }
-
-
-  inline __device__ __host__
-  T GetVal(int x, int y, int z)
-  {
-    return m_GridVolumes[0](x,y,z);
-  }
-
-
-  inline __device__
-  void SetVal(T val,int x, int y, int z)
-  {
-    m_GridVolumes[0](0,0,0) = val;
-  }
-
 
   //////////////////////////////////////////////////////
   // Dimensions
@@ -79,123 +64,17 @@ public:
   // amount of space.
   //////////////////////////////////////////////////////
 
-  inline __device__ __host__
-  bool IsValid() const {
-    const uint3 size = Volume<T,Target,Management>::Voxels();
-    return size.x >= 8 && size.y >= 8 && size.z >= 8;
-  }
-
-  //////////////////////////////////////////////////////
-  // Access VolumeGrid in units of Bounding Box
-  //////////////////////////////////////////////////////
-  // get element
-  inline  __device__ __host__
-  void GetElement(T& r_val, size_t x, size_t y, size_t z)
-  {
-    // try access element
-    // access element. convert x, y, z to basic sdf index
-    //    float x_element = x/m_res;
-    //    float y_element = y/m_res;
-    //    float z_element = z/m_res;
-
-    //    printf("%d;",int(x_element));
-
-    //    printf("%d",int(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w));
-
-    //    if(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w == 64)
-    //    {
-    //      printf("find element.");
-
-    //    r_val = m_GridVolume[int(x_element)][int(y_element)][int(z_element)]->Get(x_element,y_element,z_element);
-
-    //    r_val = m_GridVolume[0][0][0]->Get(0,0,0);
-
-    //      //        break;
-    //    }
-
-    //    printf("get element fail.");
-  }
-
+  //  inline __device__ __host__
+  //  bool IsValid() const {
+  //    const uint3 size = Volume<T,Target,Management>::Voxels();
+  //    return size.x >= 8 && size.y >= 8 && size.z >= 8;
+  //  }
 
   inline  __device__ __host__
-  void SetElement(T& r_val, size_t x, size_t y, size_t z)
+  T& operator()(size_t x, size_t y, size_t z)
   {
-    // try access element
-    // access element. convert x, y, z to basic sdf index
-    //    float x_element = x/m_res;
-    //    float y_element = y/m_res;
-    //    float z_element = z/m_res;
-
-    //    printf("%d;",int(x_element));
-
-    //    printf("%d",int(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w));
-
-    //    if(m_GridVolume[int(x_element)][int(y_element) ][int(z_element)]->w == 64)
-    //    {
-    //      printf("find element.");
-
-    //    r_val = m_GridVolume[int(x_element)][int(y_element)][int(z_element)]->Get(x_element,y_element,z_element);
-
-    //    m_GridVolume[0][0][0]->Get(0,0,0) = 1;
-
-    //      //        break;
-    //    }
-
-    //    printf("get element fail.");
-  }
-
-
-  // get element
-  inline  __device__
-  float GetElementFloat(size_t x, size_t y, size_t z)
-  {
-    float fval = 0;
-    GetElement(fval,x,y,z);
-    return fval;
-  }
-
-  // get element
-  inline  __device__
-  SDF_t GetElementSdf(size_t x, size_t y, size_t z)
-  {
-    SDF_t   val;
-    val.val = 1;
-    val.w   = 0;
-    GetElement(val, x, y, z);
-    return val;
-  }
-
-
-  inline __device__
-  void SetElementVolume(size_t x, size_t y, size_t z, T val)
-  {
-    // try access element
-    // access element. convert x, y, z to basic sdf index
-    float x_element = x/m_res;
-    float y_element = y/m_res;
-    float z_element = z/m_res;
-
-    printf("try to set element;");
-
-    for(int i=0;i!=4; i++)
-    {
-      for(int j=0;j!=4;j++)
-      {
-        for(int k=0;k!=4;k++)
-        {
-          //          // printf("in iteration;");
-          //          BasicSDF<T,Target, Manage>* rBasicSDF = m_GridVolume(i,j,k);
-          //          if(rBasicSDF->m_X == int(x_element) &&
-          //             rBasicSDF->m_Y == int(y_element) &&
-          //             rBasicSDF->m_Z == int(z_element)  )
-          //          {
-          //            // access element
-          //            rBasicSDF->m_Vol(x_element,y_element,z_element) = val;
-          //            printf("set element val success;");
-          //          }
-        }
-      }
-    }
+    // convert x, y, z, to actual index and get the element
+    return m_GridVolumes[x/m_BasicGridRes + m_WholeGridRes * (y/m_BasicGridRes + m_WholeGridRes * z/m_BasicGridRes)](x%m_BasicGridRes,y%m_BasicGridRes,z%m_BasicGridRes );
   }
 
   inline __device__ __host__
@@ -203,21 +82,66 @@ public:
   {
     int num = 0;
 
-//    for(int i=0;i!=m_d/m_res;i++)
-//    {
-//      for(int j=0;j!=m_d/m_res;j++)
-//      {
-//        for(int k=0;k!=m_d/m_res;k++)
-//        {
-//          if(GetSDFByIndex(i,j,k)->d == m_res)
-//          {
-//            num++;
-//          }
-//        }
-//      }
-//    }
+    //    for(int i=0;i!=m_d/m_res;i++)
+    //    {
+    //      for(int j=0;j!=m_d/m_res;j++)
+    //      {
+    //        for(int k=0;k!=m_d/m_res;k++)
+    //        {
+    //          if(GetSDFByIndex(i,j,k)->d == m_res)
+    //          {
+    //            num++;
+    //          }
+    //        }
+    //      }
+    //    }
 
     return num;
+  }
+
+
+
+  inline  __device__ __host__
+  float GetUnitsTrilinearClamped(float3 pos_w) const
+  {
+    // pose of point in whole sdf
+    const float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+
+    // convert pos_v to pose in grid sdf
+    const float3 pos_v_grid = make_float3( fmod(pos_v.x, float(m_WholeGridRes) ),
+                                           fmod(pos_v.y, float(m_WholeGridRes) ),
+                                           fmod(pos_v.z, float(m_WholeGridRes) ));
+
+    float fSingleGridLength = float (2 * m_bbox.Max().x/m_WholeGridRes );
+
+    // get actual val in grid sdf
+    return m_GridVolumes[ int(pos_v.x/fSingleGridLength) + m_WholeGridRes * ( int(pos_v.y/fSingleGridLength) + m_WholeGridRes * int( pos_v.z/m_WholeGridRes ))].GetFractionalTrilinearClamped(pos_v_grid);
+  }
+
+  inline __device__ __host__
+  float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
+  {
+    // pose of point in whole sdf
+    const float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+
+    // convert pos_v to pose in grid sdf
+    const float3 pos_v_grid = make_float3( fmod(pos_v.x, float(m_WholeGridRes) ),
+                                           fmod(pos_v.y, float(m_WholeGridRes) ),
+                                           fmod(pos_v.z, float(m_WholeGridRes) ));
+
+    float fSingleGridLength = float (2 * m_bbox.Max().x/m_WholeGridRes );
+
+    const float3 deriv =
+        m_GridVolumes[ int(pos_v.x/fSingleGridLength) + m_WholeGridRes * ( int(pos_v.y/fSingleGridLength) + m_WholeGridRes * int( pos_v.z/m_WholeGridRes ))].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
+
+    return deriv / VoxelSizeUnits();
+  }
+
+  inline __device__ __host__
+  float3 GetUnitsOutwardNormal(float3 pos_w) const
+  {
+    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
+    return deriv / length(deriv);
   }
 
   inline __device__ __host__
@@ -243,11 +167,14 @@ public:
   size_t                                                m_d;
   size_t                                                m_w;
   size_t                                                m_h;
-  size_t                                                m_res;
 
   // bounding box ofbounded volume grid
   BoundingBox                                           m_bbox;
 
+  size_t                                                m_BasicGridRes;   // resolution of a single grid
+  size_t                                                m_WholeGridRes;   // how many grid we want to use in one row, usually 4, 8, 16
+
+  // volume that save all data
   VolumeGrid<T, TargetDevice, Manage>                   m_GridVolumes[64];
 };
 
