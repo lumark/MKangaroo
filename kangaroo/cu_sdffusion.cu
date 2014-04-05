@@ -378,61 +378,8 @@ void SdfFuseDirectGreyGrid(
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
-    ) {
-
-  //  int m_res = 4;
-
-  //  BoundedVolume<SDF_t, TargetDevice, Manage>*   d_array;
-
-  ////  int nSize = sizeof(vol.m_GridVolume);
-
-  //  int nSize = sizeof(vol.m_TestVol) * 64;
-
-  //  int nSize = sizeof(vol.m_hSingGridVolume);
-
-  //  printf("each size is %d, %d",nSize);
-
-  //  printf("get val %f",vol.m_hSingGridVolume->Get(0,0,0));
-
-  //  // 1. Allocate device array.
-  //  cudaMalloc((void**) &(d_array), nSize);
-  //  GpuCheckErrors();
-
-  //  // 2. Copy array contents from host to device.
-  //  cudaMemcpy(d_array, vol.m_hSingGridVolume, nSize, cudaMemcpyHostToDevice);
-  //  GpuCheckErrors();
-
-  // 3. Point to device pointer in host struct.
-  //  for(int i=0;i!=4;i++)
-  //  {
-  //    for(int j=0;j!=4;j++)
-  //    {
-  //      for(int k=0;k!=4;k++)
-  //      {
-  //        vol.m_hGridVolume[i + j * m_res + k * m_res * m_res] = d_array[i + j * m_res + k * m_res * m_res];
-  //      }
-  //    }
-  //  }
-
-  //  vol.m_hSingGridVolume = d_array;
-
-  //  d_array->CopyFrom
-
-  //    BoundedVolume<SDF_t, TargetDevice, Manage>* d_array;
-
-  //    int nSize = sizeof(vol.m_TestSDF);
-
-  //    printf("each size is %d, %d",nSize);
-
-  //    // 1. Allocate device array.
-  //    cudaMalloc((void**) &(d_array), nSize);
-  //    GpuCheckErrors();
-
-  //    // 2. Copy array contents from host to device.
-  //    cudaMemcpy(d_array, vol.m_GridVolume, nSize, cudaMemcpyHostToDevice);
-  //    GpuCheckErrors();
-
-
+    )
+{
   cudaMemcpyToSymbol(g_Vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
