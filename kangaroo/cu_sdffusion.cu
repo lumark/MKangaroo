@@ -240,21 +240,9 @@ void SdfFuseDirectGrey(
 ////////////////////////////////////////////////////////// For Grid SDF Fusion /////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_Vol;
+__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
 __device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_colorVol;
 
-int GetAvailableGPUMemory()
-{
-  const unsigned bytes_per_mb = 1024*1000;
-  size_t cu_mem_start, cu_mem_total;
-  if(cudaMemGetInfo( &cu_mem_start, &cu_mem_total ) != cudaSuccess) {
-    std::cerr << "Unable to get available memory" << std::endl;
-    exit(-1);
-  }
-
-  int LeftMemory = cu_mem_start/bytes_per_mb;
-  return LeftMemory;
-}
 
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
@@ -270,11 +258,11 @@ __global__ void KernSdfFuseDirectGreyGrid(Image<float> depth, Image<float4> norm
   //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
 
   // For each voxel (x,y,z) we have in a bounded volume
-  for(int z=0; z < g_Vol.m_d; ++z)
+  for(int z=0; z < g_vol.m_d; ++z)
   {
     // See if this voxel is possible to be in the image boundary
     // Get voxel position in certain radius in world coordinate (good)
-    const float3 P_w = g_Vol.VoxelPositionInUnits(x,y,z);
+    const float3 P_w = g_vol.VoxelPositionInUnits(x,y,z);
 
     // Get voxel position in camera coordinate (good)
     const float3 P_c = T_cw * P_w;
@@ -321,7 +309,9 @@ __global__ void KernSdfFuseDirectGreyGrid(Image<float> depth, Image<float4> norm
           /// here 0.5 is for kinect sensor
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
-            const SDF_t curvol = g_Vol(x,y,z);
+            //            printf("fuse:x%d,y%d,z%d",x,y,z);
+
+            const SDF_t curvol = g_vol(x,y,z);
 
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
             SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
@@ -329,10 +319,8 @@ __global__ void KernSdfFuseDirectGreyGrid(Image<float> depth, Image<float4> norm
             sdf.LimitWeight(max_w);
 
             /// set val
-            g_Vol(x, y, z) = sdf;
+            g_vol(x, y, z) = sdf;
             g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
-
-//            printf("val:%f, grey val %f:",g_Vol(x,y,z).val, g_colorVol(x,y,z));
           }
         }
       }
@@ -349,25 +337,33 @@ void SdfFuseDirectGreyGrid(
     float trunc_dist, float max_w, float mincostheta
     )
 {
-  // load vol val to golbal memory
-  cudaMemcpyToSymbol(g_Vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
-  GpuCheckErrors();
-
-  // launch kernel for SDF fusion
-  dim3 blockDim(16,16);
-  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
-  GpuCheckErrors();
-
-  // copy data back after launch the kernel
-  for(int i=0;i!=64;i++)
+  if(GetAvailableGPUMemory()>400)
   {
-    vol.m_GridVolumes[i].MemcpyFromDevice(g_Vol.m_GridVolumes[i]);
-    colorVol.m_GridVolumes[i].MemcpyFromDevice(g_colorVol.m_GridVolumes[i]);
+    printf("available memory is %d\n",GetAvailableGPUMemory());
+
+    // load vol val to golbal memory
+    cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
+    cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+    GpuCheckErrors();
+
+    // launch kernel for SDF fusion
+    dim3 blockDim(16,16);
+    dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
+    KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+    GpuCheckErrors();
+
+    // copy data back after launch the kernel
+    for(int i=0;i!=64;i++)
+    {
+      vol.m_GridVolumes[i].MemcpyFromDevice(g_vol.m_GridVolumes[i]);
+      colorVol.m_GridVolumes[i].MemcpyFromDevice(g_colorVol.m_GridVolumes[i]);
+    }
+
+    //  // cuda free memory
+    //  cudaFree(g_vol);
+    //  cudaFree(g_colorVol);
   }
 
-  // cuda free memory
 }
 
 

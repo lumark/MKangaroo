@@ -226,15 +226,19 @@ struct VolumeGrid
   inline  __device__ __host__
   float GetFractionalTrilinearClamped(float3 pos) const
   {
+    // get pos by %
     const float3 pf = pos * make_float3(w-1.f, h-1.f, d-1.f);
 
+    // get int index of input pos
     const int ix = fmaxf(fminf(w-2, floorf(pf.x) ), 0);
     const int iy = fmaxf(fminf(h-2, floorf(pf.y) ), 0);
     const int iz = fmaxf(fminf(d-2, floorf(pf.z) ), 0);
+
     const float fx = pf.x - ix;
     const float fy = pf.y - iy;
     const float fz = pf.z - iz;
 
+    // get voxel value
     const float v0 = Get(ix,iy,iz);
     const float vx = Get(ix+1,iy,iz);
     const float vy = Get(ix,iy+1,iz);
@@ -375,6 +379,11 @@ struct VolumeGrid
 
   size_t img_pitch;
   size_t d;
+
+
+//  size_t fake_w;
+//  size_t fake_h;
+//  size_t fake_d;
 
 };
 

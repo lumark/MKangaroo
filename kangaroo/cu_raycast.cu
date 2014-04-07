@@ -378,12 +378,10 @@ __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<
       imgdepth(u,v) = depth;
       img(u,v) = c;
       norm(u,v) = make_float4(n_c, 1);
-      printf("raycast success.");
     }else{
       imgdepth(u,v) = 0.0f/0.0f;
       img(u,v) = 0;
       norm(u,v) = make_float4(0,0,0,0);
-      printf("invalid depth.");
     }
 
   }
@@ -394,15 +392,24 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
                 const BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> colorVol,
                 const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
 {
-  // load vol val to golbal memory
-  cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
-  GpuCheckErrors();
 
-  dim3 blockDim, gridDim;
-  InitDimFromOutputImageOver(blockDim, gridDim, img);
-  KernRaycastSdf<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
-  GpuCheckErrors();
+  if(GetAvailableGPUMemory()>400)
+  {
+    printf("available memory is %d\n",GetAvailableGPUMemory());
+    // load vol val to golbal memory
+    cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
+    cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+    GpuCheckErrors();
+
+    dim3 blockDim, gridDim;
+    InitDimFromOutputImageOver(blockDim, gridDim, img);
+    KernRaycastSdf<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
+    GpuCheckErrors();
+
+    //  cudaFree(g_vol);
+    //  cudaFree(g_colorVol);
+  }
+
 }
 
 
