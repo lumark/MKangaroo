@@ -58,7 +58,7 @@ struct TargetHost
     *pitch = w*sizeof(T);
     *hostPtr = (T*)malloc(*pitch * h);
 
-    printf("allocate target host mem succes\n");
+//    printf("allocate target host mem succes\n");
   }
 
   template<typename T> inline static
@@ -70,7 +70,7 @@ struct TargetHost
     if( err != cudaSuccess ) {
       throw CudaException("Unable to cudaMallocHost", err);
     }
-    printf("allocaye target host mem succes\n");
+//    printf("allocaye target host mem succes\n");
   }
 
   template<typename T> inline static
@@ -89,7 +89,7 @@ struct TargetDevice
     if( err != cudaSuccess ) {
       throw CudaException("Unable to cudaMallocPitch", err);
     }
-    printf("allocate target decice cuda mem succes\n");
+//    printf("allocate target decice cuda mem succes\n");
   }
 
   template<typename T> inline static
@@ -100,8 +100,7 @@ struct TargetDevice
       throw CudaException("Unable to cudaMallocPitch", err);
     }
     *img_pitch = *pitch * h;
-    printf("allocaye target decice cuda mem succes\n");
-
+//    printf("allocaye target decice cuda mem succes\n");
   }
 
   template<typename T> inline static
@@ -150,7 +149,7 @@ struct Manage
 
 struct DontManage
 {
-  inline static __host__ __device__
+  inline static __host__
   void AllocateCheck()
   {
     printf("Fatal Image that doesn't own data should not call this constructor\n");

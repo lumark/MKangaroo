@@ -19,9 +19,6 @@
 namespace roo
 {
 
-
-
-
 // A VolumeGrid consist n numbers of single volume. Each volume is d*d*d cube.
 // When init the VolumeGrid, we set the dim of it and set the dim of single volume of it.
 // The initialization of VolumeGrid only init one single volume and a table of active volumes.
@@ -32,7 +29,7 @@ namespace roo
 template<typename T, typename Target = TargetDevice, typename Management = DontManage>
 struct VolumeGrid
 {
-  inline __device__ __host__
+  inline __device__
   void CleanUp()
   {
     Management::template Cleanup<T,Target>(ptr);
@@ -70,7 +67,6 @@ struct VolumeGrid
     assert(h == img.h);
     assert(img_pitch == img.img_pitch);
     cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), TargetCopyKind<Target,TargetFrom>() );
-    printf("[VolumeGrid] finish copy from.\n");
   }
 
 
@@ -84,7 +80,6 @@ struct VolumeGrid
     assert(h == img.h);
     assert(img_pitch == img.img_pitch);
     cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), cudaMemcpyDeviceToDevice);
-    printf("[VolumeGrid] finish copy from host.\n");
   }
 
   template<typename TargetFrom, typename ManagementFrom>
@@ -223,17 +218,20 @@ struct VolumeGrid
           );
   }
 
+  // clamp - returns smallest integer not less than a scalar or each vector component.
+  // lerp - returns linear interpolation of two scalars or vectors based on a weight
   inline  __device__ __host__
   float GetFractionalTrilinearClamped(float3 pos) const
   {
-    // get pos by %
+    // get real gird index by % of pose
     const float3 pf = pos * make_float3(w-1.f, h-1.f, d-1.f);
 
-    // get int index of input pos
+    // get approximate grid index
     const int ix = fmaxf(fminf(w-2, floorf(pf.x) ), 0);
     const int iy = fmaxf(fminf(h-2, floorf(pf.y) ), 0);
     const int iz = fmaxf(fminf(d-2, floorf(pf.z) ), 0);
 
+    // get index difference
     const float fx = pf.x - ix;
     const float fy = pf.y - iy;
     const float fz = pf.z - iz;
@@ -248,6 +246,7 @@ struct VolumeGrid
     const float vyz = Get(ix,iy+1,iz+1);
     const float vxyz = Get(ix+1,iy+1,iz+1);
 
+    // lerp - returns linear interpolation of two scalars or vectors based on a weight
     return lerp(
           lerp(lerp(v0,vx,fx),  lerp(vy,vxy,fx), fy),
           lerp(lerp(vz,vxz,fx), lerp(vyz,vxyz,fx), fy),
@@ -273,14 +272,13 @@ struct VolumeGrid
   inline __device__ __host__
   float3 GetFractionalBackwardDiffDxDyDz(float3 pos) const
   {
+    // get real gird index by % of pose
     const float3 pf = pos * make_float3(w-1.f, h-1.f, d-1.f);
 
     const int ix = fmaxf(fminf(w-2, floorf(pf.x) ), 1);
     const int iy = fmaxf(fminf(h-2, floorf(pf.y) ), 1);
     const int iz = fmaxf(fminf(d-2, floorf(pf.z) ), 1);
-    //        const int ix = floorf(pf.x);
-    //        const int iy = floorf(pf.y);
-    //        const int iz = floorf(pf.z);
+
     const float fx = pf.x - ix;
     const float fy = pf.y - iy;
     const float fz = pf.z - iz;

@@ -164,7 +164,6 @@ __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<
         if( sdf <= 0 )
         {
           if( last_sdf > 0) {
-            //                      printf("surface!");
             // surface!
             if(subpix) {
               lambda = lambda + delta_lambda * sdf / (last_sdf - sdf);
@@ -396,6 +395,7 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
   if(GetAvailableGPUMemory()>400)
   {
     printf("available memory is %d\n",GetAvailableGPUMemory());
+
     // load vol val to golbal memory
     cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
     cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
@@ -406,8 +406,12 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
     KernRaycastSdf<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
     GpuCheckErrors();
 
-    //  cudaFree(g_vol);
-    //  cudaFree(g_colorVol);
+    g_vol.FreeMem();
+    g_colorVol.FreeMem();
+  }
+  else
+  {
+    printf("skip raycast grid sdf. available memory is %d\n",GetAvailableGPUMemory() );
   }
 
 }

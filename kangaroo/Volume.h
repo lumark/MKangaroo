@@ -313,6 +313,12 @@ struct Volume
     const int ix = fmaxf(fminf(w-2, floorf(pf.x) ), 1);
     const int iy = fmaxf(fminf(h-2, floorf(pf.y) ), 1);
     const int iz = fmaxf(fminf(d-2, floorf(pf.z) ), 1);
+
+//    if(pos.z<0)
+//    {
+//      printf("pos:z=%f,pf:z=%f,iz=%d",pos.z,pf.z,iz);
+//    }
+
     //        const int ix = floorf(pf.x);
     //        const int iy = floorf(pf.y);
     //        const int iz = floorf(pf.z);

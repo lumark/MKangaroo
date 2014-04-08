@@ -38,14 +38,15 @@ public:
     m_d    = n_d;
     m_bbox = r_bbox;
     m_BasicGridRes = n_res;
-    m_WholeGridRes = m_w/n_res;
+    m_WholeGridRes = m_w/m_BasicGridRes;
 
-    printf("init! whole grid res:%d;basic grid res:%d",m_WholeGridRes,m_BasicGridRes);
+    //    printf("init! whole grid res:%d;basic grid res:%d",m_WholeGridRes,m_BasicGridRes);
 
     // init all basic SDFs
-    for(int i=0;i!=64; i++)
+    for(int i=0;i!=m_WholeGridRes*m_WholeGridRes*m_WholeGridRes; i++)
     {
-      m_GridVolumes[i].InitVolume(64,64,64);
+      m_GridVolumes[i].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
+
     }
   }
 
@@ -80,58 +81,47 @@ public:
   inline  __device__ __host__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = int(floorf(x/64)) + 4 * ( int(floorf(y/64)) + 4 * int(floorf(z/64)) );
+    int nIndex = int(floorf(x/m_BasicGridRes)) + m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) + m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
 
-//    if(nIndex>20)
-//    {
-//      printf("input=(%d,%d,%d);index=%d(%d,%d,%d);pos(%d,%d,%d)",x,y,z,nIndex,int(x/64), int(y/64), int(z/64), x%64, y%64, z%64);
+    //        printf("fuse x:%d,y:%d,z:%d, index %d,x:%d,y:%d,z:%d, basic:%d,whole:%d;",x,y,z,nIndex, x%m_BasicGridRes, y%m_BasicGridRes, z%m_BasicGridRes,m_BasicGridRes,m_WholeGridRes);
 
-//    }
-
-    return m_GridVolumes[nIndex](x%64, y%64, z%64);
+    return m_GridVolumes[nIndex](x%m_BasicGridRes, y%m_BasicGridRes, z%m_BasicGridRes);
   }
-
-  inline __device__ __host__
-  int GetValidVolsNum()
-  {
-    int num = 0;
-
-    //    for(int i=0;i!=m_d/m_res;i++)
-    //    {
-    //      for(int j=0;j!=m_d/m_res;j++)
-    //      {
-    //        for(int k=0;k!=m_d/m_res;k++)
-    //        {
-    //          if(GetSDFByIndex(i,j,k)->d == m_res)
-    //          {
-    //            num++;
-    //          }
-    //        }
-    //      }
-    //    }
-
-    return num;
-  }
-
 
 
   // input pos_w in meter
   inline  __device__ __host__
   float GetUnitsTrilinearClamped(float3 pos_w) const
   {
-    // get pose of voxel in whole sdf, in %
-    const float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+    /// get pose of voxel in whole sdf, in %
+    float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-    if(pos_w.z>=0.5 && pos_v.z>=0)
+    if(pos_v.x>=1) { pos_v.x =0.99999; }
+    if(pos_v.y>=1) { pos_v.y =0.99999; }
+    if(pos_v.z>=1) { pos_v.z =0.99999; }
+
+    if(pos_v.x<0) { pos_v.x =0; }
+    if(pos_v.y<0) { pos_v.y =0; }
+    if(pos_v.z<0) { pos_v.z =0; }
+
+    //    if(pos_v.x>=1) { pos_v.x =1; }
+    //    if(pos_v.y>=1) { pos_v.y =1; }
+    //    if(pos_v.z>=1) { pos_v.z =1; }
+
+    //    if(pos_v.x<0) { pos_v.x =0; }
+    //    if(pos_v.y<0) { pos_v.y =0; }
+    //    if(pos_v.z<0) { pos_v.z =0; }
+
+    // Get the index of voxel in basic sdf
+    const int3 Index =make_int3( floorf(pos_v.x/0.25f),  floorf(pos_v.y/0.25f),  floorf(pos_v.z/0.25f)  );
+
+    // access actual vol
+    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
+
+    if(nIndex>=0 && nIndex<64)
     {
-      // Get the index of voxel in basic sdf
-      const int nIndex_x = floorf(pos_v.x/0.25f);
-      const int nIndex_y = floorf(pos_v.y/0.25f);
-      const int nIndex_z = floorf(pos_v.z/0.25f);
-
-      const int nIndex = nIndex_x + 4* (nIndex_y+ 4* nIndex_z);
-
-      float3 pos_v_grid =make_float3( fmod(pos_v.x,0.25f) /0.25f, fmod(pos_v.y,0.25f) /0.25f, fmod(pos_v.z,0.25f) /0.25f);
+      /// get axis.
+      float3 pos_v_grid = make_float3( fmod(pos_v.x,0.25f) /0.25f, fmod(pos_v.y,0.25f) /0.25f, fmod(pos_v.z,0.25f) /0.25f );
 
       //      printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
 
@@ -139,27 +129,43 @@ public:
     }
     else
     {
+      printf("pos_w:(%f,%f,%f),pos_v(%f,%f,%f),index(%d,x%d,y%d,z%d);",pos_w.x,pos_w.y,pos_w.z,pos_v.x,pos_v.y,pos_v.z,nIndex,Index.x,Index.y,Index.z);
       return 0;
     }
-
   }
 
   inline __device__ __host__
   float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
   {
-    // pose of voxel in whole sdf, in meters
-    const float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+    /// get pose of voxel in whole sdf, in %
+    float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-    if(pos_w.z>=0.5 && pos_v.z>=0)
+    if(pos_v.x>=1) { pos_v.x =0.99999; }
+    if(pos_v.y>=1) { pos_v.y =0.99999; }
+    if(pos_v.z>=1) { pos_v.z =0.99999; }
+
+    if(pos_v.x<0) { pos_v.x =0; }
+    if(pos_v.y<0) { pos_v.y =0; }
+    if(pos_v.z<0) { pos_v.z =0; }
+
+    //    if(pos_v.x>=1) { pos_v.x =1; }
+    //    if(pos_v.y>=1) { pos_v.y =1; }
+    //    if(pos_v.z>=1) { pos_v.z =1; }
+
+    //    if(pos_v.x<0) { pos_v.x =0; }
+    //    if(pos_v.y<0) { pos_v.y =0; }
+    //    if(pos_v.z<0) { pos_v.z =0; }
+
+    // Get the index of voxel in basic sdf
+    const int3 Index =make_int3( floorf(pos_v.x/0.25f), floorf(pos_v.y/0.25f),floorf(pos_v.z/0.25f)  );
+
+    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
+
+
+    if(nIndex>=0 && nIndex<64)
     {
-      // Get the index of voxel in basic sdf
-      const int nIndex_x = floorf(pos_v.x/0.25f);
-      const int nIndex_y = floorf(pos_v.y/0.25f);
-      const int nIndex_z = floorf(pos_v.z/0.25f);
-
-      const int nIndex = nIndex_x + 4* (nIndex_y+ 4* nIndex_z);
-
-      float3 pos_v_grid =make_float3( fmod(pos_v.x,0.25f) /0.25f, fmod(pos_v.y,0.25f) /0.25f, fmod(pos_v.z,0.25f) /0.25f);
+      /// get axis.
+      float3 pos_v_grid = make_float3( fmod(pos_v.x,0.25f) /0.25f, fmod(pos_v.y,0.25f) /0.25f, fmod(pos_v.z,0.25f) /0.25f );
 
       //      printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
 
@@ -169,8 +175,11 @@ public:
     }
     else
     {
+      printf("pos_w:(%f,%f,%f),pos_v(%f,%f,%f),index(%d,x%d,y%d,z%d);",pos_w.x,pos_w.y,pos_w.z,pos_v.x,pos_v.y,pos_v.z,nIndex,Index.x,Index.y,Index.z);
+
       return make_float3(0,0,0);
     }
+
   }
 
   inline __device__ __host__
@@ -200,6 +209,84 @@ public:
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
+  inline __device__ __host__
+  void FreeMem()
+  {
+    for(int i=0;i!=m_WholeGridRes*m_WholeGridRes*m_WholeGridRes;i++)
+    {
+      cudaFree( m_GridVolumes[i].ptr );
+    }
+  }
+
+
+  //  // input pos_w in meter
+  //  inline  __device__ __host__
+  //  float GetUnitsTrilinearClamped(float3 pos_w) const
+  //  {
+  //    /// get pose of voxel in whole sdf, in %
+  //    const float3 pos_v_presentage = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+
+  //    // get actual grid index by % of pose
+  //    const float3 pf = pos_v_presentage * make_float3(m_w-1.f, m_h-1.f, m_d-1.f);
+
+  //    // get approximate grid index
+  //    const float3 pos_grid_index_approximate = make_float3( fmaxf(fminf(m_w-2, floorf(pf.x) ), 0),
+  //                                                           fmaxf(fminf(m_h-2, floorf(pf.y) ), 0),
+  //                                                           fmaxf(fminf(m_d-2, floorf(pf.z) ), 0)
+  //                                                           );
+
+  //    const float3 pos_v = make_float3( pos_grid_index_approximate.x/(m_w-1.f),
+  //                                      pos_grid_index_approximate.y/(m_h-1.f),
+  //                                      pos_grid_index_approximate.z/(m_d-1.f));
+
+  //    // Get the index of voxel in basic sdf
+  //    const int3 Index =make_int3( floorf(pos_v.x/0.25f), floorf(pos_v.y/0.25f), floorf(pos_v.z/0.25f) );
+
+  //    // access actual vol
+  //    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
+
+  //    /// get axis.
+  //    float3 pos_v_grid = make_float3( fmod(pos_v_presentage.x,0.25f) /0.25f, fmod(pos_v_presentage.y,0.25f) /0.25f, fmod(pos_v_presentage.z,0.25f) /0.25f);
+
+  //    //            printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
+
+  //    return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
+  //  }
+
+  //  inline __device__ __host__
+  //  float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
+  //  {
+  //    /// get pose of voxel in whole sdf, in %
+  //    const float3 pos_v_presentage = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+
+  //    // get actual pose from int index of input pos
+  //    const float3 pf = pos_v_presentage * make_float3(m_w-1.f, m_h-1.f, m_d-1.f);
+
+  //    // get pose index in grid index, for get index
+  //    const float3 pos_grid_index_approximate = make_float3( fmaxf(fminf(m_w-2, floorf(pf.x) ), 1),
+  //                                                           fmaxf(fminf(m_h-2, floorf(pf.y) ), 1),
+  //                                                           fmaxf(fminf(m_d-2, floorf(pf.z) ), 1)
+  //                                                           );
+
+  //    const float3 pos_v = make_float3( pos_grid_index_approximate.x/(m_w-1.f),
+  //                                      pos_grid_index_approximate.y/(m_h-1.f),
+  //                                      pos_grid_index_approximate.z/(m_d-1.f));
+
+  //    // Get the index of voxel in basic sdf
+  //    const int3 Index =make_int3( floorf(pos_v.x/0.25f), floorf(pos_v.y/0.25f), floorf(pos_v.z/0.25f) );
+
+  //    // access actual vol
+  //    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
+
+  //    /// get axis.
+  //    float3 pos_v_grid = make_float3( fmod(pos_v_presentage.x,0.25f) /0.25f, fmod(pos_v_presentage.y,0.25f) /0.25f, fmod(pos_v_presentage.z,0.25f) /0.25f);
+
+  //    //            printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
+
+  //    const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
+
+  //    return deriv / VoxelSizeUnits();
+  //  }
 
 public:
   size_t                                                m_d;
@@ -209,11 +296,11 @@ public:
   // bounding box ofbounded volume grid
   BoundingBox                                           m_bbox;
 
-  size_t                                                m_BasicGridRes;   // resolution of a single grid
-  size_t                                                m_WholeGridRes;   // how many grid we want to use in one row, usually 4, 8, 16
+  unsigned int                                          m_BasicGridRes;    // resolution of a single grid
+  unsigned int                                          m_WholeGridRes;    // how many grid we want to use in one row, usually 4, 8, 16
 
   // volume that save all data
-  VolumeGrid<T, TargetDevice, Manage>                   m_GridVolumes[64];
+  VolumeGrid<T, TargetDevice, Manage>                   m_GridVolumes[64]; // 4 by 4 by 4
 };
 
 

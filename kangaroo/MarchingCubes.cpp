@@ -156,13 +156,13 @@ aiMesh* MeshFromLists(
 
     mesh->mNumVertices = verts.size();
     mesh->mVertices = new aiVector3D[verts.size()];
-    for(int i=0; i < verts.size(); ++i) {
+    for(unsigned int i=0; i < verts.size(); ++i) {
         mesh->mVertices[i] = verts[i];
     }
 
     if(norms.size() == verts.size()) {
         mesh->mNormals = new aiVector3D[norms.size()];
-        for(int i=0; i < norms.size(); ++i) {
+        for(unsigned int i=0; i < norms.size(); ++i) {
             mesh->mNormals[i] = norms[i];
         }
     }else{
@@ -171,13 +171,13 @@ aiMesh* MeshFromLists(
 
     mesh->mNumFaces = faces.size();
     mesh->mFaces = new aiFace[faces.size()];
-    for(int i=0; i < faces.size(); ++i) {
+    for(unsigned int i=0; i < faces.size(); ++i) {
         mesh->mFaces[i] = faces[i];
     }
 
     if( colors.size() == verts.size()) {
         mesh->mColors[0] = new aiColor4D[colors.size()];
-        for(int i=0; i < colors.size(); ++i) {
+        for(unsigned int i=0; i < colors.size(); ++i) {
             mesh->mColors[0][i] = colors[i];
         }
     }

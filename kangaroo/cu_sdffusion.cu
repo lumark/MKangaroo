@@ -339,12 +339,14 @@ void SdfFuseDirectGreyGrid(
 {
   if(GetAvailableGPUMemory()>400)
   {
-    printf("available memory is %d\n",GetAvailableGPUMemory());
+    printf("available memory before copy is %d\n",GetAvailableGPUMemory());
 
     // load vol val to golbal memory
     cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
     cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
     GpuCheckErrors();
+
+    printf("available memory after copy is %d\n",GetAvailableGPUMemory());
 
     // launch kernel for SDF fusion
     dim3 blockDim(16,16);
@@ -359,9 +361,11 @@ void SdfFuseDirectGreyGrid(
       colorVol.m_GridVolumes[i].MemcpyFromDevice(g_colorVol.m_GridVolumes[i]);
     }
 
-    //  // cuda free memory
-    //  cudaFree(g_vol);
-    //  cudaFree(g_colorVol);
+    // cuda free memory
+    g_vol.FreeMem();
+    g_colorVol.FreeMem();
+    printf("available memory is %d after free memory.\n",GetAvailableGPUMemory());
+
   }
 
 }
