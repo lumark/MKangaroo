@@ -39,22 +39,23 @@ public:
     m_bbox = r_bbox;
     m_BasicGridRes = n_res;
     m_WholeGridRes = m_w/m_BasicGridRes;
+  }
 
-    // init all basic SDFs
-    printf("available memory before init volume is %d, Active Num of grid volume is %d\n",GetAvailableGPUMemory(), GetActiveGridVolNum());
 
-//    for(int i=0;i!=m_w;i++)
-//    {
-//      for(int j=0;j!=m_h;j++)
-//      {
-//        for(int k=0;k!=m_d;k++)
-//        {
-//          InitSingleBasicSDFWithGridIndex(i,j,k);
-//        }
-//      }
-//    }
-
-    printf("available memory after init volume is %d, Active Num of grid volume is %d\n",GetAvailableGPUMemory(), GetActiveGridVolNum());
+  // the following code is for testing... init all basic SDFs directlly.
+  inline __host__
+  void InitAllBasicSDFs()
+  {
+    for(int i=0;i!=m_w;i++)
+    {
+      for(int j=0;j!=m_h;j++)
+      {
+        for(int k=0;k!=m_d;k++)
+        {
+          InitSingleBasicSDFWithGridIndex(i,j,k);
+        }
+      }
+    }
   }
 
   inline __host__
@@ -72,48 +73,14 @@ public:
   inline __host__
   bool InitSingleBasicSDFWithIndex(int nIndex)
   {
-//    printf("try to init basic sdf with index %d\n",nIndex);
-
     if( m_GridVolumes[nIndex].d !=m_BasicGridRes )
     {
       m_GridVolumes[nIndex].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
-      printf("init grid sdf %d success \n",nIndex);
+      printf("[BoundedVolumeGrid] Init grid sdf %d success \n",nIndex);
       return true;
     }
 
     return false;
-  }
-
-
-  inline __host__
-  void InitSingleBasicSDF(float x, float y, float z)
-  {
-    //    float3 pos_w = make_float3(x,y,z);
-
-    //    /// get pose of voxel in whole sdf, in %
-    //    float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
-
-    //    if(pos_v.x>=1) { pos_v.x =0.99999; }
-    //    if(pos_v.y>=1) { pos_v.y =0.99999; }
-    //    if(pos_v.z>=1) { pos_v.z =0.99999; }
-
-    //    if(pos_v.x<0) { pos_v.x =0; }
-    //    if(pos_v.y<0) { pos_v.y =0; }
-    //    if(pos_v.z<0) { pos_v.z =0; }
-
-    //    const float fFactor = float(m_BasicGridRes)/float(m_w);
-
-    //    // Get the index of voxel in basic sdf
-    //    const int3 Index =make_int3( floorf(pos_v.x/fFactor),  floorf(pos_v.y/fFactor),  floorf(pos_v.z/fFactor)  );
-
-    //    // access actual vol
-    //    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
-
-    //    if(CheckIfBasicSDFActive(nIndex) == false)
-    //    {
-    //      printf("init new sdf with index %d success!\n",nIndex);
-    //      m_GridVolumes[nIndex].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
-    //    }
   }
 
 
@@ -327,7 +294,7 @@ public:
     if(m_NextInitBasicSDFs[nIndex] == 0)
     {
       m_NextInitBasicSDFs[nIndex] = 1;
-//      printf("set %d to true.", nIndex);
+      //      printf("set %d to true.", nIndex);
     }
   }
 
