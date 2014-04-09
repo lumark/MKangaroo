@@ -24,6 +24,14 @@ void SdfFuseDirectGrey(BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
                        ImageIntrinsics Krgb, float trunc_dist, float max_w, float mincostheta);
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+void SDFInitGreyGrid(int* pNextInitSDFs,
+                     BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
+                     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
+                     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+                     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+                     float trunc_dist, float max_w, float mincostheta
+                     );
+
 void SdfFuseDirectGreyGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage> vol,
                            roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
                            Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw,

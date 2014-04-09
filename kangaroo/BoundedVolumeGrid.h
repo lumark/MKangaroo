@@ -40,13 +40,100 @@ public:
     m_BasicGridRes = n_res;
     m_WholeGridRes = m_w/m_BasicGridRes;
 
-    //    printf("init! whole grid res:%d;basic grid res:%d",m_WholeGridRes,m_BasicGridRes);
-
     // init all basic SDFs
-    for(int i=0;i!=m_WholeGridRes*m_WholeGridRes*m_WholeGridRes; i++)
-    {
-      m_GridVolumes[i].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
+    printf("available memory before init volume is %d, Active Num of grid volume is %d\n",GetAvailableGPUMemory(), GetActiveGridVolNum());
 
+//    for(int i=0;i!=m_w;i++)
+//    {
+//      for(int j=0;j!=m_h;j++)
+//      {
+//        for(int k=0;k!=m_d;k++)
+//        {
+//          InitSingleBasicSDFWithGridIndex(i,j,k);
+//        }
+//      }
+//    }
+
+    printf("available memory after init volume is %d, Active Num of grid volume is %d\n",GetAvailableGPUMemory(), GetActiveGridVolNum());
+  }
+
+  inline __host__
+  void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
+  {
+    int nIndex = int(floorf(x/m_BasicGridRes)) + m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) + m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
+
+    if(m_GridVolumes[nIndex].d !=m_BasicGridRes)
+    {
+      m_GridVolumes[nIndex].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
+    }
+  }
+
+
+  inline __host__
+  bool InitSingleBasicSDFWithIndex(int nIndex)
+  {
+//    printf("try to init basic sdf with index %d\n",nIndex);
+
+    if( m_GridVolumes[nIndex].d !=m_BasicGridRes )
+    {
+      m_GridVolumes[nIndex].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
+      printf("init grid sdf %d success \n",nIndex);
+      return true;
+    }
+
+    return false;
+  }
+
+
+  inline __host__
+  void InitSingleBasicSDF(float x, float y, float z)
+  {
+    //    float3 pos_w = make_float3(x,y,z);
+
+    //    /// get pose of voxel in whole sdf, in %
+    //    float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+
+    //    if(pos_v.x>=1) { pos_v.x =0.99999; }
+    //    if(pos_v.y>=1) { pos_v.y =0.99999; }
+    //    if(pos_v.z>=1) { pos_v.z =0.99999; }
+
+    //    if(pos_v.x<0) { pos_v.x =0; }
+    //    if(pos_v.y<0) { pos_v.y =0; }
+    //    if(pos_v.z<0) { pos_v.z =0; }
+
+    //    const float fFactor = float(m_BasicGridRes)/float(m_w);
+
+    //    // Get the index of voxel in basic sdf
+    //    const int3 Index =make_int3( floorf(pos_v.x/fFactor),  floorf(pos_v.y/fFactor),  floorf(pos_v.z/fFactor)  );
+
+    //    // access actual vol
+    //    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
+
+    //    if(CheckIfBasicSDFActive(nIndex) == false)
+    //    {
+    //      printf("init new sdf with index %d success!\n",nIndex);
+    //      m_GridVolumes[nIndex].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
+    //    }
+  }
+
+
+  inline __host__
+  void InitSDFs()
+  {
+    printf("try to init %d sdfs..\n", 512);
+
+    for(int i=0;i!=512;i++)
+    {
+      if(CheckIfBasicSDFActive(i)==false && m_NextInitBasicSDFs[i]==1)
+      {
+        //        m_GridVolumes[i].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
+        printf("init new sdf %d success. \n",i );
+      }
+
+      if(m_NextInitBasicSDFs[i]==1 && CheckIfBasicSDFActive(i)==true)
+      {
+        printf("skip init sdf %d . \n",i );
+      }
     }
   }
 
@@ -78,19 +165,21 @@ public:
   //    return size.x >= 8 && size.y >= 8 && size.z >= 8;
   //  }
 
-  inline  __device__ __host__
+  inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = int(floorf(x/m_BasicGridRes)) + m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) + m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
+    const int nIndex = int(floorf(x/m_BasicGridRes)) + m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) + m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
 
-    //        printf("fuse x:%d,y:%d,z:%d, index %d,x:%d,y:%d,z:%d, basic:%d,whole:%d;",x,y,z,nIndex, x%m_BasicGridRes, y%m_BasicGridRes, z%m_BasicGridRes,m_BasicGridRes,m_WholeGridRes);
+    if(CheckIfBasicSDFActive(nIndex)==false)
+    {
+      printf("[operator] fatal error! sdf %d is not init yet!\n", nIndex);
+    }
 
     return m_GridVolumes[nIndex](x%m_BasicGridRes, y%m_BasicGridRes, z%m_BasicGridRes);
   }
 
-
   // input pos_w in meter
-  inline  __device__ __host__
+  inline  __device__
   float GetUnitsTrilinearClamped(float3 pos_w) const
   {
     /// get pose of voxel in whole sdf, in %
@@ -104,37 +193,26 @@ public:
     if(pos_v.y<0) { pos_v.y =0; }
     if(pos_v.z<0) { pos_v.z =0; }
 
-    //    if(pos_v.x>=1) { pos_v.x =1; }
-    //    if(pos_v.y>=1) { pos_v.y =1; }
-    //    if(pos_v.z>=1) { pos_v.z =1; }
-
-    //    if(pos_v.x<0) { pos_v.x =0; }
-    //    if(pos_v.y<0) { pos_v.y =0; }
-    //    if(pos_v.z<0) { pos_v.z =0; }
+    const float fFactor = float(m_BasicGridRes)/float(m_w);
 
     // Get the index of voxel in basic sdf
-    const int3 Index =make_int3( floorf(pos_v.x/0.25f),  floorf(pos_v.y/0.25f),  floorf(pos_v.z/0.25f)  );
+    const int3 Index =make_int3( floorf(pos_v.x/fFactor),  floorf(pos_v.y/fFactor),  floorf(pos_v.z/fFactor)  );
 
     // access actual vol
     const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
 
-    if(nIndex>=0 && nIndex<64)
-    {
-      /// get axis.
-      float3 pos_v_grid = make_float3( fmod(pos_v.x,0.25f) /0.25f, fmod(pos_v.y,0.25f) /0.25f, fmod(pos_v.z,0.25f) /0.25f );
+    /// get axis.
+    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor, fmod(pos_v.y,fFactor) /fFactor, fmod(pos_v.z,fFactor) /fFactor );
 
-      //      printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
-
-      return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
-    }
-    else
+    if(CheckIfBasicSDFActive(nIndex)==false)
     {
-      printf("pos_w:(%f,%f,%f),pos_v(%f,%f,%f),index(%d,x%d,y%d,z%d);",pos_w.x,pos_w.y,pos_w.z,pos_v.x,pos_v.y,pos_v.z,nIndex,Index.x,Index.y,Index.z);
       return 0;
     }
+
+    return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
   }
 
-  inline __device__ __host__
+  inline __device__
   float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
   {
     /// get pose of voxel in whole sdf, in %
@@ -148,53 +226,37 @@ public:
     if(pos_v.y<0) { pos_v.y =0; }
     if(pos_v.z<0) { pos_v.z =0; }
 
-    //    if(pos_v.x>=1) { pos_v.x =1; }
-    //    if(pos_v.y>=1) { pos_v.y =1; }
-    //    if(pos_v.z>=1) { pos_v.z =1; }
-
-    //    if(pos_v.x<0) { pos_v.x =0; }
-    //    if(pos_v.y<0) { pos_v.y =0; }
-    //    if(pos_v.z<0) { pos_v.z =0; }
+    const float fFactor = float(m_BasicGridRes)/float(m_w);
 
     // Get the index of voxel in basic sdf
-    const int3 Index =make_int3( floorf(pos_v.x/0.25f), floorf(pos_v.y/0.25f),floorf(pos_v.z/0.25f)  );
+    const int3 Index =make_int3( floorf(pos_v.x/fFactor), floorf(pos_v.y/fFactor),floorf(pos_v.z/fFactor)  );
 
     const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
 
+    /// get axis.
+    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor, fmod(pos_v.y,fFactor) /fFactor, fmod(pos_v.z,fFactor) /fFactor );
 
-    if(nIndex>=0 && nIndex<64)
+    if(CheckIfBasicSDFActive(nIndex)==false)
     {
-      /// get axis.
-      float3 pos_v_grid = make_float3( fmod(pos_v.x,0.25f) /0.25f, fmod(pos_v.y,0.25f) /0.25f, fmod(pos_v.z,0.25f) /0.25f );
-
-      //      printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
-
-      const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
-
-      return deriv / VoxelSizeUnits();
-    }
-    else
-    {
-      printf("pos_w:(%f,%f,%f),pos_v(%f,%f,%f),index(%d,x%d,y%d,z%d);",pos_w.x,pos_w.y,pos_w.z,pos_v.x,pos_v.y,pos_v.z,nIndex,Index.x,Index.y,Index.z);
-
       return make_float3(0,0,0);
     }
 
+    const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
+
+    return deriv / VoxelSizeUnits();
   }
 
-  inline __device__ __host__
+  inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
   {
     const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
     return deriv / length(deriv);
   }
 
-  inline __device__ __host__
+  inline __device__
   float3 VoxelPositionInUnits(int x, int y, int z) const
   {
     const float3 vol_size = m_bbox.Size();
-
-    //    printf("input(%d,%d,%d,). get(%f,%f,%f);",x,y,z,m_bbox.Min().x + vol_size.x*x/(float)(m_w-1),m_bbox.Min().y + vol_size.y*y/(float)(m_h-1),m_bbox.Min().z + vol_size.z*z/(float)(m_d-1));
 
     return make_float3(
           m_bbox.Min().x + vol_size.x*x/(float)(m_w-1),
@@ -203,14 +265,23 @@ public:
           );
   }
 
-  inline __device__ __host__
+  inline __device__
   float3 VoxelPositionInUnits(int3 p_v) const
   {
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
-  inline __device__ __host__
-  void FreeMem()
+  inline __host__
+  void CopyFrom(BoundedVolumeGrid<T, Target , Management>& rVol )
+  {
+    for(int i=0;i!= m_WholeGridRes*m_WholeGridRes*m_WholeGridRes;i++)
+    {
+      m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+    }
+  }
+
+  inline __host__
+  void FreeMemory()
   {
     for(int i=0;i!=m_WholeGridRes*m_WholeGridRes*m_WholeGridRes;i++)
     {
@@ -218,75 +289,47 @@ public:
     }
   }
 
+  inline __host__ __device__
+  bool CheckIfBasicSDFActive(const int nIndex) const
+  {
+    if(m_GridVolumes[nIndex].d == m_BasicGridRes)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 
-  //  // input pos_w in meter
-  //  inline  __device__ __host__
-  //  float GetUnitsTrilinearClamped(float3 pos_w) const
-  //  {
-  //    /// get pose of voxel in whole sdf, in %
-  //    const float3 pos_v_presentage = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-  //    // get actual grid index by % of pose
-  //    const float3 pf = pos_v_presentage * make_float3(m_w-1.f, m_h-1.f, m_d-1.f);
+  inline __host__
+  int GetActiveGridVolNum()
+  {
+    int nNum = 0;
 
-  //    // get approximate grid index
-  //    const float3 pos_grid_index_approximate = make_float3( fmaxf(fminf(m_w-2, floorf(pf.x) ), 0),
-  //                                                           fmaxf(fminf(m_h-2, floorf(pf.y) ), 0),
-  //                                                           fmaxf(fminf(m_d-2, floorf(pf.z) ), 0)
-  //                                                           );
+    for(int i=0;i!=m_WholeGridRes*m_WholeGridRes*m_WholeGridRes;i++)
+    {
+      if(m_GridVolumes[i].d == m_BasicGridRes)
+      {
+        nNum ++;
+      }
+    }
 
-  //    const float3 pos_v = make_float3( pos_grid_index_approximate.x/(m_w-1.f),
-  //                                      pos_grid_index_approximate.y/(m_h-1.f),
-  //                                      pos_grid_index_approximate.z/(m_d-1.f));
+    return nNum;
+  }
 
-  //    // Get the index of voxel in basic sdf
-  //    const int3 Index =make_int3( floorf(pos_v.x/0.25f), floorf(pos_v.y/0.25f), floorf(pos_v.z/0.25f) );
 
-  //    // access actual vol
-  //    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
-
-  //    /// get axis.
-  //    float3 pos_v_grid = make_float3( fmod(pos_v_presentage.x,0.25f) /0.25f, fmod(pos_v_presentage.y,0.25f) /0.25f, fmod(pos_v_presentage.z,0.25f) /0.25f);
-
-  //    //            printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
-
-  //    return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
-  //  }
-
-  //  inline __device__ __host__
-  //  float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
-  //  {
-  //    /// get pose of voxel in whole sdf, in %
-  //    const float3 pos_v_presentage = (pos_w - m_bbox.Min()) / (m_bbox.Size());
-
-  //    // get actual pose from int index of input pos
-  //    const float3 pf = pos_v_presentage * make_float3(m_w-1.f, m_h-1.f, m_d-1.f);
-
-  //    // get pose index in grid index, for get index
-  //    const float3 pos_grid_index_approximate = make_float3( fmaxf(fminf(m_w-2, floorf(pf.x) ), 1),
-  //                                                           fmaxf(fminf(m_h-2, floorf(pf.y) ), 1),
-  //                                                           fmaxf(fminf(m_d-2, floorf(pf.z) ), 1)
-  //                                                           );
-
-  //    const float3 pos_v = make_float3( pos_grid_index_approximate.x/(m_w-1.f),
-  //                                      pos_grid_index_approximate.y/(m_h-1.f),
-  //                                      pos_grid_index_approximate.z/(m_d-1.f));
-
-  //    // Get the index of voxel in basic sdf
-  //    const int3 Index =make_int3( floorf(pos_v.x/0.25f), floorf(pos_v.y/0.25f), floorf(pos_v.z/0.25f) );
-
-  //    // access actual vol
-  //    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
-
-  //    /// get axis.
-  //    float3 pos_v_grid = make_float3( fmod(pos_v_presentage.x,0.25f) /0.25f, fmod(pos_v_presentage.y,0.25f) /0.25f, fmod(pos_v_presentage.z,0.25f) /0.25f);
-
-  //    //            printf("pos_v:%f,%f,%f, index=%d; x=%f,y=%f,z=%f;",pos_v.x,pos_v.y,pos_v.z, nIndex, pos_v_grid.x, pos_v_grid.y,pos_v_grid.z);
-
-  //    const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
-
-  //    return deriv / VoxelSizeUnits();
-  //  }
+  inline __device__
+  void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
+  {
+    const int nIndex = x/m_BasicGridRes+ m_WholeGridRes*( y/m_BasicGridRes+m_WholeGridRes * z/m_BasicGridRes );
+    if(m_NextInitBasicSDFs[nIndex] == 0)
+    {
+      m_NextInitBasicSDFs[nIndex] = 1;
+//      printf("set %d to true.", nIndex);
+    }
+  }
 
 public:
   size_t                                                m_d;
@@ -300,7 +343,8 @@ public:
   unsigned int                                          m_WholeGridRes;    // how many grid we want to use in one row, usually 4, 8, 16
 
   // volume that save all data
-  VolumeGrid<T, TargetDevice, Manage>                   m_GridVolumes[64]; // 4 by 4 by 4
+  VolumeGrid<T, TargetDevice, Manage>                   m_GridVolumes[512]; // 4 by 4 by 4
+  int                                                   m_NextInitBasicSDFs[512];
 };
 
 

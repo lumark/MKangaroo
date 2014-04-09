@@ -35,15 +35,15 @@ struct VolumeGrid
     Management::template Cleanup<T,Target>(ptr);
   }
 
-  inline __device__ __host__
+  inline __host__
   void InitVolume(unsigned int n_w, unsigned int n_h, unsigned int n_d)
   {
     w = n_w;
     h = n_h;
     d = n_d;
-    Management::AllocateCheck();
+
+    //    Management::AllocateCheck();
     Target::template AllocatePitchedMem<T>(&ptr,&pitch,&img_pitch,w,h,d);
-    printf("[VolumeGrid] init vol success.\n");
   }
 
 
@@ -377,11 +377,6 @@ struct VolumeGrid
 
   size_t img_pitch;
   size_t d;
-
-
-//  size_t fake_w;
-//  size_t fake_h;
-//  size_t fake_d;
 
 };
 

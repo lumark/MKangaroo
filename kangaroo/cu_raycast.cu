@@ -392,10 +392,6 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
                 const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
 {
 
-  if(GetAvailableGPUMemory()>400)
-  {
-    printf("available memory is %d\n",GetAvailableGPUMemory());
-
     // load vol val to golbal memory
     cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
     cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
@@ -406,14 +402,8 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
     KernRaycastSdf<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
     GpuCheckErrors();
 
-    g_vol.FreeMem();
-    g_colorVol.FreeMem();
-  }
-  else
-  {
-    printf("skip raycast grid sdf. available memory is %d\n",GetAvailableGPUMemory() );
-  }
-
+    g_vol.FreeMemory();
+    g_colorVol.FreeMemory();
 }
 
 

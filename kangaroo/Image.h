@@ -57,8 +57,6 @@ struct TargetHost
   void AllocatePitchedMem(T** hostPtr, size_t *pitch, size_t w, size_t h){
     *pitch = w*sizeof(T);
     *hostPtr = (T*)malloc(*pitch * h);
-
-//    printf("allocate target host mem succes\n");
   }
 
   template<typename T> inline static
@@ -70,8 +68,8 @@ struct TargetHost
     if( err != cudaSuccess ) {
       throw CudaException("Unable to cudaMallocHost", err);
     }
-//    printf("allocaye target host mem succes\n");
   }
+
 
   template<typename T> inline static
   void DeallocatePitchedMem(T* hostPtr){
@@ -89,7 +87,6 @@ struct TargetDevice
     if( err != cudaSuccess ) {
       throw CudaException("Unable to cudaMallocPitch", err);
     }
-//    printf("allocate target decice cuda mem succes\n");
   }
 
   template<typename T> inline static
@@ -100,7 +97,6 @@ struct TargetDevice
       throw CudaException("Unable to cudaMallocPitch", err);
     }
     *img_pitch = *pitch * h;
-//    printf("allocaye target decice cuda mem succes\n");
   }
 
   template<typename T> inline static
