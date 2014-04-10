@@ -405,8 +405,6 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
   KernRaycastSdfGrid<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
   GpuCheckErrors();
 
-  printf("finish raycast (non-grey)\n");
-
   g_vol.FreeMemory();
 }
 
@@ -503,8 +501,6 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
   InitDimFromOutputImageOver(blockDim, gridDim, img);
   KernRaycastSdfGridGrey<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
   GpuCheckErrors();
-
-  printf("finish raycast grey\n");
 
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
