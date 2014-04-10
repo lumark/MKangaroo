@@ -281,7 +281,7 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
       const float c =  grey.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
-      if(c!=0)
+      if(c>0)
       {
         // depth value at camera coorniate
         const float vd   = P_c.z;
@@ -308,7 +308,7 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
             /// set val
-            //            int nIndex = int( (float(x)-0.000001)/8.f)  +  8 *  (  int( float(y-0.000001)/8.f) + 8* int ( (float(z)-0.00001)/8.f ) ) ;
+
             int nIndex = int(floorf(x/g_vol.m_BasicGridRes)) +
                 g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_BasicGridRes)) +
                                          g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_BasicGridRes)) );
