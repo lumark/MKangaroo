@@ -348,7 +348,11 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   for(int i=0;i!=512;i++)
   {
     pNextInitSDFs[i] = nNextInitSDFs[i];
+    nNextInitSDFs[i] = 0;
   }
+
+  // reset index
+  cudaMemcpyToSymbol(g_NextInitSDFs,nNextInitSDFs,sizeof(nNextInitSDFs),0,cudaMemcpyHostToDevice);
 
   // cuda free memory
   g_vol.FreeMemory();

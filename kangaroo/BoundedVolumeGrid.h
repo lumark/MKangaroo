@@ -33,10 +33,10 @@ public:
   void init(unsigned int n_w, unsigned int n_h, unsigned int n_d, unsigned int n_res, const BoundingBox& r_bbox)
   {
     // init grid sdf
-    m_w    = n_w;
-    m_h    = n_h;
-    m_d    = n_d;
-    m_bbox = r_bbox;
+    m_w            = n_w;
+    m_h            = n_h;
+    m_d            = n_d;
+    m_bbox         = r_bbox;
     m_BasicGridRes = n_res;
     m_WholeGridRes = m_w/m_BasicGridRes;
   }
@@ -61,7 +61,10 @@ public:
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
-    int nIndex = int(floorf(x/m_BasicGridRes)) + m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) + m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
+    int nIndex =
+        int(floorf(x/m_BasicGridRes)) +
+        m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) +
+                           m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
 
     if(m_GridVolumes[nIndex].d !=m_BasicGridRes)
     {
@@ -84,25 +87,6 @@ public:
   }
 
 
-  inline __host__
-  void InitSDFs()
-  {
-    printf("try to init %d sdfs..\n", 512);
-
-    for(int i=0;i!=512;i++)
-    {
-      if(CheckIfBasicSDFActive(i)==false && m_NextInitBasicSDFs[i]==1)
-      {
-        //        m_GridVolumes[i].InitVolume(m_BasicGridRes,m_BasicGridRes,m_BasicGridRes);
-        printf("init new sdf %d success. \n",i );
-      }
-
-      if(m_NextInitBasicSDFs[i]==1 && CheckIfBasicSDFActive(i)==true)
-      {
-        printf("skip init sdf %d . \n",i );
-      }
-    }
-  }
 
   //////////////////////////////////////////////////////
   // Dimensions
@@ -135,12 +119,15 @@ public:
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    const int nIndex = int(floorf(x/m_BasicGridRes)) + m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) + m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
+    const int nIndex =
+        int(floorf(x/m_BasicGridRes)) +
+        m_WholeGridRes * ( int(floorf(y/m_BasicGridRes)) +
+                           m_WholeGridRes * int(floorf(z/m_BasicGridRes)) );
 
-    if(CheckIfBasicSDFActive(nIndex)==false)
-    {
-      printf("[operator] fatal error! sdf %d is not init yet!\n", nIndex);
-    }
+    //    if(CheckIfBasicSDFActive(nIndex)==false)
+    //    {
+    //      printf("[operator] fatal error! sdf %d is not init yet!\n", nIndex);
+    //    }
 
     return m_GridVolumes[nIndex](x%m_BasicGridRes, y%m_BasicGridRes, z%m_BasicGridRes);
   }
@@ -168,13 +155,13 @@ public:
     // access actual vol
     const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
 
-    /// get axis.
-    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor, fmod(pos_v.y,fFactor) /fFactor, fmod(pos_v.z,fFactor) /fFactor );
-
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
-      return 0.0;
+      return 0.0/0.0;
     }
+
+    /// get axis.
+    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor, fmod(pos_v.y,fFactor) /fFactor, fmod(pos_v.z,fFactor) /fFactor );
 
     return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
   }
@@ -200,13 +187,13 @@ public:
 
     const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
 
-    /// get axis.
-    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor, fmod(pos_v.y,fFactor) /fFactor, fmod(pos_v.z,fFactor) /fFactor );
-
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
-      return make_float3(0.0,0.0,0.0);
+      return make_float3(0.0/0.0,0.0/0.0,0.0/0.0);
     }
+
+    /// get axis.
+    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor, fmod(pos_v.y,fFactor) /fFactor, fmod(pos_v.z,fFactor) /fFactor );
 
     const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
 
@@ -287,6 +274,7 @@ public:
   }
 
 
+  // set next sdf that we want to init
   inline __device__
   void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
   {
@@ -309,7 +297,7 @@ public:
   unsigned int                                m_WholeGridRes;    // how many grid we want to use in one row, usually 4, 8, 16
 
   // volume that save all data
-  VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[512]; // 4 by 4 by 4
+  VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[512];
   int                                         m_NextInitBasicSDFs[512];  // an array that record the a basic SDF we want to init
 
 };
