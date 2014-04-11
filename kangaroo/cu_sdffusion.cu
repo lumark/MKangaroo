@@ -289,30 +289,31 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
         // depth value at image coordinate
         const float md   = depth.GetBilinear<float>(p_c);
 
-        // normal value at image coordinate
-        const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
-
-        const float costheta = dot(mdn, P_c) / -length(P_c);
-        const float sd = costheta * (md - vd);
-
-        if(sd <= -trunc_dist)
+        if(md>0.5)
         {
-          // Further than truncation distance from surface
-          // We do nothing.
-        }
-        // update SDF
-        else
-        {
-          //        }else if(sd < 5*trunc_dist) {
-          /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          // normal value at image coordinate
+          const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
+
+          const float costheta = dot(mdn, P_c) / -length(P_c);
+          const float sd = costheta * (md - vd);
+
+          if(sd <= -trunc_dist)
           {
-            /// set val
-
-            int nIndex = int(floorf(x/g_vol.m_BasicGridRes)) +
-                g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_BasicGridRes)) +
-                                         g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_BasicGridRes)) );
-            g_NextInitSDFs[nIndex] = 1;
+            // Further than truncation distance from surface
+            // We do nothing.
+          }
+          // update SDF
+          else
+          {
+            //        }else if(sd < 5*trunc_dist) {
+            /// here 0.5 is for kinect sensor
+            if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
+            {
+              int nIndex = int(floorf(x/g_vol.m_VolumeGridRes)) +
+                  g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_VolumeGridRes)) +
+                                           g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_VolumeGridRes)) );
+              g_NextInitSDFs[nIndex] = 1;
+            }
           }
         }
       }
@@ -341,11 +342,12 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   KernSdfInitGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 
-  int nNextInitSDFs[512];
+  int nNextInitSDFs[vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-  for(int i=0;i!=512;i++)
+  // copy array back
+  for(int i=0;i!=vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes;i++)
   {
     pNextInitSDFs[i] = nNextInitSDFs[i];
     nNextInitSDFs[i] = 0;
@@ -357,7 +359,6 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   // cuda free memory
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
-
 }
 
 // -----------------------------------------------------------------------------
