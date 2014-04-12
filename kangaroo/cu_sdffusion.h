@@ -45,12 +45,6 @@ void SdfFuseColor(BoundedVolume<SDF_t> vol, BoundedVolume<uchar3> colorVol,
                   Mat<float,3,4> T_iw, ImageIntrinsics Kimg, float trunc_dist,
                   float max_w, float mincostheta);
 
-void SdfFuseFindOutline(BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
-                        Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw,
-                        ImageIntrinsics K, Image<uchar3> img, Mat<float,3,4> T_iw,
-                        ImageIntrinsics Kimg,float trunc_dist,float max_w,
-                        float mincostheta, Image<float4> OutLine);
-
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void SdfReset(BoundedVolume<SDF_t> vol, float trunc_dist = 0);

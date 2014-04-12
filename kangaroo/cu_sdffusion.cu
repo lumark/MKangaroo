@@ -90,10 +90,6 @@ __global__ void KernSdfFuse(
     if( depth.InBounds(p_c, 2) && img.InBounds(p_i,2) )
     {
       const float vd = P_c.z;
-      //            const float md = depth.GetNearestNeighbour(p_c);
-      //            const float3 mdn = make_float3(normals.GetNearestNeighbour(p_c));
-      //            const float c = ConvertPixel<float,uchar3>( img.GetNearestNeighbour(p_i) );
-
       const float md = depth.GetBilinear<float>(p_c);
       const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
       const float c = ConvertPixel<float,float3>( img.GetBilinear<float3>(p_i) ) / 255.0;
@@ -125,13 +121,8 @@ void SdfFuse(
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics K,
     Image<uchar3> img, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
     float trunc_dist, float max_w, float mincostheta
-    ) {
-  //    // 3d invoke
-  //    dim3 blockDim(8,8,8);
-  //    dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y, vol.d / blockDim.z);
-  //    KernSdfFuse<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, K, img, T_iw, Kimg, trunc_dist, max_w, mincostheta);
-  //    GpuCheckErrors();
-
+    )
+{
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
   KernSdfFuse<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, K, img, T_iw, Kimg, trunc_dist, max_w, mincostheta);
@@ -159,12 +150,9 @@ __global__ void KernSdfFuseDirectGrey(
     // See if this voxel is possible to be in the image boundary
     // Get voxel position in certain radius in world coordinate
     const float3 P_w = vol.VoxelPositionInUnits(x,y,z);
-    //        printf("loc:%f,%f,%f;",P_w.x,P_w.y,P_w.z);
-    //    printf("x:%d,y:%d,z:%d,loc:%f,%f,%f;",x,y,z,P_w.x,P_w.y,P_w.z);
 
     // Get voxel position in camera coordinate
     const float3 P_c = T_cw * P_w;
-    //    printf("P_c x:%f,y:%f,z:%f;",P_c.x,P_c.y,P_c.z);
 
     // Project a 3D voxel point to 2D depth an grey image coordinate
     const float2 p_c = Kdepth.Project(P_c);
@@ -564,85 +552,6 @@ void SdfFuseColor(
                                          trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 }
-
-//-----------------------------------------------------------------------------------------------------------------------------------
-
-//////////////////////////////////////////////////////
-// find outline from sdf
-/////////////////////////////////////////////////////
-__global__ void KernSdfFuseFindOutline(
-    BoundedVolume<SDF_t> vol,BoundedVolume<float> colorVol,
-    Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics K,
-    Image<uchar3> img, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
-    float trunc_dist, float max_w, float mincostheta, Image<float4> dOutLine
-    )
-{
-
-  const int x = blockIdx.x*blockDim.x + threadIdx.x;
-  const int y = blockIdx.y*blockDim.y + threadIdx.y;
-  //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
-
-
-  for(int z=0; z < vol.d; ++z)
-  {
-    const float3 P_w = vol.VoxelPositionInUnits(x,y,z);
-    const float3 P_c = T_cw * P_w;
-    const float2 p_c = K.Project(P_c);
-    const float3 P_i = T_iw * P_w;
-    const float2 p_i = Kimg.Project(P_i);
-
-    // if voxel is inside bounds
-    if( depth.InBounds(p_c, 2) && img.InBounds(p_i,2) )
-    {
-      const float vd = P_c.z;
-
-      const float md = depth.GetBilinear<float>(p_c);
-      const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
-      const float c = ConvertPixel<float,float3>( img.GetBilinear<float3>(p_i) ) / 255.0;
-
-      const float costheta = dot(mdn, P_c) / -length(P_c);
-      const float sd = costheta * (md - vd);
-      const float w = costheta * 1.0f/vd;
-
-      if(sd <= -trunc_dist)
-      {
-      }
-      else
-      {
-        SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
-        sdf += vol(x,y,z);
-
-        sdf.LimitWeight(max_w);
-        vol(x,y,z) = sdf;
-      }
-    }
-    // out of boundary
-    else
-    {
-      //            dOutLine(p_i.x,p_i.y) = make_float4(1, 0, 1, 1);
-    }
-  }
-
-}
-
-
-
-
-void SdfFuseFindOutline(
-    BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics K,
-    Image<uchar3> img, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
-    float trunc_dist, float max_w, float mincostheta, Image<float4> dOutline
-    ) {
-
-  dim3 blockDim(16,16);
-  dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
-  KernSdfFuseFindOutline<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, K, img, T_iw, Kimg, trunc_dist, max_w, mincostheta, dOutline);
-  GpuCheckErrors();
-}
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------------------
 
 
 //////////////////////////////////////////////////////

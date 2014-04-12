@@ -236,117 +236,7 @@ void BuildPoseRefinementFromDepthmapSystemESM(
 }
 
 
-// -------------------------------------------------------------------------------------------------------------------------------------------- add by luma
-// ESMDetectOutline
-template<typename Ti>
-__device__ inline
-void BuildESMDetectOutline(
-    const unsigned int u,  const unsigned int v, const float depth,
-    const Image<Ti>& dImgl, const Image<Ti>& dImgr,
-    const Mat<float,3,3>& Klg, const Mat<float,3,3>& Krg, const Mat<float,3,3>& Krd, const Mat<float,4,4>& Tgd,
-    const Mat<float,4,4>& Tlr, const Mat<float,3,4>& KlgTlr,
-    LeastSquaresSystem<float,6>& lss, Image<float4> dDebug,
-    const float c, const float rate, const bool bDiscardMaxMin, const float fMinDepth, const float fMaxDepth
-) {
-    // 3d point from reference depth camera
-    Mat<float,4> Pr_d;
-    Pr_d(0) = depth * (u - Krd(0,2)) / Krd(0,0);
-    Pr_d(1) = depth * (v - Krd(1,2)) / Krd(1,1);
-    Pr_d(2) = depth;
-    Pr_d(3) = 1;
 
-    // 3d point from reference grey camera
-    Mat<float,4> Pr_g = Tgd * Pr_d;
-
-    // projected point of reference grey camera
-    Mat<float,3> KrPr;
-    KrPr(0) = Krg(0,0)*Pr_g(0) + Krg(0,2)*Pr_g(2);
-    KrPr(1) = Krg(1,1)*Pr_g(1) + Krg(1,2)*Pr_g(2);
-    KrPr(2) = Pr_g(2);
-
-    // de-homogenized point in reference grey camera
-    const Mat<float,2> pr = {KrPr(0)/KrPr(2), KrPr(1)/KrPr(2)};
-
-    // 3d point in live grey camera
-    const Mat<float,4> Pl = Tlr * Pr_g;
-
-    // projected point of live grey camera
-    Mat<float,3> KlPl;
-    KlPl(0) = Klg(0,0)*Pl(0) + Klg(0,2)*Pl(2);
-    KlPl(1) = Klg(1,1)*Pl(1) + Klg(1,2)*Pl(2);
-    KlPl(2) = Pl(2);
-
-    // de-homogenized point in live grey camera
-    const Mat<float,2> pl = {KlPl(0)/KlPl(2), KlPl(1)/KlPl(2)};
-
-    if(isfinite(depth) && depth > fMinDepth && depth < fMaxDepth)
-    {
-        if( dImgr.InBounds(pr(0), pr(1), 2) &&  dImgl.InBounds(pl(0), pl(1), 2) )
-        {
-            float Il = dImgl.template GetBilinear<float>(pl(0), pl(1));
-            float Ir = dImgr.template GetBilinear<float>(pr(0), pr(1));
-
-            if( bDiscardMaxMin && ( Il == 0 || Il == 255 || Ir == 0 || Ir == 255 ) )
-            {
-                dDebug(u, v) = make_float4(1,1,0,1); // discard grey scale value, 'cyan'
-            }
-            else
-            {
-                // image error
-                const float y = Il - Ir;
-
-                // calculate image derivative
-                const Mat<float,1,2> dIl = dImgl.template GetCentralDiff<float>(pl(0), pl(1));
-
-                // derivative of projection (L) and dehomogenization
-                const Mat<float,2,3> dPl_by_dpl = {
-                  1.0/KlPl(2), 0, -KlPl(0)/(KlPl(2)*KlPl(2)),
-                  0, 1.0/KlPl(2), -KlPl(1)/(KlPl(2)*KlPl(2))
-                };
-
-                const Mat<float,1,4> dIldPlKlgTlr = dIl * dPl_by_dpl * KlgTlr;
-
-                // Sparse Jl = dIldPlKT_lr * gen_i * Pr
-                const Mat<float,1,6> Jl = {
-                    dIldPlKlgTlr(0),
-                    dIldPlKlgTlr(1),
-                    dIldPlKlgTlr(2),
-                    -dIldPlKlgTlr(1)*Pr_g(2) + dIldPlKlgTlr(2)*Pr_g(1),
-                    +dIldPlKlgTlr(0)*Pr_g(2) - dIldPlKlgTlr(2)*Pr_g(0),
-                    -dIldPlKlgTlr(0)*Pr_g(1) + dIldPlKlgTlr(1)*Pr_g(0)
-                };
-
-                const float w = LSReweightTukey(y, c);
-                lss.JTJ = OuterProduct(Jl, w);
-                lss.JTy = mul_aTb(Jl, y*w);
-                lss.obs = 1;
-                lss.sqErr = y * y;
-                const float bb = abs(y*y);
-
-                if(bb>rate)
-                {
-                    dDebug(u,v) = make_float4(0,1,0,1); // mark obj outline as 'green'
-                }
-                else
-                {
-                    dDebug(u,v) = make_float4(1,0,0,1); // mark inline as 'blue'
-                }
-
-            }
-        }
-        else
-        {
-            dDebug(u,v) = make_float4(1,1,0,1); // out of boundary, 'cyan'
-        }
-    }
-    else
-    {
-        dDebug(u,v) = make_float4(0,0,1,1);  // wrong depth, 'red'
-    }
-
-}
-
-// -------------------------------------------------------------------------------------------------------------------------------------------- add by luma
 
 
 //template<typename Ti>
@@ -707,27 +597,7 @@ __global__ void KernPoseRefinementFromDepthESM(
     lss.ReducePutBlock(dSum);
 }
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------- add by luma
-template<typename Ti>
-__global__ void KernESMDetectOutline(
-    const Image<Ti> dImgl, const Image<Ti> dImgr, const Image<float> dDepth,
-    const Mat<float,3,3> Klg, const Mat<float,3,3> Krg, const Mat<float,3,3> Krd, const Mat<float,4,4> Tgd,
-    const Mat<float,4,4> Tlr, const Mat<float,3,4> KlgTlr,
-    Image<LeastSquaresSystem<float,6> > dSum, Image<float4> dDebug,
-    const float c, const float rate, const bool bDiscardMaxMin, const float fMinDepth, const float fMaxDepth
-) {
-    const unsigned int u = blockIdx.x*blockDim.x + threadIdx.x;
-    const unsigned int v = blockIdx.y*blockDim.y + threadIdx.y;
 
-    __shared__ SumLeastSquaresSystem<float,6,16,16> lss;
-
-    float depth = dDepth(u,v);
-
-    BuildESMDetectOutline( u, v, depth, dImgl, dImgr, Klg, Krg, Krd, Tgd, Tlr, KlgTlr, lss.ZeroThisObs(), dDebug, c, rate, bDiscardMaxMin, fMinDepth, fMaxDepth );
-
-    lss.ReducePutBlock(dSum);
-}
-// -------------------------------------------------------------------------------------------------------------------------------------------------------------- add by luma
 
 LeastSquaresSystem<float,6> PoseRefinementFromDepthESM(
     const Image<unsigned char> dImgl,
@@ -746,26 +616,7 @@ LeastSquaresSystem<float,6> PoseRefinementFromDepthESM(
     return lss.FinalSystem();
 }
 
-// -------------------------------------------------------------------------------------------------------------------------------------------------- add by luma
 
-LeastSquaresSystem<float,6> ESMDetectOutline(
-    const Image<unsigned char> dImgl,
-    const Image<unsigned char> dImgr,
-    const Image<float> dDepth,
-    const Mat<float,3,3> Klg, const Mat<float,3,3> Krg, const Mat<float,3,3> Krd, const Mat<float,4,4> Tgd,
-    const Mat<float,4,4> Tlr, const Mat<float,3,4> KlgTlr,
-    Image<unsigned char> dWorkspace, Image<float4> dDebug,
-    const float c, const float rate, const bool bDiscardMaxMin, const float fMinDepth, const float fMaxDepth
-){
-    dim3 blockDim, gridDim;
-    InitDimFromOutputImage(blockDim, gridDim, dImgr, 16,16);
-
-    HostSumLeastSquaresSystem<float,6> lss(dWorkspace, blockDim, gridDim);
-    KernESMDetectOutline<unsigned char><<<gridDim,blockDim>>>(dImgl, dImgr, dDepth, Klg, Krg, Krd, Tgd, Tlr, KlgTlr, lss.LeastSquareImage(), dDebug, c, rate, bDiscardMaxMin, fMinDepth, fMaxDepth );
-    return lss.FinalSystem();
-}
-
-// -------------------------------------------------------------------------------------------------------------------------------------------------- add by luma
 
 template<typename Ti>
 __global__ void KernCalibrationRgbdFromDepthESM(
@@ -807,100 +658,6 @@ LeastSquaresSystem<float,6> CalibrationRgbdFromDepthESM(
     return lss.FinalSystem();
 }
 
-
-// -------------------------------------------------------------------------------------------------------------------------------------------------add by lu
-
-//////////////////////////////////////////////////////
-// use ICP to detect outline
-//////////////////////////////////////////////////////
-
-__global__ void KernICPDetOutLine(
-    const Image<float4> dPl,
-    const Image<float4> dPr, const Image<float4> dNr,
-    const Mat<float,3,4> KT_lr, const Mat<float,3,4> T_rl, float c, float rate,
-    Image<LeastSquaresSystem<float,6> > dSum, Image<float4> dDebug
-) {
-    const unsigned int u = blockIdx.x*blockDim.x + threadIdx.x;
-    const unsigned int v = blockIdx.y*blockDim.y + threadIdx.y;
-
-    __shared__ SumLeastSquaresSystem<float,6,16,16> sumlss;
-    LeastSquaresSystem<float,6>& sum = sumlss.ZeroThisObs();
-
-    const float4 Pr = dPr(u,v);
-    const float4 Nr = dNr(u,v);
-
-    const float3 KPl = KT_lr * Pr;
-    const float2 pl = dn(KPl);
-
-    if( isfinite(Pr.z) && Nr.w == 1.0f /*&& dot3(Nr,Pr) / -length3(Pr) > 0.2*/ && dPl.InBounds(pl, 3) )
-    {
-        const float4 _Pl = dPl.GetNearestNeighbour(pl);
-
-        if(isfinite(_Pl.z))
-        {
-            const float3 _Pr = T_rl * _Pl;
-            const float3 Dr = _Pr - Pr;
-            const float DrDotNr = dot(Dr,Nr);
-            const float y = DrDotNr;
-
-            const Mat<float,1,6> Jr = {
-                -dot(SE3gen0mul(_Pr), Nr),
-                -dot(SE3gen1mul(_Pr), Nr),
-                -dot(SE3gen2mul(_Pr), Nr),
-                -dot(SE3gen3mul(_Pr), Nr),
-                -dot(SE3gen4mul(_Pr), Nr),
-                -dot(SE3gen5mul(_Pr), Nr)
-            };
-
-            const float w = (1.0f/Pr.z) * LSReweightTukey(y,c);
-            sum.JTJ = OuterProduct(Jr,w);
-            sum.JTy = mul_aTb(Jr,y*w);
-            sum.obs = 1;
-            sum.sqErr = y*y;
-
-            const float db = abs(y*y);
-            if(db>rate)
-            {
-//                printf("error %f",db);
-                dDebug(u,v) = make_float4(0,1,0,1); // mark obj outline as 'green'
-            }
-            else
-            {
-                dDebug(u,v) = make_float4(1,0,0,1); // mark inline as 'blue'
-            }
-        }
-        else
-        {
-            dDebug(u,v) = make_float4(0,0,1,1); // live frame pixel with invalid depth value. 'red'
-        }
-    }
-    else
-    {
-        dDebug(u,v) = make_float4(1,1,0,1); // reference frame pixel with invalid depth value or out of boundary. 'cyan'
-    }
-
-    sumlss.ReducePutBlock(dSum);
-}
-
-//////////////////////////////////////////////////////
-// Projective ICP with Point Plane constraint for detect outline
-//////////////////////////////////////////////////////
-
-LeastSquaresSystem<float,6> ICPDetOutLine(
-    const Image<float4> dPl,
-    const Image<float4> dPr, const Image<float4> dNr,
-    const Mat<float,3,4> KT_lr, const Mat<float,3,4> T_rl, float c, float rate,
-    Image<unsigned char> dWorkspace, Image<float4> dDebug
-){
-    dim3 blockDim, gridDim;
-    InitDimFromOutputImage(blockDim, gridDim, dPl, 16, 16);
-
-    HostSumLeastSquaresSystem<float,6> lss(dWorkspace, blockDim, gridDim);
-    KernICPDetOutLine<<<gridDim,blockDim>>>(dPl, dPr, dNr, KT_lr, T_rl, c, rate, lss.LeastSquareImage(), dDebug );
-    return lss.FinalSystem();
-}
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------ add by lu
 
 //////////////////////////////////////////////////////
 // Projective ICP with Point Plane constraint
