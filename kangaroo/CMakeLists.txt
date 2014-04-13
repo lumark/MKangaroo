@@ -9,18 +9,18 @@ string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 ################################################################################
 
 list(APPEND SRC_H
-    BoundedVolume.h   BoundedVolumeGrid.h   MarchingCubesTables.h cu_deconvolution.h    cu_painting.h             kangaroo.h
+    BoundedVolume.h   BoundedVolumeGrid.h   MarchingCubesTables.h cu_deconvolution.h        cu_painting.h        kangaroo.h
     BoundingBox.h     Mat.h                 cu_dense_stereo.h     cu_plane_fit.h            launch_utils.h
     CostVolElem.h     MatUtils.h            cu_depth_tools.h      cu_raycast.h              patch_score.h
     CudaTimer.h       Pyramid.h             cu_heightmap.h        cu_remap.h                pixel_convert.h
     Divergence.h      Sdf.h                 cu_index_buffer.h     cu_resample.h             reduce.h
-    Image.h           Volume.h  VolumeGrid.h              cu_integral_image.h   cu_rof_denoising.h        reweighting.h
+    Image.h           Volume.h              VolumeGrid.h          cu_integral_image.h       cu_rof_denoising.h   reweighting.h
     ImageApron.h      cu_anaglyph.h         cu_lookup_warp.h      cu_sdffusion.h            sampling.h
     ImageIntrinsics.h cu_bilateral.h        cu_manhatten.h        cu_segment_test.h         variational.h
     ImageKeyframe.h   cu_blur.h             cu_median.h           cu_semi_global_matching.h
     InvalidValue.h    cu_census.h           cu_model_refinement.h cu_tgv.h
     LeastSquareSum.h  cu_convert.h          cu_normals.h          disparity.h
-    MarchingCubes.h   cu_convolution.h      cu_operations.h       hamming_distance.h
+    MarchingCubes.h   cu_convolution.h      cu_operations.h       hamming_distance.h  cu_rolling_sdf.h
 )
 
 list(APPEND SRC_CU
@@ -31,7 +31,7 @@ list(APPEND SRC_CU
     cu_census.cu cu_semi_global_matching.cu
     cu_manhatten.cu cu_integral_image.cu
     cu_convolution.cu cu_deconvolution.cu
-    cu_rof_denoising.cu cu_tgv.cu
+    cu_rof_denoising.cu cu_rolling_sdf.cu  cu_tgv.cu
     cu_segment_test.cu
     cu_painting.cu cu_remap.cu
     cu_raycast.cu cu_sdffusion.cu
