@@ -12,6 +12,7 @@ namespace roo
 // A BoundedVolumeGrid consist n numbers of single volume. Each volume is
 // (m_BasicGridRes*m_BasicGridRes*m_BasicGridRes) cube.
 // Using this function requires calling roo::SDFInitGreyGrid first.
+// =============================================================================
 
 template<typename T, typename Target = TargetDevice, typename Management = DontManage>
 class BoundedVolumeGrid
@@ -25,19 +26,20 @@ public:
   // the reason we have to use this as global veriables in kernel function is that
   // it may contain more than 16 VolumeGrid, which over the maximum size of the
   // parameters that we can pass into a kernel function
+  // ===========================================================================
   inline __host__
   void init(unsigned int n_w, unsigned int n_h, unsigned int n_d, unsigned int n_res, const BoundingBox& r_bbox)
   {
     // init grid sdf
     if(n_w == n_h && n_h == n_d)
     {
-      m_w            = n_w;
-      m_h            = n_h;
-      m_d            = n_d;
+      m_w             = n_w;
+      m_h             = n_h;
+      m_d             = n_d;
 
-      m_bbox         = r_bbox;
+      m_bbox          = r_bbox;
       m_VolumeGridRes = n_res;
-      m_WholeGridRes = m_w/m_VolumeGridRes;
+      m_WholeGridRes  = m_w/m_VolumeGridRes;
     }
     else
     {
@@ -65,12 +67,14 @@ public:
     }
   }
 
+
+
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
-    int nIndex = int(floorf(x/m_VolumeGridRes)) +
-        m_WholeGridRes * ( int(floorf(y/m_VolumeGridRes)) +
-                           m_WholeGridRes * int(floorf(z/m_VolumeGridRes)) );
+    int nIndex =GetIndex( int(floorf(x/m_VolumeGridRes)),
+                          int(floorf(y/m_VolumeGridRes)),
+                          int(floorf(z/m_VolumeGridRes)) );
 
     if(m_GridVolumes[nIndex].d !=m_VolumeGridRes)
     {
@@ -135,16 +139,20 @@ public:
     return nNum>0 && m_w >= 8 && m_h >= 8 && m_d >= 8;
   }
 
+
+
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    const int nIndex =
-        int(floorf(x/m_VolumeGridRes)) +
-        m_WholeGridRes * ( int(floorf(y/m_VolumeGridRes)) +
-                           m_WholeGridRes * int(floorf(z/m_VolumeGridRes)) );
+    int nIndex = GetIndex( int(floorf(x/m_VolumeGridRes)),
+                           int(floorf(y/m_VolumeGridRes)),
+                           int(floorf(z/m_VolumeGridRes)) );
 
     return m_GridVolumes[nIndex](x%m_VolumeGridRes, y%m_VolumeGridRes, z%m_VolumeGridRes);
   }
+
+
+
 
   // input pos_w in meter
   inline  __device__
@@ -164,12 +172,11 @@ public:
     const float fFactor = float(m_VolumeGridRes)/float(m_w);
 
     // Get the index of voxel in basic sdf
-    const int3 Index =make_int3( floorf(pos_v.x/fFactor),
-                                 floorf(pos_v.y/fFactor),
-                                 floorf(pos_v.z/fFactor)  );
+    const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
+                                   floorf(pos_v.y/fFactor),
+                                   floorf(pos_v.z/fFactor)  );
 
-    // access actual vol
-    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
+    int nIndex = GetIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -183,6 +190,8 @@ public:
 
     return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
   }
+
+
 
   inline __device__
   float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
@@ -201,11 +210,11 @@ public:
     const float fFactor = float(m_VolumeGridRes)/float(m_w);
 
     // Get the index of voxel in basic sdf
-    const int3 Index =make_int3( floorf(pos_v.x/fFactor),
-                                 floorf(pos_v.y/fFactor),
-                                 floorf(pos_v.z/fFactor)  );
+    const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
+                                   floorf(pos_v.y/fFactor),
+                                   floorf(pos_v.z/fFactor)  );
 
-    const int nIndex = Index.x + m_WholeGridRes* (Index.y+ m_WholeGridRes* Index.z);
+    int nIndex = GetIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -220,6 +229,13 @@ public:
     const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
 
     return deriv / VoxelSizeUnits();
+  }
+
+  inline __device__ __host__
+  unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
+  {
+    const unsigned int nIndex =x + m_WholeGridRes* (y+ m_WholeGridRes* z);
+    return  nIndex;
   }
 
   inline __device__
@@ -265,6 +281,12 @@ public:
     }
   }
 
+  inline __host__
+  void FreeMemoryByIndex(unsigned int nIndex)
+  {
+    cudaFree( m_GridVolumes[nIndex].ptr );
+  }
+
   inline __host__ __device__
   bool CheckIfBasicSDFActive(const int nIndex) const
   {
@@ -304,8 +326,7 @@ public:
   inline __device__
   void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
   {
-    const int nIndex = x/m_VolumeGridRes+
-        m_WholeGridRes*( y/m_VolumeGridRes+m_WholeGridRes * z/m_VolumeGridRes );
+    const int nIndex = GetIndex(x/m_VolumeGridRes, y/m_VolumeGridRes, z/m_VolumeGridRes );
 
     if(m_NextInitBasicSDFs[nIndex] == 0 && CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -314,10 +335,15 @@ public:
   }
 
 
+
+
 public:
   size_t                                      m_d;
   size_t                                      m_w;
   size_t                                      m_h;
+
+  // for rolling sdf. When this value is not zero, we need to recompute index based on the shift
+  int3                                        m_shift;
 
   // bounding box ofbounded volume grid
   BoundingBox                                 m_bbox;
@@ -328,7 +354,6 @@ public:
   // volume that save all data
   VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[512];
   int                                         m_NextInitBasicSDFs[512];  // an array that record basic SDFs we want to init
-
 };
 
 

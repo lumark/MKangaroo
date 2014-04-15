@@ -301,6 +301,7 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
                   g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_VolumeGridRes)) +
                                            g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_VolumeGridRes)) );
               g_NextInitSDFs[nIndex] = 1;
+
             }
           }
         }
@@ -338,6 +339,7 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   for(int i=0;i!=vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes;i++)
   {
     pNextInitSDFs[i] = nNextInitSDFs[i];
+
     nNextInitSDFs[i] = 0;
   }
 
