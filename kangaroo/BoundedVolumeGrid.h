@@ -40,6 +40,8 @@ public:
       m_bbox          = r_bbox;
       m_VolumeGridRes = n_res;
       m_WholeGridRes  = m_w/m_VolumeGridRes;
+
+      m_shift = make_int3(0,0,0);
     }
     else
     {
@@ -66,7 +68,6 @@ public:
       }
     }
   }
-
 
 
   inline __host__
@@ -148,10 +149,17 @@ public:
                            int(floorf(y/m_VolumeGridRes)),
                            int(floorf(z/m_VolumeGridRes)) );
 
+    if(CheckIfBasicSDFActive(nIndex) == false)
+    {
+      printf("basic sdf does not exist. shift x is %d; x=%d,y=%d,z=%d\n",
+             m_shift.x,
+             int(floorf(x/m_VolumeGridRes)),
+             int(floorf(y/m_VolumeGridRes)),
+             int(floorf(z/m_VolumeGridRes)) );
+    }
+
     return m_GridVolumes[nIndex](x%m_VolumeGridRes, y%m_VolumeGridRes, z%m_VolumeGridRes);
   }
-
-
 
 
   // input pos_w in meter
@@ -231,12 +239,73 @@ public:
     return deriv / VoxelSizeUnits();
   }
 
+  // ============================================================================
   inline __device__ __host__
   unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
   {
+    if(m_shift.x==0)
+    {
+      const unsigned int nIndex =x + m_WholeGridRes* (y+ m_WholeGridRes* z);
+      return  nIndex;
+    }
+
+    // for x
+    if(m_shift.x>0 && m_shift.x<=m_WholeGridRes)
+    {
+      if( x<=m_WholeGridRes-1-m_shift.x)
+      {
+        x = x+m_shift.x;
+      }
+      else if(x>=m_WholeGridRes-1-m_shift.x)
+      {
+        x = x-(m_WholeGridRes-1)+(m_shift.x-1);
+      }
+    }
+    else if(m_shift.x<0 && m_shift.x>=-m_WholeGridRes)
+    {
+      if(x<m_WholeGridRes+m_shift.x)
+      {
+        x = x+abs(m_shift.x);
+      }
+      else if( x>=m_WholeGridRes+m_shift.x )
+      {
+        x = m_WholeGridRes - x;
+      }
+    }
+
+//    // for y
+//    if(m_shift.y>0)
+//    {
+
+//    }
+//    else if(m_shift.y<0)
+//    {
+
+//    }
+
+//    // for z
+//    if(m_shift.z>0)
+//    {
+
+//    }
+//    else if(m_shift.z<0)
+//    {
+
+//    }
+
     const unsigned int nIndex =x + m_WholeGridRes* (y+ m_WholeGridRes* z);
     return  nIndex;
   }
+
+  // ============================================================================
+  //  inline __device__ __host__
+  //  unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
+  //  {
+  //    const unsigned int nIndex =x + m_WholeGridRes* (y+ m_WholeGridRes* z);
+  //    return  nIndex;
+  //  }
+
+
 
   inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
@@ -284,8 +353,15 @@ public:
   inline __host__
   void FreeMemoryByIndex(unsigned int nIndex)
   {
+    if(CheckIfBasicSDFActive(nIndex) == false)
+    {
+      printf("[BoundedVolumeGrid] fatal error! pointer being free must be allocate first!!\n");
+      exit(-1);
+    }
+
     cudaFree( m_GridVolumes[nIndex].ptr );
   }
+
 
   inline __host__ __device__
   bool CheckIfBasicSDFActive(const int nIndex) const
@@ -334,6 +410,30 @@ public:
     }
   }
 
+
+  inline __host__
+  void UpdateShift(int3 shift_index)
+  {
+    m_shift = m_shift + shift_index;
+
+    if(m_shift.x == m_WholeGridRes )
+    {
+      m_shift.x = 0;
+    }
+
+    if(m_shift.y == m_WholeGridRes)
+    {
+      m_shift.y = 0;
+    }
+
+    if(m_shift.z == m_WholeGridRes)
+    {
+      m_shift.z = 0;
+    }
+
+    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d\n",
+           m_shift.x,m_shift.y,m_shift.z);
+  }
 
 
 

@@ -29,7 +29,7 @@ namespace roo
 template<typename T, typename Target = TargetDevice, typename Management = DontManage>
 struct VolumeGrid
 {
-  inline __device__
+  inline __host__
   void CleanUp()
   {
     Management::template Cleanup<T,Target>(ptr);

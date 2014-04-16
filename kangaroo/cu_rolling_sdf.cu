@@ -119,7 +119,7 @@ __global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
 // shift is n * grid num in one diminsion. It can be positive or negative.
 // by now each time we need to move at least one grid volume
 // =============================================================================
-void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, float3 shift)
+void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 shift)
 {
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
@@ -149,10 +149,10 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, float3
   vol.m_shift = shift;
 
   // 2, Kernel functin. Initialization for GPU parallelization
-  dim3 blockDim(16,16);
-  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernRollingGridSdf<<<gridDim,blockDim>>>(bb_min, bb_max, shift);
-  GpuCheckErrors();
+//  dim3 blockDim(16,16);
+//  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
+//  KernRollingGridSdf<<<gridDim,blockDim>>>(bb_min, bb_max, shift);
+//  GpuCheckErrors();
 
 
   // 3, copy array back

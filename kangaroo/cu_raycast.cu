@@ -406,6 +406,8 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
   GpuCheckErrors();
 
   g_vol.FreeMemory();
+
+  printf("[RaycastSDF.cu] Finish raycast grid sdf.\n");
 }
 
 
@@ -489,7 +491,8 @@ __global__ void KernRaycastSdfGridGrey(Image<float> imgdepth, Image<float4> norm
 void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
                 const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
                 const BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> colorVol,
-                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
+                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
+                float trunc_dist, bool subpix )
 {
 
   // load vol val to golbal memory
@@ -504,6 +507,9 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
 
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
+
+  printf("[RaycastSDF.cu] Finish raycast grid grey sdf.\n");
+
 }
 
 

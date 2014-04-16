@@ -297,9 +297,16 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
             /// here 0.5 is for kinect sensor
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              int nIndex = int(floorf(x/g_vol.m_VolumeGridRes)) +
-                  g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_VolumeGridRes)) +
-                                           g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_VolumeGridRes)) );
+              //              int nIndex = int(floorf(x/g_vol.m_VolumeGridRes)) +
+              //                  g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_VolumeGridRes)) +
+              //                                           g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_VolumeGridRes)) );
+
+              int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_VolumeGridRes)),
+                                          int(floorf(y/g_vol.m_VolumeGridRes)),
+                                          int(floorf(z/g_vol.m_VolumeGridRes)) );
+
+//              printf("shift:%d;",g_vol.m_shift.x);
+
               g_NextInitSDFs[nIndex] = 1;
 
             }
@@ -339,16 +346,19 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   for(int i=0;i!=vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes;i++)
   {
     pNextInitSDFs[i] = nNextInitSDFs[i];
-
     nNextInitSDFs[i] = 0;
   }
 
   // reset index
   cudaMemcpyToSymbol(g_NextInitSDFs,nNextInitSDFs,sizeof(nNextInitSDFs),0,cudaMemcpyHostToDevice);
+  GpuCheckErrors();
 
   // cuda free memory
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
+  GpuCheckErrors();
+
+  printf("[SDFInitGreyGrid.cu] Finished.\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -418,6 +428,8 @@ __global__ void KernSdfFuseDirectGreyGrid(Image<float> depth, Image<float4> norm
           {
             //            printf("fuse:x%d,y%d,z%d",x,y,z);
 
+//            printf("shift:%d",g_vol.m_shift.x);
+
             const SDF_t curvol = g_vol(x,y,z);
 
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
@@ -444,7 +456,7 @@ void SdfFuseDirectGreyGrid(
     float trunc_dist, float max_w, float mincostheta
     )
 {
-
+  printf("[SdfFuseDirectGreyGrid.cu] Start! shift x is %d\n", vol.m_shift.x);
 
   /// load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
@@ -461,10 +473,15 @@ void SdfFuseDirectGreyGrid(
   // copy data back after launch the kernel
   vol.CopyFrom(g_vol);
   colorVol.CopyFrom(g_colorVol);
+  GpuCheckErrors();
 
   // cuda free memory
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
+  GpuCheckErrors();
+
+  printf("[SdfFuseDirectGreyGrid.cu] Finish!\n");
+
 }
 
 
