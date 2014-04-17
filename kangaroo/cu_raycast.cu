@@ -406,8 +406,6 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
   GpuCheckErrors();
 
   g_vol.FreeMemory();
-
-  printf("[RaycastSDF.cu] Finish raycast grid sdf.\n");
 }
 
 
@@ -507,9 +505,6 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
 
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
-
-  printf("[RaycastSDF.cu] Finish raycast grid grey sdf.\n");
-
 }
 
 

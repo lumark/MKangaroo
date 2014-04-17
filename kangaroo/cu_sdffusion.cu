@@ -358,6 +358,8 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   g_colorVol.FreeMemory();
   GpuCheckErrors();
 
+//  free(nNextInitSDFs);
+
   printf("[SDFInitGreyGrid.cu] Finished.\n");
 }
 
@@ -456,8 +458,6 @@ void SdfFuseDirectGreyGrid(
     float trunc_dist, float max_w, float mincostheta
     )
 {
-  printf("[SdfFuseDirectGreyGrid.cu] Start! shift x is %d\n", vol.m_shift.x);
-
   /// load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
@@ -479,9 +479,6 @@ void SdfFuseDirectGreyGrid(
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
   GpuCheckErrors();
-
-  printf("[SdfFuseDirectGreyGrid.cu] Finish!\n");
-
 }
 
 

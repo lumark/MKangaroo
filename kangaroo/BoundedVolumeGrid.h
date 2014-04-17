@@ -243,7 +243,7 @@ public:
   inline __device__ __host__
   unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
   {
-    if(m_shift.x==0)
+    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
     {
       const unsigned int nIndex =x + m_WholeGridRes* (y+ m_WholeGridRes* z);
       return  nIndex;
@@ -263,47 +263,73 @@ public:
     }
     else if(m_shift.x<0 && m_shift.x>=-m_WholeGridRes)
     {
-      if(x<m_WholeGridRes+m_shift.x)
+      if(x>=abs(m_shift.x) && x<=m_WholeGridRes)
       {
-        x = x+abs(m_shift.x);
+        x = x+m_shift.x;
       }
-      else if( x>=m_WholeGridRes+m_shift.x )
+      else if( x<=abs(m_shift.x) )
       {
-        x = m_WholeGridRes - x;
+        x = x+m_WholeGridRes-1-abs(m_shift.x) ;
       }
     }
 
-//    // for y
-//    if(m_shift.y>0)
-//    {
 
-//    }
-//    else if(m_shift.y<0)
-//    {
 
-//    }
+    // for y
+    if(m_shift.y>0 && m_shift.y<=m_WholeGridRes)
+    {
+      if( y<=m_WholeGridRes-1-m_shift.y)
+      {
+        y = y+m_shift.y;
+      }
+      else if(y>=m_WholeGridRes-1-m_shift.y)
+      {
+        y = y-(m_WholeGridRes-1)+(m_shift.y-1);
+      }
+    }
+    else if(m_shift.y<0 && m_shift.y>=-m_WholeGridRes)
+    {
+      if(y>=abs(m_shift.y) && y<=m_WholeGridRes)
+      {
+        y = y+m_shift.y;
+      }
+      else if( y<=abs(m_shift.y) )
+      {
+        y = y+m_WholeGridRes-1-abs(m_shift.y) ;
+      }
+    }
 
-//    // for z
-//    if(m_shift.z>0)
-//    {
 
-//    }
-//    else if(m_shift.z<0)
-//    {
 
-//    }
+    // for z
+    if(m_shift.z>0 && m_shift.z<=m_WholeGridRes)
+    {
+      if( z<=m_WholeGridRes-1-m_shift.z)
+      {
+        z = z+m_shift.z;
+      }
+      else if(z>=m_WholeGridRes-1-m_shift.z)
+      {
+        z = z-(m_WholeGridRes-1)+(m_shift.z-1);
+      }
+    }
+    else if(m_shift.z<0 && m_shift.z>=-m_WholeGridRes)
+    {
+      if(z>=abs(m_shift.z) && z<=m_WholeGridRes)
+      {
+        z = z+m_shift.z;
+      }
+      else if( z<=abs(m_shift.z) )
+      {
+        z = z+m_WholeGridRes-1-abs(m_shift.z) ;
+      }
+    }
 
+
+    // compute actual index
     const unsigned int nIndex =x + m_WholeGridRes* (y+ m_WholeGridRes* z);
     return  nIndex;
   }
-
-  // ============================================================================
-  //  inline __device__ __host__
-  //  unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
-  //  {
-  //    const unsigned int nIndex =x + m_WholeGridRes* (y+ m_WholeGridRes* z);
-  //    return  nIndex;
-  //  }
 
 
 
@@ -416,23 +442,26 @@ public:
   {
     m_shift = m_shift + shift_index;
 
-    if(m_shift.x == m_WholeGridRes )
+    if(m_shift.x == m_WholeGridRes ||  m_shift.x == -m_WholeGridRes)
     {
       m_shift.x = 0;
+      printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
     }
 
-    if(m_shift.y == m_WholeGridRes)
+    if(m_shift.y == m_WholeGridRes || m_shift.y == -m_WholeGridRes)
     {
       m_shift.y = 0;
+      printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
     }
 
-    if(m_shift.z == m_WholeGridRes)
+    if(m_shift.z == m_WholeGridRes || m_shift.z == -m_WholeGridRes)
     {
       m_shift.z = 0;
+      printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d\n",
-           m_shift.x,m_shift.y,m_shift.z);
+    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift is %d \n",
+           m_shift.x,m_shift.y,m_shift.z, m_WholeGridRes);
   }
 
 
