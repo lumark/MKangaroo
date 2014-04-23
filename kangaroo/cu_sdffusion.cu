@@ -297,13 +297,13 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
             /// here 0.5 is for kinect sensor
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              //              int nIndex = int(floorf(x/g_vol.m_VolumeGridRes)) +
-              //                  g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_VolumeGridRes)) +
-              //                                           g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_VolumeGridRes)) );
+              //              int nIndex = int(floorf(x/g_vol.m_nVolumeGridRes)) +
+              //                  g_vol.m_nWholeGridRes * ( int(floorf(y/g_vol.m_nVolumeGridRes)) +
+              //                                           g_vol.m_nWholeGridRes * int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
-              int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_VolumeGridRes)),
-                                          int(floorf(y/g_vol.m_VolumeGridRes)),
-                                          int(floorf(z/g_vol.m_VolumeGridRes)) );
+              int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+                                          int(floorf(y/g_vol.m_nVolumeGridRes)),
+                                          int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
 //              printf("shift:%d;",g_vol.m_shift.x);
 
@@ -338,12 +338,12 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   KernSdfInitGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 
-  int nNextInitSDFs[vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes];
+  int nNextInitSDFs[vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
   // copy array back
-  for(int i=0;i!=vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes;i++)
+  for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
   {
     pNextInitSDFs[i] = nNextInitSDFs[i];
     nNextInitSDFs[i] = 0;

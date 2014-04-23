@@ -28,39 +28,39 @@ public:
     if(shift_index.x!=0)
     {
       pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x +
-          float(shift_index.x) * BBSize.x/float(pVol->m_WholeGridRes);
+          float(shift_index.x) * BBSize.x/float(pVol->m_nWholeGridRes);
 
       pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x +
-          float(shift_index.x) * BBSize.x/float(pVol->m_WholeGridRes);
+          float(shift_index.x) * BBSize.x/float(pVol->m_nWholeGridRes);
 
       printf("shift x is %d, total shift x is %f, change bbox bbmin x to %f, bbmax x to %f\n",
-             shift_index.x, float(shift_index.x) * BBSize.x/float(pVol->m_WholeGridRes),
+             shift_index.x, float(shift_index.x) * BBSize.x/float(pVol->m_nWholeGridRes),
              pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
     }
 
     if(shift_index.y!=0)
     {
       pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y +
-          float(shift_index.y) * BBSize.y/float(pVol->m_WholeGridRes);
+          float(shift_index.y) * BBSize.y/float(pVol->m_nWholeGridRes);
 
       pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y +
-          float(shift_index.y) * BBSize.y/float(pVol->m_WholeGridRes);
+          float(shift_index.y) * BBSize.y/float(pVol->m_nWholeGridRes);
 
       printf("shift y is %d, total shift y is %f, change bbox bbmin y to %f, bbmax y to %f\n",
-             shift_index.y, float(shift_index.y) * BBSize.y/float(pVol->m_WholeGridRes),
+             shift_index.y, float(shift_index.y) * BBSize.y/float(pVol->m_nWholeGridRes),
              pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
     }
 
     if(shift_index.z!=0)
     {
       pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z +
-          float(shift_index.z) * BBSize.z/float(pVol->m_WholeGridRes);
+          float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes);
 
       pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z +
-          float(shift_index.z) * BBSize.z/float(pVol->m_WholeGridRes);
+          float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes);
 
       printf("shift z is %d, total shift z is %f, change bbox bbmin z to %f, bbmax z to %f\n",
-             shift_index.z, float(shift_index.z) * BBSize.z/float(pVol->m_WholeGridRes),
+             shift_index.z, float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes),
              pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
     }
 
@@ -76,22 +76,22 @@ public:
     /// iterator through all grid sdf and see if it need to be free
     //////////////////////////////////////////////////////////////////////////////
     // for each grid sdf in the volume
-    for(int i=0;i!=int(pVol->m_WholeGridRes);i++)
+    for(int i=0;i!=int(pVol->m_nWholeGridRes);i++)
     {
-      for(int j=0;j!=int(pVol->m_WholeGridRes);j++)
+      for(int j=0;j!=int(pVol->m_nWholeGridRes);j++)
       {
-        for(int k=0;k!=int(pVol->m_WholeGridRes);k++)
+        for(int k=0;k!=int(pVol->m_nWholeGridRes);k++)
         {
           // for x
           if(shift_index.x>0 && i<shift_index.x)
           {
-            nNextResetSDFs[i+pVol->m_WholeGridRes*(j+pVol->m_WholeGridRes*k)] =1;
+            nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
 
-          if(shift_index.x<0 && i>= int(pVol->m_WholeGridRes) + shift_index.x)
+          if(shift_index.x<0 && i>= int(pVol->m_nWholeGridRes) + shift_index.x)
           {
-            nNextResetSDFs[i+pVol->m_WholeGridRes*(j+pVol->m_WholeGridRes*k)] =1;
+            nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
 
@@ -99,13 +99,13 @@ public:
           // for y
           if(shift_index.y>0 && j<shift_index.y)
           {
-            nNextResetSDFs[i+pVol->m_WholeGridRes*(j+pVol->m_WholeGridRes*k)] =1;
+            nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
 
-          if(shift_index.y<0 && j>= int(pVol->m_WholeGridRes) + shift_index.y)
+          if(shift_index.y<0 && j>= int(pVol->m_nWholeGridRes) + shift_index.y)
           {
-            nNextResetSDFs[i+pVol->m_WholeGridRes*(j+pVol->m_WholeGridRes*k)] =1;
+            nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
 
@@ -113,13 +113,13 @@ public:
           // for z
           if(shift_index.z>0 && k<shift_index.z)
           {
-            nNextResetSDFs[i+pVol->m_WholeGridRes*(j+pVol->m_WholeGridRes*k)] =1;
+            nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
           }
 
-          if(shift_index.z<0 && k>= int(pVol->m_WholeGridRes) + shift_index.z)
+          if(shift_index.z<0 && k>= int(pVol->m_nWholeGridRes) + shift_index.z)
           {
-            nNextResetSDFs[i+pVol->m_WholeGridRes*(j+pVol->m_WholeGridRes*k)] =1;
+            nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
           }
         }
@@ -134,7 +134,7 @@ public:
     /// free grid sdf
     //////////////////////////////////////////////////////////////////////////////
 
-    for(unsigned int i=0;i!=pVol->m_WholeGridRes* pVol->m_WholeGridRes* pVol->m_WholeGridRes; i++)
+    for(unsigned int i=0;i!=pVol->m_nWholeGridRes* pVol->m_nWholeGridRes* pVol->m_nWholeGridRes; i++)
     {
       if(nNextResetSDFs[i] == 1)
       {

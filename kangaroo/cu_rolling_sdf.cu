@@ -98,9 +98,9 @@ __global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
       g_vol(x,y,z) = SDF_t(0.0/0.0,0.0);
 
       // get the index of grid sdf that need to be reseted
-      int nIndex = int(floorf(x/g_vol.m_VolumeGridRes)) +
-          g_vol.m_WholeGridRes * ( int(floorf(y/g_vol.m_VolumeGridRes)) +
-                                   g_vol.m_WholeGridRes * int(floorf(z/g_vol.m_VolumeGridRes)) );
+      int nIndex = int(floorf(x/g_vol.m_nVolumeGridRes)) +
+          g_vol.m_nWholeGridRes * ( int(floorf(y/g_vol.m_nVolumeGridRes)) +
+                                   g_vol.m_nWholeGridRes * int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
       // save index of sdf that need to be reset later
       g_NextResetSDFs[nIndex] = 1;
@@ -129,20 +129,20 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
 
   if(shift.x!=0)
   {
-    bb_min.x = bb_min.x + shift.x * vol.m_bbox.Size().x/float(vol.m_WholeGridRes);
-    bb_max.x = bb_max.x + shift.x * vol.m_bbox.Size().x/float(vol.m_WholeGridRes);
+    bb_min.x = bb_min.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nWholeGridRes);
+    bb_max.x = bb_max.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nWholeGridRes);
   }
 
   if(shift.y!=0)
   {
-    bb_min.y = bb_min.y + shift.y * vol.m_bbox.Size().y/float(vol.m_WholeGridRes);
-    bb_max.y = bb_max.y + shift.y * vol.m_bbox.Size().y/float(vol.m_WholeGridRes);
+    bb_min.y = bb_min.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nWholeGridRes);
+    bb_max.y = bb_max.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nWholeGridRes);
   }
 
   if(shift.z!=0)
   {
-    bb_min.z = bb_min.z + shift.z * vol.m_bbox.Size().z/float(vol.m_WholeGridRes);
-    bb_max.z = bb_max.z + shift.z * vol.m_bbox.Size().z/float(vol.m_WholeGridRes);
+    bb_min.z = bb_min.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nWholeGridRes);
+    bb_max.z = bb_max.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nWholeGridRes);
   }
 
   // save shift params in grid sdf data struct
@@ -156,11 +156,11 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
 
 
   // 3, copy array back
-  int nNextResetSDFs[vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes];
+  int nNextResetSDFs[vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes];
   cudaMemcpyFromSymbol(nNextResetSDFs, g_NextResetSDFs, sizeof(g_NextResetSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-  for(int i=0;i!=vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes;i++)
+  for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
   {
     pNextInitSDFs[i] = nNextResetSDFs[i];
 
@@ -174,7 +174,7 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
   g_vol.FreeMemory();
 
   // reset
-  for(int i=0;i!=vol.m_WholeGridRes*vol.m_WholeGridRes*vol.m_WholeGridRes;i++)
+  for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
   {
     if(nNextResetSDFs[i]==1)
     {

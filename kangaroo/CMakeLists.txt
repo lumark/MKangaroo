@@ -1,6 +1,12 @@
 cmake_minimum_required( VERSION 2.8 )
 project( Kangaroo )
 
+# Build Configures
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-local-typedefs -Wno-unused-parameter -Wno-unknown-pragmas -Wno-deprecated-declarations")
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
