@@ -333,7 +333,7 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
-  dim3 blockDim(16,16);
+  dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
   KernSdfInitGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
@@ -465,7 +465,7 @@ void SdfFuseDirectGreyGrid(
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
-  dim3 blockDim(16,16);
+  dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
   KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();

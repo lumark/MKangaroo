@@ -6,6 +6,7 @@
 #include "BoundedVolumeGrid.h"
 #include "ImageIntrinsics.h"
 #include "Sdf.h"
+#include "extra/Timer.h"
 
 namespace roo
 {

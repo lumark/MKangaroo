@@ -481,8 +481,8 @@ public:
   unsigned int                                m_nWholeGridRes;    // resolution of a whole grid in one dim. usually 4, 8, 16
 
   // volume that save all data
-  VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[512];
-  int                                         m_NextInitBasicSDFs[512];  // an array that record basic SDFs we want to init
+  VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[1024];
+  int                                         m_NextInitBasicSDFs[1024];  // an array that record basic SDFs we want to init
 };
 
 
