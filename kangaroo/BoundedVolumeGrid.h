@@ -249,6 +249,7 @@ public:
       return  nIndex;
     }
 
+
     // for x
     if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes)
     {
@@ -272,7 +273,6 @@ public:
         x = x+m_nWholeGridRes-1-abs(m_shift.x) ;
       }
     }
-
 
 
     // for y
