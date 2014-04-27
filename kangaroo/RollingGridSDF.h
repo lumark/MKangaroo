@@ -17,7 +17,6 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     /// change bbox min and max value based on shif parameters
     //////////////////////////////////////////////////////////////////////////////
-
     printf("size x=%f, y=%f, z=%f; shift is x=%d,y=%d,z=%d\n ",
            pVol->m_bbox.Size().x,pVol->m_bbox.Size().y,pVol->m_bbox.Size().z,
            shift_index.x, shift_index.y,shift_index.z);
@@ -67,6 +66,8 @@ public:
     // save shift params in grid and grid grey sdf data struct
     pVol->UpdateShift(shift_index);
   }
+
+
 
   // compute index of grid sdf that need to be freed
   template<typename T> inline
