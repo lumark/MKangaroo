@@ -151,11 +151,14 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("basic sdf does not exist. shift x is %d; x=%d,y=%d,z=%d\n",
+      printf("basic sdf does not exist. shift x is %d; x=%d,y=%d,z=%d. Max index (x,y,z)=(%d,%d,%d)\n",
              m_shift.x,
              int(floorf(x/m_nVolumeGridRes)),
              int(floorf(y/m_nVolumeGridRes)),
-             int(floorf(z/m_nVolumeGridRes)) );
+             int(floorf(z/m_nVolumeGridRes)),
+             m_nWholeGridRes,
+             m_nWholeGridRes,
+             m_nWholeGridRes);
     }
 
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);

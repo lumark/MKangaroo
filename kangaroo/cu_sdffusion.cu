@@ -487,6 +487,9 @@ void SdfFuseDirectGreyGrid(
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion for certain index without consideing void (zero intensity) pixels
+// notice that in this function, we check each voxel we have and see if we need
+// to fuse any information into it. This is different from check each pixel we have
+// and try to fuse it into the sdf.
 __global__ void KernSdfFuseDirectGreyGridDesireIndex(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
@@ -570,20 +573,19 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
           }
         }
       }
-
-//      printf("finish fuse;");
     }
   }
 }
 
 
-void SdfFuseDirectGreyGridDesireIndex(int* pNextInitSDFs,
-                                      BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
-                                      BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
-                                      Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                                      Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-                                      float trunc_dist, float max_w, float mincostheta
-                                      )
+void SdfFuseDirectGreyGridDesireIndex(
+    int* pNextInitSDFs,
+    BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
+    BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
+    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta
+    )
 {
   if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
   {
@@ -724,13 +726,14 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
 }
 
 
-void SdfFuseDirectGreyGridAutoInit(int* pNextInitSDFs,
-                                   BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
-                                   BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
-                                   Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                                   Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-                                   float trunc_dist, float max_w, float mincostheta
-                                   )
+void SdfFuseDirectGreyGridAutoInit(
+    int* pNextInitSDFs,
+    BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
+    BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
+    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta
+    )
 {
   if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
   {
@@ -750,8 +753,6 @@ void SdfFuseDirectGreyGridAutoInit(int* pNextInitSDFs,
   KernSdfFuseDirectGreyGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 
-  //  printf("[SdfFuseDirectGreyGridAutoInit] Finished kernel.\n");
-
   // check if need to init new grid sdf
   int nNextInitSDFs[102400];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
@@ -763,8 +764,6 @@ void SdfFuseDirectGreyGridAutoInit(int* pNextInitSDFs,
     pNextInitSDFs[i] = nNextInitSDFs[i];
     nNextInitSDFs[i] = 0;
   }
-
-  //  printf("[SdfFuseDirectGreyGridAutoInit] Finished gen grid index.\n");
 
   // reset index
   cudaMemcpyToSymbol(g_NextInitSDFs,nNextInitSDFs,sizeof(nNextInitSDFs),0,cudaMemcpyHostToDevice);
@@ -779,8 +778,6 @@ void SdfFuseDirectGreyGridAutoInit(int* pNextInitSDFs,
   g_vol.FreeMemory();
   g_colorVol.FreeMemory();
   GpuCheckErrors();
-
-  //  printf("[SdfFuseDirectGreyGridAutoInit] Finished all.\n");
 }
 
 
