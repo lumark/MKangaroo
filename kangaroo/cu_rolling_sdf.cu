@@ -184,56 +184,69 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
 }
 
 
+
 // raycast grid grey SDF
-__global__ void KernRollingSdfGridDetect(
-    float3 positive_shift, float3 negative_shift, Image<float> imgdepth,
-    const Mat<float,3,4> T_wc, ImageIntrinsics K )
+__device__ float3 g_positive_shift;
+__device__ float3 g_negative_shift;
+__global__ void KernDetectRollingSdfShift(
+    Image<float> imgdepth, const Mat<float,3,4> T_wc, ImageIntrinsics K )
 {
   const int u = blockIdx.x*blockDim.x + threadIdx.x;
   const int v = blockIdx.y*blockDim.y + threadIdx.y;
 
   if( u < imgdepth.w && v < imgdepth.h )
   {
-    float depth_value = imgdepth(u,v);
-
-    if(depth_value>0.5)
+    if(imgdepth(u,v)>0.5)
     {
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
 
       float3 shift = g_vol.GetShiftValue(ray_w);
 
-      if(abs(shift.x)>1 || abs(shift.y) >1 || abs(shift.z)>1)
+      if(abs(shift.x)>1 )
       {
         // for positive
-        if(shift.x > positive_shift.x)
+        if(shift.x > g_positive_shift.x)
         {
-          positive_shift.x = shift.x;
+          g_positive_shift.x = shift.x;
+//          printf("positive_shift_x:%f;",g_positive_shift.x);
         }
-        else if(shift.x < negative_shift.x)
+        else if(shift.x < g_negative_shift.x)
         {
-          negative_shift.x = shift.x;
+          g_negative_shift.x = shift.x;
+//          printf("negative_shift_x:%f;",g_negative_shift.x);
         }
+      }
 
-        if(shift.y > positive_shift.y)
+      if( abs(shift.y) >1)
+      {
+        if(shift.y > g_positive_shift.y)
         {
-          positive_shift.y = shift.y;
+          g_positive_shift.y = shift.y;
+//          printf("positive_shift_y:%f;",g_positive_shift.y);
         }
-        else if(shift.y < negative_shift.y)
+        else if(shift.y < g_negative_shift.y)
         {
-          negative_shift.y = shift.y;
+          g_negative_shift.y = shift.y;
+//          printf("negative_shift_y:%f;",g_negative_shift.y);
         }
+      }
 
-        if(shift.z > positive_shift.z)
+      if( abs(shift.z)>1)
+      {
+        if(shift.z > g_positive_shift.z)
         {
-          positive_shift.z = shift.z;
+          g_positive_shift.z = shift.z;
+//          printf("positive_shift_z:%f;",g_positive_shift.z);
         }
-        else if(shift.z < negative_shift.z)
+        else if(shift.z < g_negative_shift.z)
         {
-          negative_shift.z = shift.z;
+          g_negative_shift.z = shift.z;
+//          printf("negative_shift_z:%f;",g_negative_shift.z);
         }
       }
     }
+
   }
 }
 
@@ -247,10 +260,27 @@ void RollingDetShift(float3 positive_shift, float3 negative_shift, Image<float> 
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
+  // set shift to 0
+  positive_shift = make_float3(0,0,0);
+  negative_shift = make_float3(0,0,0);
+
+  cudaMemcpyToSymbol(g_positive_shift,&positive_shift,sizeof(positive_shift),0,cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
+  GpuCheckErrors();
+
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
-  KernRollingSdfGridDetect<<<gridDim,blockDim>>>(positive_shift, negative_shift, depth, T_wc, K);
+  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
   GpuCheckErrors();
+
+  //  cudaMemcpy(&positive_shift,&g_positive_shift,sizeof(positive_shift),cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
+  GpuCheckErrors();
+
+//  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
+//         positive_shift.x,positive_shift.y,positive_shift.z,
+//         negative_shift.x,negative_shift.y,negative_shift.z);
 
   g_vol.FreeMemory();
 }
