@@ -250,6 +250,14 @@ public:
     return deriv / VoxelSizeUnits();
   }
 
+
+  inline __device__
+  float3 GetShiftValue(float3 pos_w) const
+  {
+    /// get pose of voxel in whole sdf, in %
+    return (pos_w - m_bbox.Min()) / (m_bbox.Size());
+  }
+
   // ============================================================================
   inline __device__ __host__
   unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
