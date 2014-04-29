@@ -33,13 +33,21 @@ public:
     // init grid sdf
     if(n_w == n_h && n_h == n_d)
     {
-      m_w             = n_w;
-      m_h             = n_h;
-      m_d             = n_d;
+      m_w              = n_w;
+      m_h              = n_h;
+      m_d              = n_d;
 
-      m_bbox          = r_bbox;
+      m_bbox           = r_bbox;
       m_nVolumeGridRes = n_res;
       m_nWholeGridRes  = m_w/m_nVolumeGridRes;
+
+      if(m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes > 4096)
+      {
+        printf("[GridSDF/init] fatal error, overflow! Max allow 4096, request %d .\n",
+               m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes);
+        printf("Please reset VOL res and VOL_GRID_RES parameters!!!");
+        exit(-1);
+      }
 
       m_shift = make_int3(0,0,0);
     }
@@ -156,9 +164,9 @@ public:
              int(floorf(x/m_nVolumeGridRes)),
              int(floorf(y/m_nVolumeGridRes)),
              int(floorf(z/m_nVolumeGridRes)),
-             m_nWholeGridRes,
-             m_nWholeGridRes,
-             m_nWholeGridRes);
+             m_nWholeGridRes-1,
+             m_nWholeGridRes-1,
+             m_nWholeGridRes-1);
     }
 
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
@@ -484,8 +492,9 @@ public:
   unsigned int                                m_nWholeGridRes;    // resolution of a whole grid in one dim. usually 4, 8, 16
 
   // volume that save all data
-  VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[1024];
-  int                                         m_NextInitBasicSDFs[1024];  // an array that record basic SDFs we want to init
+  // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.
+  VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[4096];
+  int                                         m_NextInitBasicSDFs[4096];  // an array that record basic SDFs we want to init
 };
 
 
