@@ -251,7 +251,7 @@ __global__ void KernDetectRollingSdfShift(
 }
 
 
-void RollingDetShift(float3 positive_shift, float3 negative_shift, Image<float> depth,
+void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float> depth,
                      const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
                      const Mat<float,3,4> T_wc, ImageIntrinsics K)
 {

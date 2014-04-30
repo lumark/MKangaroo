@@ -15,8 +15,7 @@ void SdfResetPartial(BoundedVolume<SDF_t> vol, float3 shift);
 void RollingGridSdfCuda(BoundedVolume<SDF_t> vol, float3 shift);
 
 // get shift param for rolling sdf
-void RollingDetShift(float3 positive_shift, float3 negative_shift, Image<float> depth,
+void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float> depth,
                      const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
                      const Mat<float,3,4> T_wc, ImageIntrinsics K);
-
 }
