@@ -4,7 +4,6 @@
 #include "BoundingBox.h"
 #include "Sdf.h"
 
-
 namespace roo
 {
 
@@ -85,7 +84,9 @@ public:
                           int(floorf(y/m_nVolumeGridRes)),
                           int(floorf(z/m_nVolumeGridRes)) );
 
-    if(m_GridVolumes[nIndex].d !=m_nVolumeGridRes)
+    if(m_GridVolumes[nIndex].d !=m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].h !=m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].w !=m_nVolumeGridRes)
     {
       m_GridVolumes[nIndex].InitVolume(m_nVolumeGridRes,
                                        m_nVolumeGridRes,
@@ -97,7 +98,9 @@ public:
   inline __host__
   bool InitSingleBasicSDFWithIndex(int nIndex)
   {
-    if( m_GridVolumes[nIndex].d !=m_nVolumeGridRes )
+    if( m_GridVolumes[nIndex].d !=m_nVolumeGridRes &&
+        m_GridVolumes[nIndex].h !=m_nVolumeGridRes &&
+        m_GridVolumes[nIndex].w !=m_nVolumeGridRes)
     {
       m_GridVolumes[nIndex].InitVolume(m_nVolumeGridRes,
                                        m_nVolumeGridRes,
@@ -123,8 +126,7 @@ public:
   inline __device__ __host__
   float3 VoxelSizeUnits() const
   {
-    return m_bbox.Size() /
-        make_float3( m_w-1, m_h-1, m_d-1 );
+    return m_bbox.Size() / make_float3( m_w-1, m_h-1, m_d-1 );
   }
 
   //////////////////////////////////////////////////////
@@ -139,7 +141,9 @@ public:
 
     for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
-      if(m_GridVolumes[i].d == m_nVolumeGridRes)
+      if(m_GridVolumes[i].d !=m_nVolumeGridRes &&
+         m_GridVolumes[i].h !=m_nVolumeGridRes &&
+         m_GridVolumes[i].w !=m_nVolumeGridRes)
       {
         nNum ++;
       }
@@ -159,8 +163,10 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("basic sdf does not exist. shift x is %d; x=%d,y=%d,z=%d. Max index (x,y,z)=(%d,%d,%d)\n",
+      printf("Fatal Error!!!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
              m_shift.x,
+             m_shift.y,
+             m_shift.z,
              int(floorf(x/m_nVolumeGridRes)),
              int(floorf(y/m_nVolumeGridRes)),
              int(floorf(z/m_nVolumeGridRes)),
@@ -365,9 +371,9 @@ public:
     const float3 vol_size = m_bbox.Size();
 
     return make_float3(
-          m_bbox.Min().x + vol_size.x*x/(float)(m_w-1),
-          m_bbox.Min().y + vol_size.y*y/(float)(m_h-1),
-          m_bbox.Min().z + vol_size.z*z/(float)(m_d-1)
+          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
+          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
+          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
           );
   }
 
@@ -391,7 +397,16 @@ public:
   {
     for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
-      cudaFree( m_GridVolumes[i].ptr );
+      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
+         m_GridVolumes[i].h == m_nVolumeGridRes &&
+         m_GridVolumes[i].w == m_nVolumeGridRes)
+      {
+        m_GridVolumes[i].d=0;
+        m_GridVolumes[i].w=0;
+        m_GridVolumes[i].h=0;
+        cudaFree( m_GridVolumes[i].ptr );
+      }
+
     }
   }
 
