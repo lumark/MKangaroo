@@ -42,9 +42,9 @@ public:
 
       if(m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes > 4096)
       {
-        printf("[GridSDF/init] fatal error, overflow! Max allow 4096, request %d .\n",
+        printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
                m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes);
-        printf("Please reset VOL res and VOL_GRID_RES parameters!!!");
+        printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
         exit(-1);
       }
 
@@ -52,7 +52,7 @@ public:
     }
     else
     {
-      printf("[BoundedVolumeGrid] Fatal error! Only support cube SDF (n*n*n)!\n");
+      printf("[BoundedVolumeGrid/init] Fatal error! Only support cube SDF with (n*n*n) size!\n");
       exit(-1);
     }
   }
@@ -274,7 +274,6 @@ public:
       return  nIndex;
     }
 
-
     // for x
     if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes)
     {
@@ -415,7 +414,7 @@ public:
   {
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[BoundedVolumeGrid] fatal error! pointer being free must be allocate first!!\n");
+      printf("[BoundedVolumeGrid] fatal error! Single GridSDF being free must be allocate first!!\n");
       exit(-1);
     }
 
@@ -511,8 +510,8 @@ public:
   // bounding box ofbounded volume grid
   BoundingBox                                 m_bbox;
 
-  unsigned int                                m_nVolumeGridRes;   // resolution of a single grid in one dim.
-  unsigned int                                m_nWholeGridRes;    // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nVolumeGridRes;            // resolution of a single grid in one dim.
+  unsigned int                                m_nWholeGridRes;             // resolution of a whole grid in one dim. usually 4, 8, 16
 
   // volume that save all data
   // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.

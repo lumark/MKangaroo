@@ -39,6 +39,13 @@ void SdfFuseDirectGreyGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice,
                            ImageIntrinsics Kdepth, Image<float> grey, Mat<float,3,4> T_iw,
                            ImageIntrinsics Krgb, float trunc_dist, float max_w, float mincostheta);
 
+void SdfFuseDirectGreyGridSafe(
+    BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
+    BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
+    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta
+    );
 
 // -----------------------------------------------------------------------------
 // the following function combine init and fuse together, save time
