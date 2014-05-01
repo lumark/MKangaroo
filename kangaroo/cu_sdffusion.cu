@@ -554,18 +554,29 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
                                       int(floorf(y/g_vol.m_nVolumeGridRes)),
                                       int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta && g_vol.CheckIfBasicSDFActive(nIndex)==true )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
-            const SDF_t curvol = g_vol(x,y,z);
+            if(g_vol.CheckIfBasicSDFActive(nIndex)==true )
+            {
+              const SDF_t curvol = g_vol(x,y,z);
 
-            // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
-            SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
-            sdf += curvol;
-            sdf.LimitWeight(max_w);
+              // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
+              SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
+              sdf += curvol;
+              sdf.LimitWeight(max_w);
 
-            /// set val
-            g_vol(x, y, z) = sdf;
-            g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+              /// set val
+              g_vol(x, y, z) = sdf;
+              g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+            }
+            else
+            {
+              printf("[KernSdfFuseDirectGreyGridSafe] warnning!!! skip %d,%d,%d when fusing!!!\n",
+                     int(floorf(x/g_vol.m_nVolumeGridRes)),
+                     int(floorf(y/g_vol.m_nVolumeGridRes)),
+                     int(floorf(z/g_vol.m_nVolumeGridRes)) );
+            }
+
           }
         }
       }
