@@ -79,17 +79,17 @@ void SavePXM(const std::string filename, const roo::BoundedVolumeGrid<T,roo::Tar
 /////////////////////////////////////////////////////////////////////////////
 // Load Volume types
 /////////////////////////////////////////////////////////////////////////////
-
 template<typename T>
-bool LoadPXM(std::ifstream& bFile, roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
+bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
 {
-  // Parse header
+  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
 
-  std::string ppm_type = "";
-  int num_colors = 0;
-  int w = 0;
-  int h = 0;
-  int d = 0;
+  // Parse header
+  std::string ppm_type = "P5";
+  int num_colors = 255;
+  int w = 32;
+  int h = 32;
+  int d = 32;
 
   bFile >> ppm_type;
   bFile >> w;
@@ -101,31 +101,28 @@ bool LoadPXM(std::ifstream& bFile, roo::VolumeGrid<T,roo::TargetHost,roo::Manage
   bool success = !bFile.fail() && w > 0 && h > 0 && d > 0;
 
   if(success) {
-    // Make sure vol is empty
-    roo::Manage::Cleanup<T,roo::TargetHost>(vol.ptr);
+//    vol.w = w; vol.h = h; vol.d = d;
 
-    // Allocate memory
-    roo::TargetHost::AllocatePitchedMem<T>(&vol.ptr,&vol.pitch,&vol.img_pitch,w,h,d);
-    vol.w = w; vol.h = h; vol.d = d;
+    printf("before loading..\n");
 
     // Read in data
     for(size_t d=0; d<vol.d; ++d) {
       for(size_t r=0; r<vol.h; ++r) {
+        printf("try to load..\n");
         bFile.read( (char*)vol.RowPtr(r,d), vol.w * sizeof(T) );
+        printf("finish read single element..\n");
       }
     }
     success = !bFile.fail();
   }
+  else
+  {
+    bFile.close();
+    return false;
+  }
+
   bFile.close();
-
-  return success;
-}
-
-template<typename T>
-bool LoadPXM(const std::string filename, roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
-{
-  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
-  return LoadPXM<T>(bFile,vol);
+  return true;
 }
 
 template<typename T>
@@ -143,39 +140,38 @@ bool LoadPXM(const std::string filename, roo::BoundedVolumeGrid<T,roo::TargetHos
   return LoadPXM<T>(bFile,vol);
 }
 
-template<typename T>
-bool LoadPXM(const std::string filename, roo::VolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
-{
-  roo::VolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  bool success = LoadPXM(filename, hvol);
-
-  if(success) {
-    roo::Manage::Cleanup<T,roo::TargetDevice>(vol.ptr);
-
-    roo::TargetDevice::AllocatePitchedMem<T>(&vol.ptr,&vol.pitch,&vol.img_pitch,hvol.w,hvol.h,hvol.d);
-    vol.w = hvol.w; vol.h = hvol.h; vol.d = hvol.d;
-
-    vol.CopyFrom(hvol);
-  }
-  return success;
-}
 
 template<typename T>
-bool LoadPXM(const std::string filename, roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
+bool LoadPXMGrid(string sDirName, const std::vector<std::string>& vfilename, roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol, roo::BoundingBox& rBBox)
 {
-  roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage> hvol;
-  bool success = LoadPXM(filename, hvol);
+  // init sdf
+  vol.init(256,256,256,32,rBBox);
 
-  if(success) {
-    //        roo::Manage::Cleanup<T,roo::TargetDevice>(vol.ptr);
+  // read bb box..
 
-    //        roo::TargetDevice::AllocatePitchedMem<T>(&vol.ptr,&vol.pitch,&vol.img_pitch,hvol.m_w,hvol.m_h,hvol.m_d);
-    vol.m_w = hvol.m_w; vol.m_h = hvol.m_h; vol.m_d = hvol.m_d;
-    printf("Try to load BoundedVolumeGrid\n");
-    vol.CopyAndInitFrom(hvol);
-    vol.m_bbox = hvol.m_bbox;
+  // load each single VolumeGrid
+  for(int i=0;i!=vfilename.size();i++)
+  {
+    // get index from file name
+    std::string sFileName = vfilename[i];
+    std::string sIndex = sFileName.substr(sFileName.find_last_of("-")+1, sFileName.size() - sFileName.find_last_of("-"));
+
+    int nIndex = std::atoi(sIndex.c_str());
+    vol.InitSingleBasicSDFWithIndex(nIndex);
+
+    std::cout<<"try to read single sdf with index "<<nIndex<<endl;
+    if(LoadPXMSingleGrid(sDirName+ sFileName, vol.m_GridVolumes[i]) == false)
+    {
+      std::cout<<"fatal error! cannot read single volume grid "<<sFileName<<" with index "<<nIndex<<endl;
+      exit(-1);
+    }
+    else
+    {
+      std::cout<<"read single sdf with index "<<nIndex<<" success. "<<endl;
+    }
   }
-  return success;
+
+  return true;
 }
 
 
