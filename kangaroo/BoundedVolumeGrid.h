@@ -391,6 +391,22 @@ public:
     }
   }
 
+
+  inline __host__
+  void CopyAndInitFrom(BoundedVolumeGrid<T, Target , Management>& rVol )
+  {
+    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      if(rVol.CheckIfBasicSDFActive(i)== true)
+      {
+        if(InitSingleBasicSDFWithIndex(i)==true)
+        {
+          m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+        }
+      }
+    }
+  }
+
   inline __host__
   void FreeMemory()
   {

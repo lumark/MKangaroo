@@ -1125,6 +1125,8 @@ void SdfFuseColor(
 // Reset SDF
 //////////////////////////////////////////////////////
 
+
+
 void SdfReset(BoundedVolume<SDF_t> vol, float trunc_dist)
 {
   vol.Fill(SDF_t(0.0/0.0, 0));
@@ -1150,9 +1152,30 @@ void SdfReset(VolumeGrid<float,roo::TargetDevice, roo::Manage> vol)
   vol.Fill(0.5);
 }
 
+void SdfReset(BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> vol)
+{
+  for(unsigned int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  {
+    // reset for each valid rolling grid sdf
+    if(vol.CheckIfBasicSDFActive(i)==true)
+    {
+      roo::SdfReset(vol.m_GridVolumes[i]);
+    }
+  }
+}
 
 
-
+void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetDevice, roo::Manage> vol)
+{
+  for(unsigned int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  {
+    // reset for each valid rolling grid sdf
+    if(vol.CheckIfBasicSDFActive(i)==true)
+    {
+      roo::SdfReset(vol.m_GridVolumes[i]);
+    }
+  }
+}
 
 
 //////////////////////////////////////////////////////
