@@ -459,6 +459,7 @@ public:
         }
 
         m_GridVolumes[i].MemcpyFromHost(rVol.m_GridVolumes[i]);
+        printf("copy data for index %d from host success.\n",i);
         GpuCheckErrors();
       }
     }

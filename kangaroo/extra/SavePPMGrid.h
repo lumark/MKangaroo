@@ -58,17 +58,27 @@ void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetDevi
 
 
 template<typename T, typename Manage>
-void SavePXM(const std::string filename, const roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(const std::string filename,
+             roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>& vol,
+             roo::BoundingBox&                                        rBBox,
+             std::string ppm_type = "P5",
+             int num_colors = 255)
 {
+  // load data from device to host
+  roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
+  hvol.init(256,256,256,32,rBBox);
+
+  hvol.CopyAndInitFrom(vol);
+
   // save each active volume in BoundedVolumeGrid
   for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
   {
-    if(vol.CheckIfBasicSDFActive(i)==true)
+    if(hvol.CheckIfBasicSDFActive(i)==true)
     {
       // save
       string sFileName = filename + "-" + std::to_string(i);
       std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
-      SavePXM<T,Manage>(bFile,vol.m_GridVolumes[i],ppm_type,num_colors);
+      SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i],ppm_type,num_colors);
       std::cout<<"[Kangaroo/SavePXMGrid] save grid sdf "<<sFileName<<" success."<<endl;
     }
   }
@@ -102,7 +112,7 @@ bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::Target
   bool success = !bFile.fail() && w > 0 && h > 0 && d > 0;
 
   if(success) {
-//    vol.w = w; vol.h = h; vol.d = d;
+    //    vol.w = w; vol.h = h; vol.d = d;
 
     // Read in data
     for(size_t d=0; d<vol.d; ++d) {
