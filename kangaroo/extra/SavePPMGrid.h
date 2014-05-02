@@ -18,10 +18,10 @@
 template<typename T, typename Manage>
 void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
 {
-  printf("[SavePXM] saving single volume grid...\n");
   bFile << ppm_type << std::endl;
   bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
   bFile << num_colors << '\n';
+
   for(unsigned int d=0; d<vol.d; ++d) {
     for(unsigned int r=0; r<vol.h; ++r) {
       bFile.write( (const char*)vol.RowPtr(r,d), vol.w * sizeof(T) );
@@ -37,6 +37,7 @@ void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetHost
   SavePXM<T,Manage>(bFile, vol, ppm_type, num_colors);
 }
 
+
 template<typename T, typename Manage>
 void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
 {
@@ -45,7 +46,6 @@ void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetDevice,Man
   hvol.CopyFrom(vol);
   SavePXM(bFile, hvol, ppm_type, num_colors);
 }
-
 
 
 template<typename T, typename Manage>
@@ -60,17 +60,15 @@ void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetDevi
 template<typename T, typename Manage>
 void SavePXM(const std::string                                      filename,
              roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   vol,
-             roo::BoundingBox&                                      rBBox,
              std::string                                            ppm_type = "P5",
              int                                                    num_colors = 255)
 {
   // load data from device to host
   roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
-  hvol.init(256,256,256,32,rBBox);
-
+  hvol.init(vol.m_w,vol.m_h,vol.m_d,vol.m_nVolumeGridRes,vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
-  // save each active volume in BoundedVolumeGrid
+  // save each active volume in BoundedVolumeGrid to HardDisk
   for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
   {
     if(hvol.CheckIfBasicSDFActive(i)==true)
@@ -79,7 +77,7 @@ void SavePXM(const std::string                                      filename,
       string sFileName = filename + "-" + std::to_string(i);
       std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
       SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i],ppm_type,num_colors);
-      std::cout<<"[Kangaroo/SavePXMGrid] save grid sdf "<<sFileName<<" success."<<endl;
+      std::cout<<"[Kangaroo/SavePXMGrid] Save grid sdf "<<sFileName<<" success."<<endl;
     }
   }
 }
@@ -97,10 +95,10 @@ bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::Target
 
   // Parse header
   std::string ppm_type = "P5";
-  int num_colors = 255;
-  int w = 32;
-  int h = 32;
-  int d = 32;
+  int num_colors = 0;
+  int w = 0;
+  int h = 0;
+  int d = 0;
 
   bFile >> ppm_type;
   bFile >> w;
@@ -112,11 +110,15 @@ bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::Target
   bool success = !bFile.fail() && w > 0 && h > 0 && d > 0;
 
   if(success) {
-    //    vol.w = w; vol.h = h; vol.d = d;
+    // init volume grid
+    vol.InitVolume(w,h,d);
+    GpuCheckErrors();
 
     // Read in data
-    for(size_t d=0; d<vol.d; ++d) {
-      for(size_t r=0; r<vol.h; ++r) {
+    for(size_t d=0; d<vol.d; ++d)
+    {
+      for(size_t r=0; r<vol.h; ++r)
+      {
         bFile.read( (char*)vol.RowPtr(r,d), vol.w * sizeof(T) );
       }
     }
@@ -127,6 +129,8 @@ bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::Target
     bFile.close();
     return false;
   }
+
+  printf("[LoadPXMSingleGrid] Load Single Grid with resolution: (%d,%d,%d) and color: %d success!\n",w,h,d,num_colors);
 
   bFile.close();
   return true;
@@ -144,25 +148,26 @@ bool LoadPXM(const std::string filename, roo::BoundedVolumeGrid<T,roo::TargetHos
   bFile >> vol.m_bbox.boxmax.y;
   bFile >> vol.m_bbox.boxmax.z;
   bFile.ignore(1,'\n');
+  printf("load bounding box success. Min_x:%f,Max_x:\n",vol.m_bbox.boxmin.x,vol.m_bbox.boxmax.x);
+
   return LoadPXM<T>(bFile,vol);
 }
 
 
 template<typename T>
 bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilename,
-                 roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol,
-                 roo::BoundingBox&                                        rBBox)
+                 roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
 {
   // to load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
 
   // init sdf
-  hvol.init(vol.m_w, vol.m_h,vol.m_d,vol.m_nVolumeGridRes,rBBox);
+  hvol.init(vol.m_w, vol.m_h,vol.m_d,vol.m_nVolumeGridRes,vol.m_bbox);
 
   // read bb box..
   int nNum = 0;
 
-  printf("[LoadPXMGrid] Try to copy data from disk to host.., available gpu memory is %d.\n", GetAvailableGPUMemory());
+  printf("[LoadPXMGrid] Try to copy data from disk to host, available gpu memory is %d.\n", GetAvailableGPUMemory());
 
   // load each single VolumeGrid
   for(int i=0;i!=vfilename.size();i++)
@@ -173,35 +178,26 @@ bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilen
 
     int nIndex = std::atoi(sIndex.c_str());
 
-    // init and read grid sdf
-    if(hvol.InitSingleBasicSDFWithIndex(nIndex) == true)
+    if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[nIndex]) == false)
     {
-      if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[i]) == false)
-      {
-        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
-                   " with index "<<nIndex<<" from hard disk."<<endl;
-        exit(-1);
-      }
-      else
-      {
-        nNum ++;
-      }
+      std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
+                 " with index "<<nIndex<<" from hard disk."<<endl;
+      exit(-1);
     }
     else
     {
-      std::cout<<"fatal error! cannot init single volume grid "<<sFileName<<" with index "<<nIndex<<" whole grid res is "<<hvol.m_nWholeGridRes<<endl;
-      exit(-1);
+      nNum ++;
     }
   }
 
   //
-  printf("Finish load %d sdf to host. Available GPU memory is %d, Now copy it to device..\n",nNum, GetAvailableGPUMemory());
+  printf("[LoadPXMGrid] Finish load %d sdf to host. Available GPU memory is %d, Now copy it to device..\n",nNum, GetAvailableGPUMemory());
 
   // copy data from host to device
   vol.CopyAndInitFrom(hvol);
   GpuCheckErrors();
 
-  printf("finish read data to device. Available memory is %d\n",GetAvailableGPUMemory());
+  printf("[LoadPXMGrid] Finish read data to device. Available memory is %d\n",GetAvailableGPUMemory());
 
   return true;
 }

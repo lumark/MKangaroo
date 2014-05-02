@@ -64,14 +64,14 @@ public:
   {
     for(int i=0;i!=4096;i++)
     {
-      if(CheckIfBasicSDFActive(i)==true)
-      {
+//      if(CheckIfBasicSDFActive(i)==true)
+//      {
         m_GridVolumes[i].d = 0;
         m_GridVolumes[i].w = 0;
         m_GridVolumes[i].h = 0;
 //        m_GridVolumes[i].CleanUp();
 //        GpuCheckErrors();
-      }
+//      }
     }
   }
 
@@ -109,6 +109,7 @@ public:
       m_GridVolumes[nIndex].InitVolume(m_nVolumeGridRes,
                                        m_nVolumeGridRes,
                                        m_nVolumeGridRes);
+      GpuCheckErrors();
     }
   }
 
@@ -123,6 +124,8 @@ public:
       m_GridVolumes[nIndex].InitVolume(m_nVolumeGridRes,
                                        m_nVolumeGridRes,
                                        m_nVolumeGridRes);
+      GpuCheckErrors();
+
       return true;
     }
     return false;
@@ -446,12 +449,12 @@ public:
 
 
   inline __host__
-  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
+  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
   {
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
       // skip void volum grid
-      if(rVol.CheckIfBasicSDFActive(i)== true)
+      if(rHVol.CheckIfBasicSDFActive(i)== true)
       {
         if(CheckIfBasicSDFActive(i)==false)
         {
@@ -460,9 +463,13 @@ public:
             printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
             exit(-1);
           }
+          else
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Init New grid sdf %d\n",i);
+          }
         }
 
-        m_GridVolumes[i].MemcpyFromHost(rVol.m_GridVolumes[i]);
+        m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
         GpuCheckErrors();
       }
     }
