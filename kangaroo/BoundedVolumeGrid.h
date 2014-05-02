@@ -3,6 +3,7 @@
 #include "VolumeGrid.h"
 #include "BoundingBox.h"
 #include "Sdf.h"
+#include "launch_utils.h"
 
 namespace roo
 {
@@ -48,12 +49,28 @@ public:
         exit(-1);
       }
 
+      ResetAllGridVol();
       m_shift = make_int3(0,0,0);
     }
     else
     {
       printf("[BoundedVolumeGrid/init] Fatal error! Only support cube SDF with (n*n*n) size!\n");
       exit(-1);
+    }
+  }
+
+  inline __host__
+  void ResetAllGridVol()
+  {
+    for(int i=0;i!=4096;i++)
+    {
+      if(CheckIfBasicSDFActive(i)==true)
+      {
+        m_GridVolumes[i].d = 0;
+        m_GridVolumes[i].w = 0;
+        m_GridVolumes[i].h = 0;
+        m_GridVolumes[i].CleanUp();
+      }
     }
   }
 
@@ -107,7 +124,6 @@ public:
                                        m_nVolumeGridRes);
       return true;
     }
-
     return false;
   }
 
@@ -163,7 +179,7 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("Fatal Error!!!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
+      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
              m_shift.x,
              m_shift.y,
              m_shift.z,
@@ -383,7 +399,7 @@ public:
   }
 
   inline __host__
-  void CopyFrom(BoundedVolumeGrid<T, Target , Management>& rVol )
+  void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
   {
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
@@ -393,16 +409,56 @@ public:
 
 
   inline __host__
-  void CopyAndInitFrom(BoundedVolumeGrid<T, Target , Management>& rVol )
+  void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
   {
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
+      m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+    }
+  }
+
+
+  inline __host__
+  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
+  {
+    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      // skip void volum grid
       if(rVol.CheckIfBasicSDFActive(i)== true)
       {
-        if(InitSingleBasicSDFWithIndex(i)==true)
+        if(CheckIfBasicSDFActive(i)==false)
         {
-          m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+          if(InitSingleBasicSDFWithIndex(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] fatal error! cannot init grid sdf!!\n");
+            exit(-1);
+          }
         }
+        m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+      }
+    }
+  }
+
+
+  inline __host__
+  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
+  {
+    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      // skip void volum grid
+      if(rVol.CheckIfBasicSDFActive(i)== true)
+      {
+        if(CheckIfBasicSDFActive(i)==false)
+        {
+          if(InitSingleBasicSDFWithIndex(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] fatal error! cannot init grid sdf!!\n");
+            exit(-1);
+          }
+        }
+        m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+        printf("copy data success..\n");
+        GpuCheckErrors();
       }
     }
   }
@@ -531,7 +587,7 @@ public:
 
   // volume that save all data
   // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.
-  VolumeGrid<T, TargetDevice, Manage>         m_GridVolumes[4096];
+  VolumeGrid<T, Target, Manage>               m_GridVolumes[4096];
   int                                         m_NextInitBasicSDFs[4096];  // an array that record basic SDFs we want to init
 };
 

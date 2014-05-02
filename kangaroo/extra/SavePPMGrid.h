@@ -18,6 +18,7 @@
 template<typename T, typename Manage>
 void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
 {
+  printf("[SavePXM] saving file...\n");
   bFile << ppm_type << std::endl;
   bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
   bFile << num_colors << '\n';
@@ -80,7 +81,7 @@ void SavePXM(const std::string filename, const roo::BoundedVolumeGrid<T,roo::Tar
 // Load Volume types
 /////////////////////////////////////////////////////////////////////////////
 template<typename T>
-bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
+bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
 
@@ -103,14 +104,10 @@ bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::Target
   if(success) {
 //    vol.w = w; vol.h = h; vol.d = d;
 
-    printf("before loading..\n");
-
     // Read in data
     for(size_t d=0; d<vol.d; ++d) {
       for(size_t r=0; r<vol.h; ++r) {
-        printf("try to load..\n");
         bFile.read( (char*)vol.RowPtr(r,d), vol.w * sizeof(T) );
-        printf("finish read single element..\n");
       }
     }
     success = !bFile.fail();
@@ -142,12 +139,20 @@ bool LoadPXM(const std::string filename, roo::BoundedVolumeGrid<T,roo::TargetHos
 
 
 template<typename T>
-bool LoadPXMGrid(string sDirName, const std::vector<std::string>& vfilename, roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol, roo::BoundingBox& rBBox)
+bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilename,
+                 roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol,
+                 roo::BoundingBox& rBBox)
 {
+  // to load it from disk, we need to use host volume
+  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
+
   // init sdf
-  vol.init(256,256,256,32,rBBox);
+  hvol.init(256,256,256,32,rBBox);
 
   // read bb box..
+  int nNum = 0;
+
+  printf("[LoadPXMGrid] Try to copy data from disk to host.., available memory is %d.\n", GetAvailableGPUMemory());
 
   // load each single VolumeGrid
   for(int i=0;i!=vfilename.size();i++)
@@ -157,19 +162,37 @@ bool LoadPXMGrid(string sDirName, const std::vector<std::string>& vfilename, roo
     std::string sIndex = sFileName.substr(sFileName.find_last_of("-")+1, sFileName.size() - sFileName.find_last_of("-"));
 
     int nIndex = std::atoi(sIndex.c_str());
-    vol.InitSingleBasicSDFWithIndex(nIndex);
 
-    std::cout<<"try to read single sdf with index "<<nIndex<<endl;
-    if(LoadPXMSingleGrid(sDirName+ sFileName, vol.m_GridVolumes[i]) == false)
+    // init and read grid sdf
+    if(hvol.InitSingleBasicSDFWithIndex(nIndex) == true)
     {
-      std::cout<<"fatal error! cannot read single volume grid "<<sFileName<<" with index "<<nIndex<<endl;
-      exit(-1);
+      if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[i]) == false)
+      {
+        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<" with index "<<nIndex<<" from hard disk."<<endl;
+        exit(-1);
+      }
+      else
+      {
+        nNum ++;
+      }
     }
     else
     {
-      std::cout<<"read single sdf with index "<<nIndex<<" success. "<<endl;
+      std::cout<<"fatal error! cannot init single volume grid "<<sFileName<<" with index "<<nIndex<<" whole grid res is "<<hvol.m_nWholeGridRes<<endl;
+      exit(-1);
     }
   }
+
+  //
+  printf("finish read data to host. Available memory is %d, Now copy it to device..\n",GetAvailableGPUMemory());
+  printf("finish load grid sdf! Total loading sdf num is %d\n",nNum);
+
+  // copy data from host to device
+//  vol.CopyAndInitFrom(hvol);
+  cudaMemcpyToSymbol(&vol, &hvol, sizeof(hvol), size_t(0), cudaMemcpyHostToDevice);
+  GpuCheckErrors();
+
+  printf("finish read data to device. Available memory is %d\n",GetAvailableGPUMemory());
 
   return true;
 }

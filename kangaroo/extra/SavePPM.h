@@ -3,8 +3,10 @@
 #include <kangaroo/Image.h>
 #include <kangaroo/Volume.h>
 #include <kangaroo/BoundedVolume.h>
+#include <kangaroo/extra/GetAvailableMemory.h>
 
 #include <iostream>
+#include <fstream>      // std::ifstream
 
 // P1	Portable bitmap	ASCII
 // P2	Portable graymap	ASCII
