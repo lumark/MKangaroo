@@ -170,6 +170,9 @@ public:
   }
 
 
+  //////////////////////////////////////////////////////
+  // Access Elements
+  //////////////////////////////////////////////////////
 
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
@@ -340,8 +343,6 @@ public:
       }
     }
 
-
-
     // for z
     if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes)
     {
@@ -373,7 +374,6 @@ public:
   }
 
 
-
   inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
   {
@@ -399,22 +399,25 @@ public:
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
+
+  //////////////////////////////////////////////////////
+  // Memory copy and free
+  //////////////////////////////////////////////////////
   inline __host__
   void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
   {
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
-      m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
     }
   }
-
 
   inline __host__
   void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
   {
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
-      m_GridVolumes[i].MemcpyFromHost(rVol.m_GridVolumes[i]);
+      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
     }
   }
 
@@ -431,11 +434,12 @@ public:
         {
           if(InitSingleBasicSDFWithIndex(i)==false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] fatal error! cannot init grid sdf!!\n");
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
             exit(-1);
           }
         }
-        m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+        GpuCheckErrors();
       }
     }
   }
@@ -453,13 +457,12 @@ public:
         {
           if(InitSingleBasicSDFWithIndex(i)==false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] fatal error! cannot init grid sdf!!\n");
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
             exit(-1);
           }
         }
 
         m_GridVolumes[i].MemcpyFromHost(rVol.m_GridVolumes[i]);
-        printf("copy data for index %d from host success.\n",i);
         GpuCheckErrors();
       }
     }

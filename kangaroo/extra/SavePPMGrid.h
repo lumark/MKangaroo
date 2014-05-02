@@ -18,7 +18,7 @@
 template<typename T, typename Manage>
 void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
 {
-  printf("[SavePXM] saving file...\n");
+  printf("[SavePXM] saving single volume grid...\n");
   bFile << ppm_type << std::endl;
   bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
   bFile << num_colors << '\n';
@@ -58,11 +58,11 @@ void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetDevi
 
 
 template<typename T, typename Manage>
-void SavePXM(const std::string filename,
-             roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>& vol,
-             roo::BoundingBox&                                        rBBox,
-             std::string ppm_type = "P5",
-             int num_colors = 255)
+void SavePXM(const std::string                                      filename,
+             roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   vol,
+             roo::BoundingBox&                                      rBBox,
+             std::string                                            ppm_type = "P5",
+             int                                                    num_colors = 255)
 {
   // load data from device to host
   roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
@@ -157,7 +157,7 @@ bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilen
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
 
   // init sdf
-  hvol.init(256,256,256,32,rBBox);
+  hvol.init(vol.m_w, vol.m_h,vol.m_d,vol.m_nVolumeGridRes,rBBox);
 
   // read bb box..
   int nNum = 0;
@@ -178,7 +178,8 @@ bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilen
     {
       if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[i]) == false)
       {
-        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<" with index "<<nIndex<<" from hard disk."<<endl;
+        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
+                   " with index "<<nIndex<<" from hard disk."<<endl;
         exit(-1);
       }
       else
@@ -194,7 +195,7 @@ bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilen
   }
 
   //
-  printf("finish read data to host. Total loading sdf num is %d, Available GPU memory is %d, Now copy it to device..\n",nNum, GetAvailableGPUMemory());
+  printf("Finish load %d sdf to host. Available GPU memory is %d, Now copy it to device..\n",nNum, GetAvailableGPUMemory());
 
   // copy data from host to device
   vol.CopyAndInitFrom(hvol);

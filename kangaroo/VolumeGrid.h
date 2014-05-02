@@ -44,19 +44,20 @@ struct VolumeGrid
 
     //    Management::AllocateCheck();
     Target::template AllocatePitchedMem<T>(&ptr,&pitch,&img_pitch,w,h,d);
+
   }
 
 
   //////////////////////////////////////////////////////
   // VolumeGrid / set copy
   //////////////////////////////////////////////////////
-
   inline __host__
   void Memset(unsigned char v = 0)
   {
     cudaMemset(ptr,v,pitch*h*d);
   }
 
+  // the following allows us to copy memory from device or host
   template<typename TargetFrom, typename ManagementFrom>
   inline __host__
   void CopyFrom(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
@@ -69,20 +70,6 @@ struct VolumeGrid
     cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), TargetCopyKind<Target,TargetFrom>() );
   }
 
-
-  template<typename TargetFrom, typename ManagementFrom>
-  inline __host__
-  void MemcpyFromDevice(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
-  {
-    cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), cudaMemcpyDeviceToDevice);
-  }
-
-  template<typename TargetFrom, typename ManagementFrom>
-  inline __host__
-  void MemcpyFromHost(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
-  {
-    cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), TargetCopyKind<Target,TargetFrom>() );
-  }
 
   template <typename DT>
   inline __host__
