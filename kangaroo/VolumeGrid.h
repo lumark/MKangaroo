@@ -72,21 +72,16 @@ struct VolumeGrid
 
   template<typename TargetFrom, typename ManagementFrom>
   inline __host__
-  void CopyFromHost(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
+  void MemcpyFromDevice(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
   {
-    // If these VolumeGrids don't have the same height, or have an image pitch different from their height,
-    // we need to do a copy for each depth layer.
-    assert(w == img.w);
-    assert(h == img.h);
-    assert(img_pitch == img.img_pitch);
     cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), cudaMemcpyDeviceToDevice);
   }
 
   template<typename TargetFrom, typename ManagementFrom>
   inline __host__
-  void MemcpyFromDevice(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
+  void MemcpyFromHost(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
   {
-    cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), cudaMemcpyDeviceToDevice);
+    cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), TargetCopyKind<Target,TargetFrom>() );
   }
 
   template <typename DT>

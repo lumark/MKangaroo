@@ -69,7 +69,8 @@ public:
         m_GridVolumes[i].d = 0;
         m_GridVolumes[i].w = 0;
         m_GridVolumes[i].h = 0;
-        m_GridVolumes[i].CleanUp();
+//        m_GridVolumes[i].CleanUp();
+//        GpuCheckErrors();
       }
     }
   }
@@ -413,7 +414,7 @@ public:
   {
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
-      m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
+      m_GridVolumes[i].MemcpyFromHost(rVol.m_GridVolumes[i]);
     }
   }
 
@@ -456,8 +457,8 @@ public:
             exit(-1);
           }
         }
-        m_GridVolumes[i].MemcpyFromDevice(rVol.m_GridVolumes[i]);
-        printf("copy data success..\n");
+
+        m_GridVolumes[i].MemcpyFromHost(rVol.m_GridVolumes[i]);
         GpuCheckErrors();
       }
     }

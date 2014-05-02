@@ -141,7 +141,7 @@ bool LoadPXM(const std::string filename, roo::BoundedVolumeGrid<T,roo::TargetHos
 template<typename T>
 bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilename,
                  roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol,
-                 roo::BoundingBox& rBBox)
+                 roo::BoundingBox&                                        rBBox)
 {
   // to load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
@@ -152,7 +152,7 @@ bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilen
   // read bb box..
   int nNum = 0;
 
-  printf("[LoadPXMGrid] Try to copy data from disk to host.., available memory is %d.\n", GetAvailableGPUMemory());
+  printf("[LoadPXMGrid] Try to copy data from disk to host.., available gpu memory is %d.\n", GetAvailableGPUMemory());
 
   // load each single VolumeGrid
   for(int i=0;i!=vfilename.size();i++)
@@ -184,12 +184,10 @@ bool LoadPXMGrid(std::string sDirName, const std::vector<std::string>&    vfilen
   }
 
   //
-  printf("finish read data to host. Available memory is %d, Now copy it to device..\n",GetAvailableGPUMemory());
-  printf("finish load grid sdf! Total loading sdf num is %d\n",nNum);
+  printf("finish read data to host. Total loading sdf num is %d, Available GPU memory is %d, Now copy it to device..\n",nNum, GetAvailableGPUMemory());
 
   // copy data from host to device
-//  vol.CopyAndInitFrom(hvol);
-  cudaMemcpyToSymbol(&vol, &hvol, sizeof(hvol), size_t(0), cudaMemcpyHostToDevice);
+  vol.CopyAndInitFrom(hvol);
   GpuCheckErrors();
 
   printf("finish read data to device. Available memory is %d\n",GetAvailableGPUMemory());
