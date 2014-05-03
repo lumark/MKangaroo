@@ -10,6 +10,12 @@ namespace roo {
 class RollingGridSDF
 {
 public:
+  RollingGridSDF()
+  {
+    TotalShift = make_int3(0,0,0);
+  }
+
+
   // update shift parameters
   template<typename T> inline
   void UpdateShift(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol, int3 shift_index)
@@ -17,7 +23,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     /// change bbox min and max value based on shif parameters
     //////////////////////////////////////////////////////////////////////////////
-    printf("size x=%f, y=%f, z=%f; shift is x=%d,y=%d,z=%d\n ",
+    printf("BB size x=%f, y=%f, z=%f; Current shift is x=%d,y=%d,z=%d\n ",
            pVol->m_bbox.Size().x,pVol->m_bbox.Size().y,pVol->m_bbox.Size().z,
            shift_index.x, shift_index.y,shift_index.z);
 
@@ -58,53 +64,61 @@ public:
       pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z +
           float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes);
 
-      printf("shift z is %d, total shift z is %f, change bbox bbmin z to %f, bbmax z to %f\n",
+      printf("shift z index is %d, shift z is %f, change bbox bbmin z to %f, bbmax z to %f\n",
              shift_index.z, float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes),
              pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
     }
 
     // save shift params in grid and grid grey sdf data struct
     pVol->UpdateShift(shift_index);
+
+    // update total shift
+    TotalShift = pVol->m_shift;
   }
 
 
 
-  // compute index of grid sdf that need to be freed
+  // ---------------------------------------------------------------------------
+  // compute index of grid sdf that need to be freed. for each single that was shift,
+  // we need to reset it
   template<typename T> inline
-  void GetGridSDFIndexNeedFree(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol, int3 shift_index)
+  void GetGridSDFIndexNeedFree(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
   {
     //////////////////////////////////////////////////////////////////////////////
     /// iterator through all grid sdf and see if it need to be free
     //////////////////////////////////////////////////////////////////////////////
     // for each grid sdf in the volume
+    int nNum = 0;
     for(int i=0;i!=int(pVol->m_nWholeGridRes);i++)
     {
       for(int j=0;j!=int(pVol->m_nWholeGridRes);j++)
       {
         for(int k=0;k!=int(pVol->m_nWholeGridRes);k++)
         {
+          // set it back to 0;
+          nNextResetSDFs[i]=0;
+
           // for x
-          if(shift_index.x>0 && i<shift_index.x)
+          if(TotalShift.x>0 && i<TotalShift.x)
           {
             nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
 
-          if(shift_index.x<0 && i>= int(pVol->m_nWholeGridRes) + shift_index.x)
+          if(TotalShift.x<0 && i>= int(pVol->m_nWholeGridRes) + TotalShift.x)
           {
             nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
-
 
           // for y
-          if(shift_index.y>0 && j<shift_index.y)
+          if(TotalShift.y>0 && j<TotalShift.y)
           {
             nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
 
-          if(shift_index.y<0 && j>= int(pVol->m_nWholeGridRes) + shift_index.y)
+          if(TotalShift.y<0 && j>= int(pVol->m_nWholeGridRes) + TotalShift.y)
           {
             nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
@@ -112,13 +126,13 @@ public:
 
 
           // for z
-          if(shift_index.z>0 && k<shift_index.z)
+          if(TotalShift.z>0 && k<TotalShift.z)
           {
             nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
           }
 
-          if(shift_index.z<0 && k>= int(pVol->m_nWholeGridRes) + shift_index.z)
+          if(TotalShift.z<0 && k>= int(pVol->m_nWholeGridRes) + TotalShift.z)
           {
             nNextResetSDFs[i+pVol->m_nWholeGridRes*(j+pVol->m_nWholeGridRes*k)] =1;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
@@ -126,6 +140,8 @@ public:
         }
       }
     }
+
+    printf("Num of Grid SDF need to be freed is %d\n", nNum);
   }
 
   template<typename T> inline
@@ -134,28 +150,36 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     /// free grid sdf
     //////////////////////////////////////////////////////////////////////////////
-
+    int nFreeNum = 0;
+    int nNeedFreeNum = 0;
     for(unsigned int i=0;i!=pVol->m_nWholeGridRes* pVol->m_nWholeGridRes* pVol->m_nWholeGridRes; i++)
     {
       if(nNextResetSDFs[i] == 1)
       {
+        nNeedFreeNum++;
+
+        // check if this vol is valid.
         if (pVol->CheckIfBasicSDFActive(i) == true)
         {
           roo::SdfReset(pVol->m_GridVolumes[i]);
+
           pVol->FreeMemoryByIndex(i);
 
           pVol->m_GridVolumes[i].d = 0;
           pVol->m_GridVolumes[i].w = 0;
           pVol->m_GridVolumes[i].h = 0;
-        }
 
-        nNextResetSDFs[i]=0;
+          nFreeNum ++;
+        }
       }
     }
+
+    printf("[RollingGridSDF/FreeGrid] Free %d grid sdf. Need to free %d grid sdf.\n", nFreeNum, nNeedFreeNum);
   }
 
 private:
   int nNextResetSDFs[1024];
+  int3 TotalShift;
 };
 
 
