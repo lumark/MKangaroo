@@ -627,7 +627,7 @@ void SdfFuseDirectGreyGridSafe(
 __global__ void KernSdfFuseDirectGreyGridDesireIndex(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -700,9 +700,25 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
               sdf += curvol;
               sdf.LimitWeight(max_w);
 
-              /// set val
+              // set val
               g_vol(x, y, z) = sdf;
-              g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+
+              if(bWeight == true)
+              {
+                g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+              }
+              else
+              {
+                if(g_colorVol(x,y,z)>0)
+                {
+                  printf("skipFuse;");
+                }
+                else
+                {
+                  g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+                }
+              }
+
             }
           }
         }
@@ -718,7 +734,7 @@ void SdfFuseDirectGreyGridDesireIndex(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
   if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
@@ -747,7 +763,7 @@ void SdfFuseDirectGreyGridDesireIndex(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGreyGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -763,14 +779,16 @@ void SdfFuseDirectGreyGridDesireIndex(
   printf("[SdfFuseDirectGreyGridDesireIndex/cu] Finished all.\n");
 }
 
+
+
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
-// the following do Grid SDF fusion and use mark voxels that cannot be fused in
+// the following do Grid SDF fusion and also mark voxels that cannot be fused in
 // due to uninitialized Grid SDF.
 __global__ void KernSdfFuseDirectGreyGridAutoInit(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -845,7 +863,19 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
 
               /// set val
               g_vol(x, y, z) = sdf;
-              g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+
+              if(bWeight == true)
+              {
+                g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+              }
+              else
+              {
+                if(g_colorVol(x,y,z)==0.5)
+                {
+                  g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+                }
+              }
+
             }
             else
             {
@@ -866,7 +896,7 @@ void SdfFuseDirectGreyGridAutoInit(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
   if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
@@ -884,7 +914,7 @@ void SdfFuseDirectGreyGridAutoInit(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGreyGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
   GpuCheckErrors();
 
   // check if need to init new grid sdf
