@@ -472,6 +472,7 @@ __global__ void KernRaycastSdfGridGrey(Image<float> imgdepth, Image<float4> norm
     const float3 n_w = len_n_w > 0 ? _n_w / len_n_w : make_float3(0,0,1);
     const float3 n_c = mulSO3inv(T_wc,n_w);
 
+    // render surface
     if(depth > 0 ) {
       imgdepth(u,v) = depth;
       img(u,v) = c;
