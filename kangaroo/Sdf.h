@@ -2,6 +2,7 @@
 
 #include <cuda_runtime.h>
 #include "CUDA_SDK/cutil_math.h"
+#include <cmath>        // std::abs
 
 namespace roo
 {
@@ -63,15 +64,20 @@ struct __align__(8) SDF_t_comp {
         }
     }
 
-    inline __host__ __device__ void UpdateChange(float tran_change, float rot_change)
+    inline __host__ __device__ void UpdatUnCertainty(float tran_x,float tran_y,float tran_z,
+                                                     float rot_x, float rot_y, float rot_z)
     {
-      TranChange = tran_change;
-      RotChange = rot_change;
+      TranChange = std::abs(tran_x)+std::abs(tran_y)+std::abs(tran_z);
+      RotChange  = std::abs(rot_x) +std::abs(rot_y) +std::abs(rot_z);
     }
 
     /// TODO: do more complex compare
-    inline __host__ __device__ bool CheckIfUpdate(float cur_tran_change, float cur_rot_change)
+    inline __host__ __device__ bool CheckIfUpdate(float tran_x,float tran_y,float tran_z,
+                                                  float rot_x, float rot_y, float rot_z)
     {
+      float cur_tran_change = std::abs(tran_x)+std::abs(tran_y)+std::abs(tran_z);
+      float cur_rot_change  = std::abs(rot_x) +std::abs(rot_y) +std::abs(rot_z);
+
       if(cur_tran_change<TranChange && cur_rot_change<RotChange)
       {
         return true;

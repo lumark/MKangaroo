@@ -26,7 +26,7 @@ list(APPEND SRC_H
     ImageKeyframe.h   cu_blur.h             cu_median.h           cu_semi_global_matching.h
     InvalidValue.h    cu_census.h           cu_model_refinement.h cu_tgv.h
     LeastSquareSum.h  cu_convert.h          cu_normals.h          disparity.h
-    MarchingCubes.h   cu_convolution.h      cu_operations.h       hamming_distance.h  cu_rolling_sdf.h  RollingGridSDF.h SDFPointCloud
+    MarchingCubes.h   MarchingCubesGrid.h   cu_convolution.h      cu_operations.h       hamming_distance.h  cu_rolling_sdf.h  RollingGridSDF.h SDFPointCloud
 )
 
 list(APPEND SRC_CU
