@@ -31,10 +31,11 @@ namespace roo
 {
 
 //vMarchCube performs the Marching Cubes algorithm on a single cube
+/// USER SHOULD MAKE SURE VOXEL EXIST!
 template<typename T, typename TColor>
 void vMarchCubeGrid(
-    BoundedVolumeGrid<T,roo::TargetHost, Manage>& vol,
-    BoundedVolumeGrid<TColor,roo::TargetHost, Manage>& volColor,
+    BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
+    BoundedVolumeGrid<TColor,roo::TargetHost, Manage>&  volColor,
     int x, int y, int z,
     std::vector<aiVector3D>& verts,
     std::vector<aiVector3D>& norms,
@@ -49,10 +50,10 @@ void vMarchCubeGrid(
   float afCubeValue[8];
   for(int iVertex = 0; iVertex < 8; iVertex++)
   {
-    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
-    {
+//    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
+//    {
       afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2]));
-    }
+//    }
 
     if(!std::isfinite(afCubeValue[iVertex])) return;
   }
@@ -100,7 +101,6 @@ void vMarchCubeGrid(
     }
   }
 
-
   //Draw the triangles that were found.  There can be up to five per cube
   for(int iTriangle = 0; iTriangle < 5; iTriangle++)
   {
@@ -119,11 +119,11 @@ void vMarchCubeGrid(
       verts.push_back(aiVector3D(asEdgeVertex[iVertex].x, asEdgeVertex[iVertex].y, asEdgeVertex[iVertex].z) );
       norms.push_back(aiVector3D(asEdgeNorm[iVertex].x,   asEdgeNorm[iVertex].y,   asEdgeNorm[iVertex].z) );
 
-      //      if(volColor.IsValid()) {
-      //        const TColor c = volColor.GetUnitsTrilinearClamped(asEdgeVertex[iVertex]);
-      //        float3 sColor = roo::ConvertPixel<float3,TColor>(c);
-      //        colors.push_back(aiColor4D(sColor.x, sColor.y, sColor.z, 1.0f));
-      //      }
+      if(volColor.IsValid()) {
+        const TColor c = volColor.GetUnitsTrilinearClamped(asEdgeVertex[iVertex]);
+        float3 sColor = roo::ConvertPixel<float3,TColor>(c);
+        colors.push_back(aiColor4D(sColor.x, sColor.y, sColor.z, 1.0f));
+      }
 
     }
 
@@ -152,8 +152,6 @@ void SaveMeshGrid(std::string filename, aiMesh* mesh)
   scene.mNumMaterials = 1;
   scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
   scene.mMaterials[0] = material;
-
-  std::cout<<"Size of mesh need to save is "<< sizeof(scene)<<std::endl;
 
   aiReturn res = aiExportScene(&scene, "ply", (filename + ".ply").c_str(), 0);
   std::cout << "Mesh export result: " << res << std::endl;
