@@ -14,6 +14,9 @@ namespace roo
 // Using this function requires calling roo::SDFInitGreyGrid first.
 // =============================================================================
 
+const int MAX_SUPPORT_GRID_NUM = 13824;
+
+
 template<typename T, typename Target = TargetDevice, typename Management = DontManage>
 class BoundedVolumeGrid
 {
@@ -41,7 +44,7 @@ public:
       m_nVolumeGridRes = n_res;
       m_nWholeGridRes  = m_w/m_nVolumeGridRes;
 
-      if(m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes > 4096)
+      if(m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes > MAX_SUPPORT_GRID_NUM)
       {
         printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
                m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes);
@@ -62,7 +65,7 @@ public:
   inline __host__
   void ResetAllGridVol()
   {
-    for(int i=0;i!=4096;i++)
+    for(int i=0;i!=MAX_SUPPORT_GRID_NUM;i++)
     {
 //      if(CheckIfBasicSDFActive(i)==true)
 //      {
@@ -635,8 +638,8 @@ public:
 
   // volume that save all data
   // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.
-  VolumeGrid<T, Target, Manage>               m_GridVolumes[4096];
-  int                                         m_NextInitBasicSDFs[4096];  // an array that record basic SDFs we want to init
+  VolumeGrid<T, Target, Manage>               m_GridVolumes[MAX_SUPPORT_GRID_NUM];
+  int                                         m_NextInitBasicSDFs[MAX_SUPPORT_GRID_NUM];  // an array that record basic SDFs we want to init
 };
 
 
