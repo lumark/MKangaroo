@@ -50,10 +50,10 @@ void vMarchCubeGrid(
   float afCubeValue[8];
   for(int iVertex = 0; iVertex < 8; iVertex++)
   {
-    //    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
-    //    {
-    afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2]));
-    //    }
+    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
+    {
+      afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2]));
+    }
 
     if(!std::isfinite(afCubeValue[iVertex])) return;
   }
@@ -159,8 +159,97 @@ void SaveMeshGrid(std::string filename, aiMesh* mesh)
 
 
 
+//template<typename T, typename TColor>
+//void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T, TargetHost, Manage> vol,
+//                  BoundedVolumeGrid<TColor, TargetHost, Manage> volColor )
+//{
+//  printf("in SaveMeshGrid/cpp..\n");
+
+//  std::vector<aiVector3D> verts;
+//  std::vector<aiVector3D> norms;
+//  std::vector<aiFace> faces;
+//  std::vector<aiColor4D> colors;
+
+//  for(GLint iX = 0; iX < vol.Voxels().x-1; iX++) {
+//    for(GLint iY = 0; iY < vol.Voxels().y-1; iY++) {
+//      for(GLint iZ = 0; iZ < vol.Voxels().z-1; iZ++) {
+
+//        const unsigned int nIndex =
+//            int(floorf(iX/vol.m_nVolumeGridRes)) +
+//            vol.m_nWholeGridRes* (int(floorf(iY/vol.m_nVolumeGridRes))+
+//                                  vol.m_nWholeGridRes* int(floorf(iZ/vol.m_nVolumeGridRes)));
+
+//        if(vol.CheckIfBasicSDFActive(nIndex) == true)
+//        {
+//          float val = vol(int(iX),int(iY),int(iZ)).val;
+//          if(std::isfinite(val) && val !=0)
+//          {
+//            if(val > 0.0000001 || val > -0.0000001 )
+//            {
+//              roo::vMarchCubeGrid(vol, volColor, iX,iY,iZ, verts, norms, faces, colors);
+//              printf("Finish march cube grid for (%d). val %f\n",int(iX), val);
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
+
+//  printf("finish march cube grid..\n");
+
+//  aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
+//  SaveMeshGrid(filename, mesh);
+//}
+
+
+
+
+
+// now do it for each grid instead of each voxel
 template<typename T, typename TColor>
-void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T, TargetHost, Manage> vol,  BoundedVolumeGrid<TColor, TargetHost, Manage> volColor )
+void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>& vol,
+                        BoundedVolumeGrid<TColor, TargetHost, Manage>& volColor,
+                        int i,int j,int k,
+                        std::vector<aiVector3D>& verts,
+                        std::vector<aiVector3D>& norms,
+                        std::vector<aiFace>& faces,
+                        std::vector<aiColor4D>& colors)
+{
+  for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
+  {
+    for(GLint y=0;y!=vol.m_nVolumeGridRes;y++)
+    {
+      for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
+      {
+        if(vol.CheckIfVoxelExist(i*vol.m_nVolumeGridRes + x,j*vol.m_nVolumeGridRes + y,k*vol.m_nVolumeGridRes + z) == true)
+        {
+          //          printf("voxel %d,%d,%d exist.\n", i*vol.m_nVolumeGridRes + x,j*vol.m_nVolumeGridRes + y,k*vol.m_nVolumeGridRes + z);
+          //                  float val = vol(i*vol.m_nVolumeGridRes + x,j*vol.m_nVolumeGridRes + y,k*vol.m_nVolumeGridRes + z).val;
+          //                  if(std::isfinite(val) && val !=0)
+          //                  {
+          //                    if(val > 0.0000001 || val > -0.0000001 )
+          //                    {
+          //                    printf("check index %d,%d,%d. WholeGridRes:%d, GridRes %d \n",i*vol.m_nVolumeGridRes + x,
+          //                           j*vol.m_nVolumeGridRes + y,k*vol.m_nVolumeGridRes +z, vol.m_nWholeGridRes, vol.m_nVolumeGridRes);
+
+          //           get voxel index for each grid.
+          roo::vMarchCubeGrid(vol, volColor,
+                              i*vol.m_nVolumeGridRes + x,
+                              j*vol.m_nVolumeGridRes + y,
+                              k*vol.m_nVolumeGridRes + z,
+                              verts, norms, faces, colors);
+          //        }
+        }
+      }
+    }
+  }
+}
+
+// now do it for each grid instead of each voxel
+template<typename T, typename TColor>
+void SaveMeshGrid(std::string filename,
+                  BoundedVolumeGrid<T, TargetHost, Manage> vol,
+                  BoundedVolumeGrid<TColor, TargetHost, Manage> volColor )
 {
   printf("in SaveMeshGrid/cpp..\n");
 
@@ -169,38 +258,36 @@ void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T, TargetHost, Manage>
   std::vector<aiFace> faces;
   std::vector<aiColor4D> colors;
 
-  for(GLint iX = 0; iX < vol.Voxels().x-1; iX++) {
-    for(GLint iY = 0; iY < vol.Voxels().y-1; iY++) {
-      for(GLint iZ = 0; iZ < vol.Voxels().z-1; iZ++) {
-
-        const unsigned int nIndex =
-            int(floorf(iX/vol.m_nVolumeGridRes)) +
-            vol.m_nWholeGridRes* (int(floorf(iY/vol.m_nVolumeGridRes))+
-                                  vol.m_nWholeGridRes* int(floorf(iZ/vol.m_nVolumeGridRes)));
-
-        if(vol.CheckIfBasicSDFActive(nIndex) == true)
+  // scan each grid..
+  for(int i=0;i!=vol.m_nWholeGridRes;i++)
+  {
+    for(int j=0;j!=vol.m_nWholeGridRes;j++)
+    {
+      for(int k=0;k!=vol.m_nWholeGridRes;k++)
+      {
+        if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
         {
-          float val = vol(int(iX),int(iY),int(iZ)).val;
-          if(std::isfinite(val) && val !=0)
-          {
-            if(val > 0.0000001 || val > -0.0000001 )
-            {
-              roo::vMarchCubeGrid(vol, volColor, iX,iY,iZ, verts, norms, faces, colors);
-              printf("Finish march cube grid for (%d). val %f\n",int(iX), val);
-            }
-          }
+          SaveMeshGridSingle(vol,volColor,i,j,k,verts, norms, faces, colors);
+          printf("Finish march cube grid for (%d,%d,%d).\n", i,j,k);
+        }
+        else
+        {
+          printf("skip grid %d,%d,%d\n",i,j,k);
         }
       }
     }
   }
 
-  printf("finish march cube grid..\n");
+  printf("finish march cube grid Sepreate..\n");
 
   aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
   SaveMeshGrid(filename, mesh);
 }
 
+
+
 // Instantiate templates
-template void SaveMeshGrid<SDF_t,float>(std::string, BoundedVolumeGrid<SDF_t,TargetHost, Manage> vol, BoundedVolumeGrid<float,TargetHost, Manage> volColor);
+template void SaveMeshGrid<SDF_t,float>(std::string, BoundedVolumeGrid<SDF_t,TargetHost, Manage> vol,
+BoundedVolumeGrid<float,TargetHost, Manage> volColor);
 
 }
