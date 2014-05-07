@@ -15,12 +15,16 @@ template<typename T, typename Manage>
 void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>& vol )
 {
     roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-    hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+    hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
+
+    printf("try to copy (a).. (%d,%d,%d)\n",vol.m_w, vol.m_h, vol.m_d);
+    hvol.CopyAndInitFrom(vol);
+    printf("finish to copy (a)..\n");
+
 
     roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
     hvolcolor.init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
 
-    hvol.CopyAndInitFrom(vol);
     SaveMeshGrid<T,float>(filename, hvol, hvolcolor);
 }
 
@@ -33,8 +37,9 @@ void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>
     roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
     hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
 
+    printf("try to copy.. (b)");
     hvol.CopyAndInitFrom(vol);
-    hvolcolor.CopyAndInitFrom(volColor);
+//    hvolcolor.CopyAndInitFrom(volColor);
 
     // save
     SaveMeshGrid<T,TColor>(filename, hvol, hvolcolor);

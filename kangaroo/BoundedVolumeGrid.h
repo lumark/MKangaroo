@@ -183,6 +183,21 @@ public:
     return make_uint3(m_w,m_h,m_d);
   }
 
+  inline __host__ __device__
+  bool CheckIfVoxelExist(int x, int y, int z)
+  {
+    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
+                           int(floorf(y/m_nVolumeGridRes)),
+                           int(floorf(z/m_nVolumeGridRes)) );
+
+    if( CheckIfBasicSDFActive(nIndex) == true)
+    {
+      return true;
+    }
+
+    return false;
+  }
+
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
@@ -207,6 +222,21 @@ public:
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
   }
 
+
+  inline  __device__  __host__
+  T& Get(unsigned int x,unsigned int y, unsigned int z)
+  {
+    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
+                           int(floorf(y/m_nVolumeGridRes)),
+                           int(floorf(z/m_nVolumeGridRes)) );
+
+    if(CheckIfBasicSDFActive(nIndex) == false)
+    {
+//       return 0.0/0.0;
+    }
+
+    return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
+  }
 
   // input pos_w in meter
   inline  __device__
