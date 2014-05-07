@@ -50,10 +50,10 @@ void vMarchCubeGrid(
   float afCubeValue[8];
   for(int iVertex = 0; iVertex < 8; iVertex++)
   {
-//    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
-//    {
-      afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2]));
-//    }
+    //    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
+    //    {
+    afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2]));
+    //    }
 
     if(!std::isfinite(afCubeValue[iVertex])) return;
   }
@@ -172,10 +172,23 @@ void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T, TargetHost, Manage>
   for(GLint iX = 0; iX < vol.Voxels().x-1; iX++) {
     for(GLint iY = 0; iY < vol.Voxels().y-1; iY++) {
       for(GLint iZ = 0; iZ < vol.Voxels().z-1; iZ++) {
-        if(vol.CheckIfVoxelExist(int(iX),int(iY),int(iZ)) == true)
+
+        const unsigned int nIndex =
+            int(floorf(iX/vol.m_nVolumeGridRes)) +
+            vol.m_nWholeGridRes* (int(floorf(iY/vol.m_nVolumeGridRes))+
+                                  vol.m_nWholeGridRes* int(floorf(iZ/vol.m_nVolumeGridRes)));
+
+        if(vol.CheckIfBasicSDFActive(nIndex) == true)
         {
-          roo::vMarchCubeGrid(vol, volColor, iX,iY,iZ, verts, norms, faces, colors);
-          printf("Finish march cube grid for (%d,%d,%d)..\n",int(iX),int(iY),int(iZ));
+          float val = vol(int(iX),int(iY),int(iZ)).val;
+          if(std::isfinite(val) && val !=0)
+          {
+            if(val > 0.0000001 || val > -0.0000001 )
+            {
+              roo::vMarchCubeGrid(vol, volColor, iX,iY,iZ, verts, norms, faces, colors);
+              printf("Finish march cube grid for (%d). val %f\n",int(iX), val);
+            }
+          }
         }
       }
     }
