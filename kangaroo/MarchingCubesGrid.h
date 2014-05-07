@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoundedVolume.h"
+#include "BoundedVolumeGrid.h"
 
 namespace roo {
 
@@ -9,25 +9,35 @@ namespace roo {
 //////////////////////////////////////////
 
 template<typename T, typename TColor>
-void SaveMesh(std::string filename, const BoundedVolume<T,TargetHost> vol, const BoundedVolume<TColor,TargetHost> volColor );
+void SaveMeshGrid(std::string filename, const BoundedVolumeGrid<T,TargetHost,Manage> vol, const BoundedVolumeGrid<TColor,TargetHost,Manage> volColor );
 
 template<typename T, typename Manage>
-void SaveMesh(std::string filename, BoundedVolume<T,TargetDevice,Manage>& vol )
+void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>& vol )
 {
-    roo::BoundedVolume<T,roo::TargetHost,roo::Manage> hvol(vol.w, vol.h, vol.d, vol.bbox.Min(), vol.bbox.Max());
-    roo::BoundedVolume<float,roo::TargetHost,roo::Manage> hvolcolor(1,1,1, vol.bbox.Min(), vol.bbox.Max() );
-    hvol.CopyFrom(vol);
-    SaveMesh<T,float>(filename, hvol, hvolcolor);
+    roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
+    hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+
+    roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
+    hvolcolor.init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
+
+    hvol.CopyAndInitFrom(vol);
+    SaveMeshGrid<T,float>(filename, hvol, hvolcolor);
 }
 
 template<typename T, typename TColor, typename Manage>
-void SaveMesh(std::string filename, BoundedVolume<T,TargetDevice,Manage>& vol, BoundedVolume<TColor,TargetDevice,Manage>& volColor )
+void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>& vol, BoundedVolumeGrid<TColor,TargetDevice,Manage>& volColor )
 {
-    roo::BoundedVolume<T,roo::TargetHost,roo::Manage> hvol(vol.w, vol.h, vol.d, vol.bbox.Min(), vol.bbox.Max());
-    roo::BoundedVolume<TColor,roo::TargetHost,roo::Manage> hvolcolor(volColor.w, volColor.h, volColor.d, volColor.bbox.Min(), volColor.bbox.Max());
-    hvol.CopyFrom(vol);
-    hvolcolor.CopyFrom(volColor);
-    SaveMesh<T,TColor>(filename, hvol, hvolcolor);
+    roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
+    hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+
+    roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
+    hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+
+    hvol.CopyAndInitFrom(vol);
+    hvolcolor.CopyAndInitFrom(volColor);
+
+    // save
+    SaveMeshGrid<T,TColor>(filename, hvol, hvolcolor);
 }
 
 }

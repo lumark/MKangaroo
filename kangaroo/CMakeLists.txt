@@ -80,7 +80,7 @@ if(ASSIMP_FOUND)
     set(HAVE_ASSIMP 1)
     list(APPEND INTERNAL_INC ${ASSIMP_INCLUDE_DIR})
     list(APPEND LINK_LIBS ${ASSIMP_LIBRARIES} )
-    list(APPEND SRC_CU MarchingCubes.cpp )
+    list(APPEND SRC_CU MarchingCubes.cpp MarchingCubesGrid.cpp)
 endif()
 
 find_package( OpenCV2 QUIET )

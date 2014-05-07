@@ -177,6 +177,12 @@ public:
   // Access Elements
   //////////////////////////////////////////////////////
 
+  inline __device__ __host__
+  uint3 Voxels() const
+  {
+    return make_uint3(m_w,m_h,m_d);
+  }
+
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {

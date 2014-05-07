@@ -1,7 +1,7 @@
 // For some reason I need these to link.
 
 // ------------------------------------------------------------------------------------------------
-aiScene::aiScene()
+inline aiScene::aiScene()
 	: mFlags()
 	, mRootNode()
 	, mNumMeshes()
@@ -22,7 +22,7 @@ aiScene::aiScene()
 	}
 
 // ------------------------------------------------------------------------------------------------
-aiScene::~aiScene()
+inline aiScene::~aiScene()
 {
 	// delete all sub-objects recursively
 	delete mRootNode;

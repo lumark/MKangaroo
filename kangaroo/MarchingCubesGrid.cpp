@@ -22,38 +22,19 @@
 #include "Sdf.h"
 #include "MarchingCubesGrid.h"
 #include "MarchingCubesTables.h"
+#include "MarchingCubes.h"
 
 #include <assimp/cexport.h>
 #include <assimp/scene.h>
-#include "extra/AssimpMissing.h"
 
 namespace roo
 {
 
-//fGetOffset finds the approximate point of intersection of the surface
-// between two points with the values fValue1 and fValue2
-inline float fGetOffset(float fValue1, float fValue2, float fValueDesired)
-{
-    const double fDelta = fValue2 - fValue1;
-    if(fDelta == 0.0) {
-        return 0.5;
-    }
-    return (fValueDesired - fValue1)/fDelta;
-}
-
-//vGetColor generates a color from a given position and normal of a point
-inline void vGetColor(float3 &rfColor, const float3 &rfPosition, const float3 &rfNormal)
-{
-    rfColor.x = (rfNormal.x > 0.0 ? rfNormal.x : 0.0) + (rfNormal.y < 0.0 ? -0.5*rfNormal.y : 0.0) + (rfNormal.z < 0.0 ? -0.5*rfNormal.z : 0.0);
-    rfColor.y = (rfNormal.y > 0.0 ? rfNormal.y : 0.0) + (rfNormal.z < 0.0 ? -0.5*rfNormal.z : 0.0) + (rfNormal.x < 0.0 ? -0.5*rfNormal.x : 0.0);
-    rfColor.z = (rfNormal.z > 0.0 ? rfNormal.z : 0.0) + (rfNormal.x < 0.0 ? -0.5*rfNormal.x : 0.0) + (rfNormal.y < 0.0 ? -0.5*rfNormal.y : 0.0);
-}
-
 //vMarchCube performs the Marching Cubes algorithm on a single cube
 template<typename T, typename TColor>
-void vMarchCube(
-    const BoundedVolume<T,roo::TargetHost> vol,
-    const BoundedVolume<TColor,roo::TargetHost> volColor,
+void vMarchCubeGrid(
+    BoundedVolumeGrid<T,roo::TargetHost, Manage> vol,
+    BoundedVolumeGrid<TColor,roo::TargetHost, Manage> volColor,
     int x, int y, int z,
     std::vector<aiVector3D>& verts,
     std::vector<aiVector3D>& norms,
@@ -67,7 +48,7 @@ void vMarchCube(
     //Make a local copy of the values at the cube's corners
     float afCubeValue[8];
     for(int iVertex = 0; iVertex < 8; iVertex++) {
-        afCubeValue[iVertex] = vol.Get(x+a2fVertexOffset[iVertex][0],y+a2fVertexOffset[iVertex][1],z+a2fVertexOffset[iVertex][2]);
+        afCubeValue[iVertex] = vol(x+a2fVertexOffset[iVertex][0],y+a2fVertexOffset[iVertex][1],z+a2fVertexOffset[iVertex][2]);
         if(!std::isfinite(afCubeValue[iVertex])) return;
     }
 
@@ -145,47 +126,8 @@ void vMarchCube(
     }
 }
 
-aiMesh* MeshFromLists(
-    const std::vector<aiVector3D>& verts,
-    const std::vector<aiVector3D>& norms,
-    const std::vector<aiFace>& faces,
-    const std::vector<aiColor4D>& colors
-) {
-    aiMesh* mesh = new aiMesh();
-    mesh->mPrimitiveTypes = aiPrimitiveType_TRIANGLE;
 
-    mesh->mNumVertices = verts.size();
-    mesh->mVertices = new aiVector3D[verts.size()];
-    for(unsigned int i=0; i < verts.size(); ++i) {
-        mesh->mVertices[i] = verts[i];
-    }
-
-    if(norms.size() == verts.size()) {
-        mesh->mNormals = new aiVector3D[norms.size()];
-        for(unsigned int i=0; i < norms.size(); ++i) {
-            mesh->mNormals[i] = norms[i];
-        }
-    }else{
-        mesh->mNormals = 0;
-    }
-
-    mesh->mNumFaces = faces.size();
-    mesh->mFaces = new aiFace[faces.size()];
-    for(unsigned int i=0; i < faces.size(); ++i) {
-        mesh->mFaces[i] = faces[i];
-    }
-
-    if( colors.size() == verts.size()) {
-        mesh->mColors[0] = new aiColor4D[colors.size()];
-        for(unsigned int i=0; i < colors.size(); ++i) {
-            mesh->mColors[0][i] = colors[i];
-        }
-    }
-
-    return mesh;
-}
-
-void SaveMesh(std::string filename, aiMesh* mesh)
+void SaveMeshGrid(std::string filename, aiMesh* mesh)
 {
     // Create root node which indexes first mesh
     aiNode* root = new aiNode();
@@ -211,7 +153,7 @@ void SaveMesh(std::string filename, aiMesh* mesh)
 }
 
 template<typename T, typename TColor>
-void SaveMesh(std::string filename, const BoundedVolume<T,TargetHost> vol, const BoundedVolume<TColor,TargetHost> volColor )
+void SaveMeshGrid(std::string filename, const BoundedVolumeGrid<T, TargetHost, Manage> vol, const BoundedVolumeGrid<TColor, TargetHost, Manage> volColor )
 {
     std::vector<aiVector3D> verts;
     std::vector<aiVector3D> norms;
@@ -221,16 +163,16 @@ void SaveMesh(std::string filename, const BoundedVolume<T,TargetHost> vol, const
     for(GLint iX = 0; iX < vol.Voxels().x-1; iX++) {
         for(GLint iY = 0; iY < vol.Voxels().y-1; iY++) {
             for(GLint iZ = 0; iZ < vol.Voxels().z-1; iZ++) {
-                vMarchCube(vol, volColor, iX,iY,iZ, verts, norms, faces, colors);
+                roo::vMarchCubeGrid(vol, volColor, iX,iY,iZ, verts, norms, faces, colors);
             }
         }
     }
 
     aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
-    SaveMesh(filename, mesh);
+    SaveMeshGrid(filename, mesh);
 }
 
 // Instantiate templates
-template void SaveMesh<SDF_t,float>(std::string, const BoundedVolume<SDF_t,TargetHost,DontManage> vol, const BoundedVolume<float,TargetHost> volColor);
+template void SaveMeshGrid<SDF_t,float>(std::string, const BoundedVolumeGrid<SDF_t,TargetHost, Manage> vol, const BoundedVolumeGrid<float,TargetHost, Manage> volColor);
 
 }
