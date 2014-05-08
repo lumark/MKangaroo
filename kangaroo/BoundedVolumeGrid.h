@@ -54,6 +54,7 @@ public:
 
       ResetAllGridVol();
       m_shift = make_int3(0,0,0);
+      m_global_shift = make_int3(0,0,0);
     }
     else
     {
@@ -416,6 +417,12 @@ public:
   }
 
 
+  inline __device__ __host__
+  unsigned int GetGlobalIndex(unsigned int x, unsigned int y, unsigned int z) const
+  {
+
+  }
+
   inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
   {
@@ -598,29 +605,51 @@ public:
   {
     m_shift = m_shift + shift_index;
 
-    if(m_shift.x == m_nWholeGridRes ||  m_shift.x == -m_nWholeGridRes)
+    if(m_shift.x == m_nWholeGridRes)
     {
       m_shift.x = 0;
+      m_global_shift.x++;
       printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
     }
 
-    if(m_shift.y == m_nWholeGridRes || m_shift.y == -m_nWholeGridRes)
+    if(m_shift.x == -m_nWholeGridRes)
+    {
+      m_shift.x = 0;
+      m_global_shift.x--;
+      printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
+    }
+
+    if(m_shift.y == m_nWholeGridRes)
     {
       m_shift.y = 0;
+      m_global_shift.y++;
       printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
     }
 
-    if(m_shift.z == m_nWholeGridRes || m_shift.z == -m_nWholeGridRes)
+    if(m_shift.y == -m_nWholeGridRes)
+    {
+      m_shift.y = 0;
+      m_global_shift.y--;
+      printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
+    }
+
+    if(m_shift.z == m_nWholeGridRes)
     {
       m_shift.z = 0;
+      m_global_shift.z++;
+      printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
+    }
+
+    if(m_shift.z == -m_nWholeGridRes)
+    {
+      m_shift.z = 0;
+      m_global_shift.z--;
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
     printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift is %d \n",
            m_shift.x,m_shift.y,m_shift.z, m_nWholeGridRes);
   }
-
-
 
 public:
   size_t                                      m_d;
@@ -629,6 +658,7 @@ public:
 
   // for rolling sdf. When this value is not zero, we need to recompute index based on the shift
   int3                                        m_shift;
+  int3                                        m_global_shift; // when m_shift set to 0, global will ++
 
   // bounding box ofbounded volume grid
   BoundingBox                                 m_bbox;

@@ -355,9 +355,8 @@ struct VolumeGrid
   T* ptr;
   size_t w;
   size_t h;
-
-  size_t img_pitch;
   size_t d;
+  size_t img_pitch;
 
 };
 
