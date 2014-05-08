@@ -132,6 +132,105 @@ void vMarchCubeGrid(
 }
 
 
+
+
+//vMarchCube performs the Marching Cubes algorithm on a single cube
+/// USER SHOULD MAKE SURE VOXEL EXIST!
+template<typename T, typename TColor>
+void vMarchCubeGridNOTexture(
+    BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
+    int x, int y, int z,
+    std::vector<aiVector3D>& verts,
+    std::vector<aiVector3D>& norms,
+    std::vector<aiFace>& faces,
+    std::vector<aiColor4D>& colors,
+    float fTargetValue = 0.0f
+    ) {
+  const float3 p = vol.VoxelPositionInUnits(x,y,z);
+  const float3 fScale = vol.VoxelSizeUnits();
+
+  //Make a local copy of the values at the cube's corners
+  float afCubeValue[8];
+  for(int iVertex = 0; iVertex < 8; iVertex++)
+  {
+    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
+    {
+      afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2]));
+    }
+
+    if(!std::isfinite(afCubeValue[iVertex])) return;
+  }
+
+  //Find which vertices are inside of the surface and which are outside
+  int iFlagIndex = 0;
+  for(int iVertexTest = 0; iVertexTest < 8; iVertexTest++) {
+    if(afCubeValue[iVertexTest] <= fTargetValue)
+      iFlagIndex |= 1<<iVertexTest;
+  }
+
+  //Find which edges are intersected by the surface
+  int iEdgeFlags = aiCubeEdgeFlags[iFlagIndex];
+
+  //If the cube is entirely inside or outside of the surface, then there will be no intersections
+  if(iEdgeFlags == 0) {
+    return;
+  }
+
+  //Find the point of intersection of the surface with each edge
+  //Then find the normal to the surface at those points
+  float3 asEdgeVertex[12];
+  float3 asEdgeNorm[12];
+
+  for(int iEdge = 0; iEdge < 12; iEdge++)
+  {
+    //if there is an intersection on this edge
+    if(iEdgeFlags & (1<<iEdge))
+    {
+      float fOffset = fGetOffset(afCubeValue[ a2iEdgeConnection[iEdge][0] ],
+          afCubeValue[ a2iEdgeConnection[iEdge][1] ], fTargetValue);
+
+      asEdgeVertex[iEdge] = make_float3(
+            p.x + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][0]  +  fOffset * a2fEdgeDirection[iEdge][0]) * fScale.x,
+          p.y + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][1]  +  fOffset * a2fEdgeDirection[iEdge][1]) * fScale.y,
+          p.z + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][2]  +  fOffset * a2fEdgeDirection[iEdge][2]) * fScale.z
+          );
+
+      const float3 deriv = vol.GetUnitsBackwardDiffDxDyDz( asEdgeVertex[iEdge] );
+      asEdgeNorm[iEdge] = deriv / length(deriv);
+
+      if( !std::isfinite(asEdgeNorm[iEdge].x) || !std::isfinite(asEdgeNorm[iEdge].y) || !std::isfinite(asEdgeNorm[iEdge].z) ) {
+        asEdgeNorm[iEdge] = make_float3(0,0,0);
+      }
+    }
+  }
+
+  //Draw the triangles that were found.  There can be up to five per cube
+  for(int iTriangle = 0; iTriangle < 5; iTriangle++)
+  {
+    if(a2iTriangleConnectionTable[iFlagIndex][3*iTriangle] < 0)
+      break;
+
+    aiFace face;
+    face.mNumIndices = 3;
+    face.mIndices = new unsigned int[face.mNumIndices];
+
+    for(int iCorner = 0; iCorner < 3; iCorner++)
+    {
+      int iVertex = a2iTriangleConnectionTable[iFlagIndex][3*iTriangle+iCorner];
+
+      face.mIndices[iCorner] = verts.size();
+      verts.push_back(aiVector3D(asEdgeVertex[iVertex].x, asEdgeVertex[iVertex].y, asEdgeVertex[iVertex].z) );
+      norms.push_back(aiVector3D(asEdgeNorm[iVertex].x,   asEdgeNorm[iVertex].y,   asEdgeNorm[iVertex].z) );
+
+    }
+
+    faces.push_back(face);
+  }
+}
+
+
+
+
 void SaveMeshGrid(std::string filename, aiMesh* mesh)
 {
   // Create root node which indexes first mesh
@@ -249,6 +348,38 @@ void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>& vol,
 
 // now do it for each grid instead of each voxel
 template<typename T, typename TColor>
+void SaveMeshGridSingleNOColor(BoundedVolumeGrid<T, TargetHost, Manage>& vol,
+                               int i,int j,int k,
+                               std::vector<aiVector3D>& verts,
+                               std::vector<aiVector3D>& norms,
+                               std::vector<aiFace>& faces,
+                               std::vector<aiColor4D>& colors)
+{
+  for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
+  {
+    for(GLint y=0;y!=vol.m_nVolumeGridRes;y++)
+    {
+      for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
+      {
+        if(vol.CheckIfVoxelExist(i*vol.m_nVolumeGridRes + x,j*vol.m_nVolumeGridRes + y,k*vol.m_nVolumeGridRes + z) == true)
+        {
+          //           get voxel index for each grid.
+          roo::vMarchCubeGrid(vol,
+                              i*vol.m_nVolumeGridRes + x,
+                              j*vol.m_nVolumeGridRes + y,
+                              k*vol.m_nVolumeGridRes + z,
+                              verts, norms, faces, colors);
+        }
+      }
+    }
+  }
+}
+
+
+
+
+// now do it for each grid instead of each voxel
+template<typename T, typename TColor>
 void SaveMeshGrid(std::string filename,
                   BoundedVolumeGrid<T, TargetHost, Manage> vol,
                   BoundedVolumeGrid<TColor, TargetHost, Manage> volColor )
@@ -285,6 +416,59 @@ void SaveMeshGrid(std::string filename,
   aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
   SaveMeshGrid(filename, mesh);
 }
+
+
+
+// now do it for each grid instead of each voxel
+template<typename T, typename TColor>
+void GenMeshGrid(std::string sDirName,std::string sBBFileName, int VolRes, int GridRes, std::vector<std::string> vfilename, std::string sMeshFileName)
+{
+  printf("in SaveMeshGrid/cpp..\n");
+
+  std::vector<aiVector3D> verts;
+  std::vector<aiVector3D> norms;
+  std::vector<aiFace> faces;
+  std::vector<aiColor4D> colors;
+
+  // load mesh configure
+  // to load it from disk, we need to use host volume
+  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
+  roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
+
+  // init sdf
+  hvol.init(VolRes, VolRes,VolRes, GridRes,BBox);
+
+  // scan each grid..
+  for(int i=0;i!=vfilename.size();i++)
+  {
+    // get index from file name
+    std::string sFileName = vfilename[i];
+    std::string sIndex = sFileName.substr(sFileName.find_last_of("-")+1, sFileName.size() - sFileName.find_last_of("-"));
+
+    if(sIndex!="BB")
+    {
+      int nIndex = std::atoi(sIndex.c_str());
+
+      if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[nIndex]) == false)
+      {
+        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
+                   " with index "<<nIndex<<" from hard disk."<<std::endl;
+        exit(-1);
+      }
+      else
+      {
+//        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
+        printf("Finish march cube grid for \n");
+      }
+    }
+  }
+
+  printf("finish march cube grid Sepreate..\n");
+
+  aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
+  SaveMeshGrid(sMeshFileName, mesh);
+}
+
 
 
 

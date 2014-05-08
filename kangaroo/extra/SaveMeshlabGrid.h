@@ -60,7 +60,7 @@ inline void SaveMeshlabGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice
 }
 
 
-inline void GenMeshlabFromPXM(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol)
+inline void GenMeshlabFromPXM(std::vector vFiles)
 {
     Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
     Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
@@ -77,7 +77,7 @@ inline void GenMeshlabFromPXM(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevi
 
     of << " <MeshGroup>" << std::endl;
 
-    roo::SaveMeshGrid(mesh_filename, vol);
+    roo::SaveMeshGrid(vFiles);
 
     of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
     of << "   <MLMatrix44>" << std::endl;
