@@ -68,14 +68,14 @@ public:
   {
     for(int i=0;i!=MAX_SUPPORT_GRID_NUM;i++)
     {
-//      if(CheckIfBasicSDFActive(i)==true)
-//      {
-        m_GridVolumes[i].d = 0;
-        m_GridVolumes[i].w = 0;
-        m_GridVolumes[i].h = 0;
-//        m_GridVolumes[i].CleanUp();
-//        GpuCheckErrors();
-//      }
+      //      if(CheckIfBasicSDFActive(i)==true)
+      //      {
+      m_GridVolumes[i].d = 0;
+      m_GridVolumes[i].w = 0;
+      m_GridVolumes[i].h = 0;
+      //        m_GridVolumes[i].CleanUp();
+      //        GpuCheckErrors();
+      //      }
     }
   }
 
@@ -236,7 +236,7 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-//       return 0.0/0.0;
+      //       return 0.0/0.0;
     }
 
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
@@ -328,13 +328,14 @@ public:
   }
 
   // ============================================================================
+  // get index of grid sdf in current volume
   inline __device__ __host__
   unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
   {
     if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
     {
       const unsigned int nIndex =x + m_nWholeGridRes* (y+ m_nWholeGridRes* z);
-      return  nIndex;
+      return nIndex;
     }
 
     // for x
@@ -410,18 +411,78 @@ public:
       }
     }
 
-
     // compute actual index
     const unsigned int nIndex =x + m_nWholeGridRes* (y+ m_nWholeGridRes* z);
     return  nIndex;
   }
 
 
+  // input the index of grid sdf that we want to access. return the global index for it
+  // If the index is shift, its global index will ++. Otherwise, the global index
+  // will be the same as it was. The role of this function is to see if the m_global_shift
+  // does not reset yet but there is a current shift for the grid.
   inline __device__ __host__
-  unsigned int GetGlobalIndex(unsigned int x, unsigned int y, unsigned int z) const
+  int3 GetGlobalIndex(unsigned int x, unsigned int y, unsigned int z) const
   {
+    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
+    {
+      return m_global_shift;
+    }
 
+    int3 GlobalShift = m_global_shift;
+
+    // for x
+    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes)
+    {
+      if(x>=m_nWholeGridRes-1-m_shift.x)
+      {
+        GlobalShift.x = m_global_shift.x++;
+      }
+    }
+    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes)
+    {
+      if( x<=abs(m_shift.x) )
+      {
+        GlobalShift.x = m_global_shift.x--;
+      }
+    }
+
+    // for y
+    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes)
+    {
+      if(y>=m_nWholeGridRes-1-m_shift.y)
+      {
+        GlobalShift.y = m_global_shift.y++;
+      }
+    }
+    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes)
+    {
+      if( y<=abs(m_shift.y) )
+      {
+        GlobalShift.y = m_global_shift.y--;
+      }
+    }
+
+    // for z
+    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes)
+    {
+      if(z>=m_nWholeGridRes-1-m_shift.z)
+      {
+        GlobalShift.z = m_global_shift.z++;
+      }
+    }
+    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes)
+    {
+      if( z<=abs(m_shift.z) )
+      {
+        GlobalShift.z = m_global_shift.z++;
+      }
+    }
+
+    // compute actual index
+    return  GlobalShift;
   }
+
 
   inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
@@ -650,6 +711,8 @@ public:
     printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift is %d \n",
            m_shift.x,m_shift.y,m_shift.z, m_nWholeGridRes);
   }
+
+
 
 public:
   size_t                                      m_d;
