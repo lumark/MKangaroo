@@ -436,14 +436,14 @@ public:
     {
       if(x>=m_nWholeGridRes-1-m_shift.x)
       {
-        GlobalShift.x = m_global_shift.x++;
+        GlobalShift.x = m_global_shift.x+1;
       }
     }
     else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes)
     {
       if( x<=abs(m_shift.x) )
       {
-        GlobalShift.x = m_global_shift.x--;
+        GlobalShift.x = m_global_shift.x-1;
       }
     }
 
@@ -452,14 +452,14 @@ public:
     {
       if(y>=m_nWholeGridRes-1-m_shift.y)
       {
-        GlobalShift.y = m_global_shift.y++;
+        GlobalShift.y = m_global_shift.y+1;
       }
     }
     else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes)
     {
       if( y<=abs(m_shift.y) )
       {
-        GlobalShift.y = m_global_shift.y--;
+        GlobalShift.y = m_global_shift.y-1;
       }
     }
 
@@ -468,14 +468,14 @@ public:
     {
       if(z>=m_nWholeGridRes-1-m_shift.z)
       {
-        GlobalShift.z = m_global_shift.z++;
+        GlobalShift.z = m_global_shift.z+1;
       }
     }
     else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes)
     {
       if( z<=abs(m_shift.z) )
       {
-        GlobalShift.z = m_global_shift.z++;
+        GlobalShift.z = m_global_shift.z-1;
       }
     }
 
