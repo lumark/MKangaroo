@@ -196,8 +196,9 @@ __global__ void KernDetectRollingSdfShift(
 
   if( u < imgdepth.w && v < imgdepth.h )
   {
-    if(imgdepth(u,v)>0.5)
+    if(imgdepth(u,v)>0)
     {
+
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
 
@@ -278,9 +279,9 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-//  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
-//         positive_shift.x,positive_shift.y,positive_shift.z,
-//         negative_shift.x,negative_shift.y,negative_shift.z);
+  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
+         positive_shift.x,positive_shift.y,positive_shift.z,
+         negative_shift.x,negative_shift.y,negative_shift.z);
 
   g_vol.FreeMemory();
 }

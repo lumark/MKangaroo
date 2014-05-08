@@ -193,7 +193,7 @@ __global__ void KernSdfFuseDirectGrey(
           //        }else if(sd < 5*trunc_dist) {
 
           /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
             //            printf("md %f,", md);
             const SDF_t curvol = vol(x,y,z);
@@ -279,7 +279,7 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
         // depth value at image coordinate
         const float md   = depth.GetBilinear<float>(p_c);
 
-        if(md>0.5)
+        if(md>0)
         {
           // normal value at image coordinate
           const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
@@ -432,7 +432,7 @@ __global__ void KernSdfFuseDirectGreyGrid(
           //        }else if(sd < 5*trunc_dist) {
 
           /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
             const SDF_t curvol = g_vol(x,y,z);
 
@@ -554,7 +554,7 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
                                       int(floorf(y/g_vol.m_nVolumeGridRes)),
                                       int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
             if(g_vol.CheckIfBasicSDFActive(nIndex)==true )
             {
@@ -691,7 +691,7 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
             //        }else if(sd < 5*trunc_dist) {
 
             /// here 0.5 is for kinect sensor
-            if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+            if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
             {
               const SDF_t curvol = g_vol(x,y,z);
 
@@ -846,7 +846,7 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
           //        }else if(sd < 5*trunc_dist) {
 
           /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
             int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                         int(floorf(y/g_vol.m_nVolumeGridRes)),
@@ -1111,7 +1111,7 @@ __global__ void KernSdfFuseColor(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
             const SDF_t curvol = vol(x,y,z);
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
