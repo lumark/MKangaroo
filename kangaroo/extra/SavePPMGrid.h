@@ -83,14 +83,21 @@ void SavePXM(const std::string                                      filename,
   SavePXMBoundingBox(sBBFileName, vol.m_bbox);
 
   // save each active volume in BoundedVolumeGrid to HardDisk
-  for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  for(int i=0;i!=vol.m_nWholeGridRes;i++)
   {
-    if(hvol.CheckIfBasicSDFActive(i)==true)
+    for(int j=0;j!=vol.m_nWholeGridRes;j++)
     {
-      // save
-      std::string sFileName = filename + "-" + std::to_string(i);
-      std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
-      SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i],ppm_type,num_colors);
+      for(int k=0;k!=vol.m_nWholeGridRes;k++)
+      {
+        if(hvol.CheckIfBasicSDFActive(i)==true)
+        {
+          // save
+          //      std::string sFileName = filename + "-" + std::to_string(i);
+          std::string sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
+          std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
+          SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i*j*k],ppm_type,num_colors);
+        }
+      }
     }
   }
 }
