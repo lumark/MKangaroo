@@ -327,6 +327,41 @@ public:
     return (pos_w - m_bbox.Min()) / (m_bbox.Size());
   }
 
+
+  // get sub bounding volume for speed.
+  inline __device__ __host__
+  BoundedVolumeGrid<T,Target,DontManage> SubBoundingVolume(const BoundingBox& region)
+  {
+    const float3 min_fv = (region.Min() - m_bbox.Min()) / (m_bbox.Size());
+    const float3 max_fv = (region.Max() - m_bbox.Min()) / (m_bbox.Size());
+
+    const int3 min_v = make_int3(
+          fmaxf((m_w-1)*min_fv.x, 0),
+          fmaxf((m_h-1)*min_fv.y, 0),
+          fmaxf((m_d-1)*min_fv.z, 0)
+          );
+    const int3 max_v = make_int3(
+          fminf(ceilf((m_w-1)*max_fv.x), m_w-1),
+          fminf(ceilf((m_h-1)*max_fv.y), m_h-1),
+          fminf(ceilf((m_d-1)*max_fv.z), m_d-1)
+          );
+
+    const int3 size_v = max((max_v - min_v) + make_int3(1,1,1), make_int3(0,0,0) );
+
+    const BoundingBox nbbox(
+          VoxelPositionInUnits(min_v),
+          VoxelPositionInUnits(max_v)
+          );
+
+    // return a new BoundedVolumeGrid
+
+//    return BoundedVolumeGrid<T,Target,DontManage>(
+//          Volume<T,Target,Management>::SubVolume(min_v, size_v),
+//          nbbox
+//          );
+  }
+
+
   // ============================================================================
   // get index of grid sdf in current volume
   inline __device__ __host__
