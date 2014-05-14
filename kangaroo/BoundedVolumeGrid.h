@@ -355,9 +355,15 @@ public:
     const int h= (nbbox.boxmax.y + abs(nbbox.boxmin.y)) * m_h;
     const int d= (nbbox.boxmax.z + abs(nbbox.boxmin.z)) * m_d;
 
-    //     return a new BoundedVolumeGrid
-    BoundedVolumeGrid<T,Target,Management>  SubBoundedVolumeGrid;
+    // return a new BoundedVolumeGrid
+    BoundedVolumeGrid<T,Target,Management> SubBoundedVolumeGrid;
     SubBoundedVolumeGrid.init(w,h,d,m_nVolumeGridRes, nbbox);
+
+    // put shift parameters
+    m_subVolShift =make_int3()
+
+    // change point of it
+    &SubBoundedVolumeGrid.m_GridVolumes = &m_GridVolumes;
 
     return SubBoundedVolumeGrid;
   }
@@ -754,6 +760,7 @@ public:
   // for rolling sdf. When this value is not zero, we need to recompute index based on the shift
   int3                                        m_shift;
   int3                                        m_global_shift; // when m_shift set to 0, global will ++
+  int3                                        m_subVolShift;  // shift for sub bounded volume.
 
   // bounding box ofbounded volume grid
   BoundingBox                                 m_bbox;
