@@ -279,8 +279,6 @@ public:
     return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
   }
 
-
-
   inline __device__
   float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
   {
@@ -328,7 +326,7 @@ public:
   }
 
 
-  // get sub bounding volume for speed.
+  // get sub bounding volume by bounding box for speed.
   inline __device__ __host__
   BoundedVolumeGrid<T,Target,DontManage> SubBoundingVolume(const BoundingBox& region)
   {
@@ -353,12 +351,15 @@ public:
           VoxelPositionInUnits(max_v)
           );
 
-    // return a new BoundedVolumeGrid
+    const int w= (nbbox.boxmax.x + abs(nbbox.boxmin.x)) * m_w;
+    const int h= (nbbox.boxmax.y + abs(nbbox.boxmin.y)) * m_h;
+    const int d= (nbbox.boxmax.z + abs(nbbox.boxmin.z)) * m_d;
 
-//    return BoundedVolumeGrid<T,Target,DontManage>(
-//          Volume<T,Target,Management>::SubVolume(min_v, size_v),
-//          nbbox
-//          );
+    //     return a new BoundedVolumeGrid
+    BoundedVolumeGrid<T,Target,Management>  SubBoundedVolumeGrid;
+    SubBoundedVolumeGrid.init(w,h,d,m_nVolumeGridRes, nbbox);
+
+    return SubBoundedVolumeGrid;
   }
 
 
@@ -526,7 +527,7 @@ public:
     return deriv / length(deriv);
   }
 
-  inline __device__
+  inline __device__ __host__
   float3 VoxelPositionInUnits(int x, int y, int z) const
   {
     const float3 vol_size = m_bbox.Size();
@@ -538,7 +539,7 @@ public:
           );
   }
 
-  inline __device__
+  inline __device__ __host__
   float3 VoxelPositionInUnits(int3 p_v) const
   {
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
@@ -566,7 +567,6 @@ public:
     }
   }
 
-
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
   {
@@ -588,7 +588,6 @@ public:
       }
     }
   }
-
 
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
@@ -647,7 +646,6 @@ public:
     cudaFree( m_GridVolumes[nIndex].ptr );
   }
 
-
   inline __host__ __device__
   bool CheckIfBasicSDFActive(const int nIndex) const
   {
@@ -662,7 +660,6 @@ public:
       return false;
     }
   }
-
 
   inline __host__
   int GetActiveGridVolNum()
