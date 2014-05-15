@@ -443,7 +443,10 @@ public:
     m_subVolShift =make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
 
     // change point of it
-    SubBoundedVolumeGrid.m_GridVolumes[0] = m_GridVolumes[0];
+    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      SubBoundedVolumeGrid.m_GridVolumes[i] = m_GridVolumes[i];
+    }
 
     return SubBoundedVolumeGrid;
   }
@@ -669,10 +672,6 @@ public:
 
 
   // ========================= Others =================================
-
-
-
-
   inline __host__ __device__
   bool CheckIfBasicSDFActive(const int nIndex) const
   {
