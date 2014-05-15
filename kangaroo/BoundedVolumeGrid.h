@@ -34,8 +34,8 @@ public:
   void init(unsigned int n_w, unsigned int n_h, unsigned int n_d, unsigned int n_res, const BoundingBox& r_bbox)
   {
     // init grid sdf
-    if(n_w == n_h && n_h == n_d)
-    {
+//    if(n_w == n_h && n_h == n_d)
+//    {
       m_w              = n_w;
       m_h              = n_h;
       m_d              = n_d;
@@ -55,12 +55,12 @@ public:
       ResetAllGridVol();
       m_shift = make_int3(0,0,0);
       m_global_shift = make_int3(0,0,0);
-    }
-    else
-    {
-      printf("[BoundedVolumeGrid/init] Fatal error! Only support cube SDF with (n*n*n) size!\n");
-      exit(-1);
-    }
+//    }
+//    else
+//    {
+//      printf("[BoundedVolumeGrid/init] Fatal error! Only support cube SDF with (n*n*n) size!\n");
+//      exit(-1);
+//    }
   }
 
   inline __host__
@@ -383,10 +383,34 @@ public:
   }
 
 
+  inline __device__
+  float3 GetUnitsOutwardNormal(float3 pos_w) const
+  {
+    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
+    return deriv / length(deriv);
+  }
+
+  inline __device__ __host__
+  float3 VoxelPositionInUnits(int x, int y, int z) const
+  {
+    const float3 vol_size = m_bbox.Size();
+
+    return make_float3(
+          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
+          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
+          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
+          );
+  }
+
+  inline __device__ __host__
+  float3 VoxelPositionInUnits(int3 p_v) const
+  {
+    return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
+  }
 
   // get sub bounding volume by bounding box for speed.
   inline __device__ __host__
-  BoundedVolumeGrid<T,Target,DontManage> SubBoundingVolume(const BoundingBox& region)
+  BoundedVolumeGrid<T,Target,Management> SubBoundingVolume(const BoundingBox& region)
   {
     const float3 min_fv = (region.Min() - m_bbox.Min()) / (m_bbox.Size());
     const float3 max_fv = (region.Max() - m_bbox.Min()) / (m_bbox.Size());
@@ -409,19 +433,17 @@ public:
           VoxelPositionInUnits(max_v)
           );
 
-    const int w= (nbbox.boxmax.x + abs(nbbox.boxmin.x)) * m_w;
-    const int h= (nbbox.boxmax.y + abs(nbbox.boxmin.y)) * m_h;
-    const int d= (nbbox.boxmax.z + abs(nbbox.boxmin.z)) * m_d;
+    printf("size is %d,%d,%d",size_v.x,size_v.y,size_v.z );
 
     // return a new BoundedVolumeGrid
     BoundedVolumeGrid<T,Target,Management> SubBoundedVolumeGrid;
-    SubBoundedVolumeGrid.init(w,h,d,m_nVolumeGridRes, nbbox);
+    SubBoundedVolumeGrid.init(size_v.x,size_v.y,size_v.z,m_nVolumeGridRes, nbbox);
 
     // put shift parameters
     m_subVolShift =make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
 
     // change point of it
-    &SubBoundedVolumeGrid.m_GridVolumes = &m_GridVolumes;
+    SubBoundedVolumeGrid.m_GridVolumes[0] = m_GridVolumes[0];
 
     return SubBoundedVolumeGrid;
   }
@@ -648,31 +670,6 @@ public:
 
   // ========================= Others =================================
 
-  inline __device__
-  float3 GetUnitsOutwardNormal(float3 pos_w) const
-  {
-    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
-    return deriv / length(deriv);
-  }
-
-  inline __device__ __host__
-  float3 VoxelPositionInUnits(int x, int y, int z) const
-  {
-    const float3 vol_size = m_bbox.Size();
-
-    return make_float3(
-          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
-          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
-          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
-          );
-  }
-
-  inline __device__ __host__
-  float3 VoxelPositionInUnits(int3 p_v) const
-  {
-    return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
-  }
-
 
 
 
@@ -708,6 +705,8 @@ public:
 
     return nNum;
   }
+
+
 
 public:
   size_t                                      m_d;
