@@ -433,14 +433,14 @@ public:
           VoxelPositionInUnits(max_v)
           );
 
-    printf("size is %d,%d,%d",size_v.x,size_v.y,size_v.z );
+    printf("New SubVol Size is %d,%d,%d\n",size_v.x,size_v.y,size_v.z );
 
     // return a new BoundedVolumeGrid
     BoundedVolumeGrid<T,Target,Management> SubBoundedVolumeGrid;
-    SubBoundedVolumeGrid.init(size_v.x,size_v.y,size_v.z,m_nVolumeGridRes, nbbox);
+    SubBoundedVolumeGrid.init(size_v.x,size_v.y,size_v.z, m_nVolumeGridRes, nbbox);
 
     // put shift parameters
-    m_subVolShift =make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
+    m_subVolShift = make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
 
     // change point of it
     for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
