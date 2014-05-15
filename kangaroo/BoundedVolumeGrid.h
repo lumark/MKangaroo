@@ -80,25 +80,6 @@ public:
   }
 
 
-  // the following code init all basic SDFs directlly.
-  // if we don't use this code right after init, we will have to call roo::SDFInitGreyGrid
-  // before fusing
-  inline __host__
-  void InitAllBasicSDFs()
-  {
-    for(int i=0;i!=m_w;i++)
-    {
-      for(int j=0;j!=m_h;j++)
-      {
-        for(int k=0;k!=m_d;k++)
-        {
-          InitSingleBasicSDFWithGridIndex(i,j,k);
-        }
-      }
-    }
-  }
-
-
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
@@ -136,6 +117,105 @@ public:
   }
 
 
+  //////////////////////////////////////////////////////
+  // Memory copy and free
+  //////////////////////////////////////////////////////
+  inline __host__
+  void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
+  {
+    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+    }
+  }
+
+  inline __host__
+  void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
+  {
+    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+    }
+  }
+
+  inline __host__
+  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
+  {
+    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      // skip void volum grid
+      if(rVol.CheckIfBasicSDFActive(i)== true)
+      {
+        if(CheckIfBasicSDFActive(i)==false)
+        {
+          if(InitSingleBasicSDFWithIndex(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+            exit(-1);
+          }
+        }
+        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+        GpuCheckErrors();
+      }
+    }
+  }
+
+  inline __host__
+  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
+  {
+    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      // skip void volum grid
+      if(rHVol.CheckIfBasicSDFActive(i)== true)
+      {
+        if(CheckIfBasicSDFActive(i)==false)
+        {
+          if(InitSingleBasicSDFWithIndex(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+            exit(-1);
+          }
+          else
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Init New grid sdf %d\n",i);
+          }
+        }
+
+        m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
+        GpuCheckErrors();
+      }
+    }
+  }
+
+  inline __host__
+  void FreeMemory()
+  {
+    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
+         m_GridVolumes[i].h == m_nVolumeGridRes &&
+         m_GridVolumes[i].w == m_nVolumeGridRes)
+      {
+        m_GridVolumes[i].d=0;
+        m_GridVolumes[i].w=0;
+        m_GridVolumes[i].h=0;
+        cudaFree( m_GridVolumes[i].ptr );
+      }
+
+    }
+  }
+
+  inline __host__
+  void FreeMemoryByIndex(unsigned int nIndex)
+  {
+    if(CheckIfBasicSDFActive(nIndex) == false)
+    {
+      printf("[BoundedVolumeGrid] fatal error! Single GridSDF being free must be allocate first!!\n");
+      exit(-1);
+    }
+
+    cudaFree( m_GridVolumes[nIndex].ptr );
+  }
 
   //////////////////////////////////////////////////////
   // Dimensions
@@ -227,21 +307,6 @@ public:
   }
 
 
-  inline  __device__  __host__
-  T& Get(unsigned int x,unsigned int y, unsigned int z)
-  {
-    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
-                           int(floorf(y/m_nVolumeGridRes)),
-                           int(floorf(z/m_nVolumeGridRes)) );
-
-    if(CheckIfBasicSDFActive(nIndex) == false)
-    {
-      //       return 0.0/0.0;
-    }
-
-    return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
-  }
-
   // input pos_w in meter
   inline  __device__
   float GetUnitsTrilinearClamped(float3 pos_w) const
@@ -318,13 +383,6 @@ public:
   }
 
 
-  inline __device__
-  float3 GetShiftValue(float3 pos_w) const
-  {
-    /// get pose of voxel in whole sdf, in %
-    return (pos_w - m_bbox.Min()) / (m_bbox.Size());
-  }
-
 
   // get sub bounding volume by bounding box for speed.
   inline __device__ __host__
@@ -360,7 +418,7 @@ public:
     SubBoundedVolumeGrid.init(w,h,d,m_nVolumeGridRes, nbbox);
 
     // put shift parameters
-    m_subVolShift =make_int3()
+    m_subVolShift =make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
 
     // change point of it
     &SubBoundedVolumeGrid.m_GridVolumes = &m_GridVolumes;
@@ -369,7 +427,16 @@ public:
   }
 
 
-  // ============================================================================
+  // ======================== Index/Shift ====================================
+
+  inline __device__
+  float3 GetShiftValue(float3 pos_w) const
+  {
+    /// get pose of voxel in whole sdf, in %
+    return (pos_w - m_bbox.Min()) / (m_bbox.Size());
+  }
+
+
   // get index of grid sdf in current volume
   inline __device__ __host__
   unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
@@ -526,179 +593,6 @@ public:
   }
 
 
-  inline __device__
-  float3 GetUnitsOutwardNormal(float3 pos_w) const
-  {
-    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
-    return deriv / length(deriv);
-  }
-
-  inline __device__ __host__
-  float3 VoxelPositionInUnits(int x, int y, int z) const
-  {
-    const float3 vol_size = m_bbox.Size();
-
-    return make_float3(
-          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
-          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
-          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
-          );
-  }
-
-  inline __device__ __host__
-  float3 VoxelPositionInUnits(int3 p_v) const
-  {
-    return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
-  }
-
-
-  //////////////////////////////////////////////////////
-  // Memory copy and free
-  //////////////////////////////////////////////////////
-  inline __host__
-  void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
-  {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
-    {
-      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
-    }
-  }
-
-  inline __host__
-  void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
-  {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
-    {
-      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
-    }
-  }
-
-  inline __host__
-  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
-  {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
-    {
-      // skip void volum grid
-      if(rVol.CheckIfBasicSDFActive(i)== true)
-      {
-        if(CheckIfBasicSDFActive(i)==false)
-        {
-          if(InitSingleBasicSDFWithIndex(i)==false)
-          {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
-            exit(-1);
-          }
-        }
-        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
-        GpuCheckErrors();
-      }
-    }
-  }
-
-  inline __host__
-  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
-  {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
-    {
-      // skip void volum grid
-      if(rHVol.CheckIfBasicSDFActive(i)== true)
-      {
-        if(CheckIfBasicSDFActive(i)==false)
-        {
-          if(InitSingleBasicSDFWithIndex(i)==false)
-          {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
-            exit(-1);
-          }
-          else
-          {
-            printf("[Kangaroo/BoundedVolumeGrid] Init New grid sdf %d\n",i);
-          }
-        }
-
-        m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
-        GpuCheckErrors();
-      }
-    }
-  }
-
-  inline __host__
-  void FreeMemory()
-  {
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
-    {
-      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
-         m_GridVolumes[i].h == m_nVolumeGridRes &&
-         m_GridVolumes[i].w == m_nVolumeGridRes)
-      {
-        m_GridVolumes[i].d=0;
-        m_GridVolumes[i].w=0;
-        m_GridVolumes[i].h=0;
-        cudaFree( m_GridVolumes[i].ptr );
-      }
-
-    }
-  }
-
-  inline __host__
-  void FreeMemoryByIndex(unsigned int nIndex)
-  {
-    if(CheckIfBasicSDFActive(nIndex) == false)
-    {
-      printf("[BoundedVolumeGrid] fatal error! Single GridSDF being free must be allocate first!!\n");
-      exit(-1);
-    }
-
-    cudaFree( m_GridVolumes[nIndex].ptr );
-  }
-
-  inline __host__ __device__
-  bool CheckIfBasicSDFActive(const int nIndex) const
-  {
-    if(m_GridVolumes[nIndex].d == m_nVolumeGridRes &&
-       m_GridVolumes[nIndex].w == m_nVolumeGridRes &&
-       m_GridVolumes[nIndex].h == m_nVolumeGridRes)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-  inline __host__
-  int GetActiveGridVolNum()
-  {
-    int nNum = 0;
-
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
-    {
-      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
-         m_GridVolumes[i].w == m_nVolumeGridRes &&
-         m_GridVolumes[i].h == m_nVolumeGridRes)
-      {
-        nNum ++;
-      }
-    }
-
-    return nNum;
-  }
-
-
-  // set next sdf that we want to init
-  inline __device__
-  void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
-  {
-    const int nIndex = GetIndex(x/m_nVolumeGridRes, y/m_nVolumeGridRes, z/m_nVolumeGridRes );
-
-    if(m_NextInitBasicSDFs[nIndex] == 0 && CheckIfBasicSDFActive(nIndex) == true)
-    {
-      m_NextInitBasicSDFs[nIndex] = 1;
-    }
-  }
-
-
   inline __host__
   void UpdateShift(int3 shift_index)
   {
@@ -751,6 +645,69 @@ public:
   }
 
 
+
+  // ========================= Others =================================
+
+  inline __device__
+  float3 GetUnitsOutwardNormal(float3 pos_w) const
+  {
+    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
+    return deriv / length(deriv);
+  }
+
+  inline __device__ __host__
+  float3 VoxelPositionInUnits(int x, int y, int z) const
+  {
+    const float3 vol_size = m_bbox.Size();
+
+    return make_float3(
+          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
+          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
+          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
+          );
+  }
+
+  inline __device__ __host__
+  float3 VoxelPositionInUnits(int3 p_v) const
+  {
+    return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
+  }
+
+
+
+
+  inline __host__ __device__
+  bool CheckIfBasicSDFActive(const int nIndex) const
+  {
+    if(m_GridVolumes[nIndex].d == m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].w == m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].h == m_nVolumeGridRes)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  inline __host__
+  int GetActiveGridVolNum()
+  {
+    int nNum = 0;
+
+    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    {
+      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
+         m_GridVolumes[i].w == m_nVolumeGridRes &&
+         m_GridVolumes[i].h == m_nVolumeGridRes)
+      {
+        nNum ++;
+      }
+    }
+
+    return nNum;
+  }
 
 public:
   size_t                                      m_d;

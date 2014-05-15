@@ -50,7 +50,6 @@ struct Volume
   {
     Management::AllocateCheck();
     Target::template AllocatePitchedMem<T>(&ptr,&pitch,&img_pitch,w,h,d);
-    printf("init vol success.\n");
   }
 
 
@@ -62,7 +61,6 @@ struct Volume
     d = n_d;
     Management::AllocateCheck();
     Target::template AllocatePitchedMem<T>(&ptr,&pitch,&img_pitch,w,h,d);
-    printf("[InitVolume] init vol success.\n");
   }
 
 
@@ -92,7 +90,6 @@ struct Volume
     w = n_w;
     h = n_h;
     d = n_d;
-
   }
 
   //////////////////////////////////////////////////////
@@ -116,21 +113,6 @@ struct Volume
     assert(img_pitch == img.img_pitch);
     cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), TargetCopyKind<Target,TargetFrom>() );
   }
-
-
-//  template<typename TargetFrom, typename ManagementFrom>
-//  inline __device__ __host__
-//  void CopyFrom(const Volume<T,TargetFrom,ManagementFrom>* img)
-//  {
-//    // If these volumes don't have the same height, or have an image pitch different from their height,
-//    // we need to do a copy for each depth layer.
-//    assert(w == img->w);
-//    assert(h == img->h);
-//    assert(img_pitch == img->img_pitch);
-//    cudaMemcpy2D(ptr,pitch,img->ptr,img->pitch, std::min(img->w,w)*sizeof(T), h*std::min(img->d,d), TargetCopyKind<Target,TargetFrom>() );
-//  }
-
-
 
 
   template <typename DT>
