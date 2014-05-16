@@ -215,6 +215,7 @@ public:
     }
 
     cudaFree( m_GridVolumes[nIndex].ptr );
+    GpuCheckErrors();
   }
 
   //////////////////////////////////////////////////////
@@ -433,7 +434,7 @@ public:
           VoxelPositionInUnits(max_v)
           );
 
-    printf("New SubVol Size is %d,%d,%d\n",size_v.x,size_v.y,size_v.z );
+//    printf("New SubVol Size is %d,%d,%d\n",size_v.x,size_v.y,size_v.z );
 
     // return a new BoundedVolumeGrid
     BoundedVolumeGrid<T,Target,Management> SubBoundedVolumeGrid;
@@ -665,8 +666,8 @@ public:
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift is %d \n",
-           m_shift.x,m_shift.y,m_shift.z, m_nWholeGridRes);
+    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Global shift is x=%d,,y=%d,z=%d; Max shift is %d \n",
+           m_shift.x,m_shift.y,m_shift.z, m_global_shift.x,m_global_shift.y,m_global_shift.z, m_nWholeGridRes);
   }
 
 

@@ -141,7 +141,7 @@ public:
       }
     }
 
-    printf("Num of Grid SDF need to be freed is %d\n", nNum);
+    printf("[Kangaroo/RollingGridSDF] Num of Grid SDF need to be freed is %d\n", nNum);
   }
 
   template<typename T> inline
@@ -152,19 +152,18 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     int nFreeNum = 0;
     int nNeedFreeNum = 0;
+
     for(unsigned int i=0;i!=pVol->m_nWholeGridRes* pVol->m_nWholeGridRes* pVol->m_nWholeGridRes; i++)
     {
       if(nNextResetSDFs[i] == 1)
       {
         nNeedFreeNum++;
 
-        // check if this vol is valid.
+        //         free vol only when it is valid.
         if (pVol->CheckIfBasicSDFActive(i) == true)
         {
           roo::SdfReset(pVol->m_GridVolumes[i]);
-
           pVol->FreeMemoryByIndex(i);
-
           pVol->m_GridVolumes[i].d = 0;
           pVol->m_GridVolumes[i].w = 0;
           pVol->m_GridVolumes[i].h = 0;
@@ -174,11 +173,11 @@ public:
       }
     }
 
-    printf("[RollingGridSDF/FreeGrid] Free %d grid sdf. Need to free %d grid sdf.\n", nFreeNum, nNeedFreeNum);
+    printf("[Kangaroo/RollingGridSDF] Actual free %d grid sdf. Plan to free %d grid sdf.\n", nFreeNum, nNeedFreeNum);
   }
 
 private:
-  int nNextResetSDFs[1024];
+  int  nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
   int3 TotalShift;
 };
 
