@@ -3,6 +3,8 @@
 
 #include "BoundedVolumeGrid.h"
 #include "cu_sdffusion.h"
+#include "extra/SavePPMGrid.h"
+
 
 namespace roo {
 
@@ -159,7 +161,7 @@ public:
       {
         nNeedFreeNum++;
 
-        //         free vol only when it is valid.
+        //  free vol only when it is valid.
         if (pVol->CheckIfBasicSDFActive(i) == true)
         {
           roo::SdfReset(pVol->m_GridVolumes[i]);
@@ -175,6 +177,36 @@ public:
 
     printf("[Kangaroo/RollingGridSDF] Actual free %d grid sdf. Plan to free %d grid sdf.\n", nFreeNum, nNeedFreeNum);
   }
+
+
+  template<typename T> inline
+  void SaveGird(std::string sPath, roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>& rVol)
+  {
+    //////////////////////////////////////////////////////////////////////////////
+    /// free grid sdf
+    //////////////////////////////////////////////////////////////////////////////
+    int nSaveNum = 0;
+    int nNeedSaveNum = 0;
+
+    for(unsigned int i=0;i!=rVol.m_nWholeGridRes*rVol.m_nWholeGridRes*rVol.m_nWholeGridRes; i++)
+    {
+      if(nNextResetSDFs[i] == 1)
+      {
+        nNeedSaveNum++;
+
+        //  free vol only when it is valid.
+        if (rVol.CheckIfBasicSDFActive(i) == true)
+        {
+          // first save grid to ppm file
+          SavePXM(sPath,rVol);
+          nSaveNum ++;
+        }
+      }
+    }
+
+    printf("[Kangaroo/RollingGridSDF] Actual save %d grid sdf. Plan to save %d grid sdf.\n", nSaveNum, nNeedSaveNum);
+  }
+
 
 private:
   int  nNextResetSDFs[MAX_SUPPORT_GRID_NUM];

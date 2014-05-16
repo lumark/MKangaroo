@@ -68,9 +68,8 @@ void SdfResetPartial(BoundedVolume<SDF_t> vol, float3 shift)
 //////////////////////////////////////////////////////
 /// Rolling GRID SDF
 //////////////////////////////////////////////////////
-
 __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
-__device__ int                                                       g_NextResetSDFs[512];
+__device__ int                                                       g_NextResetSDFs[MAX_SUPPORT_GRID_NUM];
 
 // =============================================================================
 // Boxmin and boxmax define the box that is to be kept intact, rest will be cleared.
@@ -79,7 +78,7 @@ __device__ int                                                       g_NextReset
 // bit expensive
 // =============================================================================
 
-__global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
+__global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax)
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
@@ -105,9 +104,7 @@ __global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
       // save index of sdf that need to be reset later
       g_NextResetSDFs[nIndex] = 1;
     }
-
   }
-
 }
 
 
@@ -149,11 +146,10 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
   vol.m_shift = shift;
 
   // 2, Kernel functin. Initialization for GPU parallelization
-  //  dim3 blockDim(16,16);
-  //  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  //  KernRollingGridSdf<<<gridDim,blockDim>>>(bb_min, bb_max, shift);
-  //  GpuCheckErrors();
-
+  dim3 blockDim(16,16);
+  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
+  KernRollingGridSdf<<<gridDim,blockDim>>>(bb_min, bb_max);
+  GpuCheckErrors();
 
   // 3, copy array back
   int nNextResetSDFs[vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes];
@@ -162,8 +158,7 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
 
   for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
   {
-    pNextInitSDFs[i] = nNextResetSDFs[i];
-
+    pNextInitSDFs[i]  = nNextResetSDFs[i];
     nNextResetSDFs[i] = 0;
   }
 
@@ -185,9 +180,10 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
 
 
 
-// raycast grid grey SDF
+//
 __device__ float3 g_positive_shift;
 __device__ float3 g_negative_shift;
+
 __global__ void KernDetectRollingSdfShift(
     Image<float> imgdepth, const Mat<float,3,4> T_wc, ImageIntrinsics K )
 {
@@ -198,7 +194,6 @@ __global__ void KernDetectRollingSdfShift(
   {
     if(imgdepth(u,v)>0)
     {
-
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
 
@@ -210,12 +205,12 @@ __global__ void KernDetectRollingSdfShift(
         if(shift.x > g_positive_shift.x)
         {
           g_positive_shift.x = shift.x;
-//          printf("positive_shift_x:%f;",g_positive_shift.x);
+          //          printf("positive_shift_x:%f;",g_positive_shift.x);
         }
         else if(shift.x < g_negative_shift.x)
         {
           g_negative_shift.x = shift.x;
-//          printf("negative_shift_x:%f;",g_negative_shift.x);
+          //          printf("negative_shift_x:%f;",g_negative_shift.x);
         }
       }
 
@@ -224,12 +219,12 @@ __global__ void KernDetectRollingSdfShift(
         if(shift.y > g_positive_shift.y)
         {
           g_positive_shift.y = shift.y;
-//          printf("positive_shift_y:%f;",g_positive_shift.y);
+          //          printf("positive_shift_y:%f;",g_positive_shift.y);
         }
         else if(shift.y < g_negative_shift.y)
         {
           g_negative_shift.y = shift.y;
-//          printf("negative_shift_y:%f;",g_negative_shift.y);
+          //          printf("negative_shift_y:%f;",g_negative_shift.y);
         }
       }
 
@@ -238,16 +233,15 @@ __global__ void KernDetectRollingSdfShift(
         if(shift.z > g_positive_shift.z)
         {
           g_positive_shift.z = shift.z;
-//          printf("positive_shift_z:%f;",g_positive_shift.z);
+          //          printf("positive_shift_z:%f;",g_positive_shift.z);
         }
         else if(shift.z < g_negative_shift.z)
         {
           g_negative_shift.z = shift.z;
-//          printf("negative_shift_z:%f;",g_negative_shift.z);
+          //          printf("negative_shift_z:%f;",g_negative_shift.z);
         }
       }
     }
-
   }
 }
 
@@ -279,11 +273,12 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
+  printf("[kangaroo/cu_rolling_sdf] Positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
          positive_shift.x,positive_shift.y,positive_shift.z,
          negative_shift.x,negative_shift.y,negative_shift.z);
 
   g_vol.FreeMemory();
+  GpuCheckErrors();
 }
 
 }

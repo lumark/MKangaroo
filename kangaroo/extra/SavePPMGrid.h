@@ -96,6 +96,7 @@ void SavePXM(const std::string                                      filename,
           std::string sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
           std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
           SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i*j*k],ppm_type,num_colors);
+          std::cout<<"Save grid "<<sFileName<<" success."<<std::endl;
         }
       }
     }
