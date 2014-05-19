@@ -141,9 +141,11 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
   {
+    printf("device wholegridres is %d\n",rVol.m_nWholeGridRes);
+
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
-      // skip void volum grid
+      // skip void volum grid, only copy non-void grid
       if(rVol.CheckIfBasicSDFActive(i)== true)
       {
         if(CheckIfBasicSDFActive(i)==false)
@@ -154,6 +156,7 @@ public:
             exit(-1);
           }
         }
+
         m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
         GpuCheckErrors();
       }
@@ -163,6 +166,8 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
   {
+    printf("hvol wholegridres is %d\n",rHVol.m_nWholeGridRes);
+
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
       // skip void volum grid
@@ -183,6 +188,8 @@ public:
 
         m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
         GpuCheckErrors();
+
+        printf("copy success.\n");
       }
     }
   }
@@ -695,9 +702,7 @@ public:
 
     for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
-      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
-         m_GridVolumes[i].w == m_nVolumeGridRes &&
-         m_GridVolumes[i].h == m_nVolumeGridRes)
+      if(CheckIfBasicSDFActive(i)==true)
       {
         nNum ++;
       }

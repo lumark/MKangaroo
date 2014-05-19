@@ -62,41 +62,43 @@ inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox
   bFile << BBox.boxmin.x << " " <<  BBox.boxmin.y << " " << BBox.boxmin.z << std::endl;
   bFile << BBox.boxmax.x << " " <<  BBox.boxmax.y << " " << BBox.boxmax.z << std::endl;
 
-  printf("save bb success.\n");
+  printf("save bb success File: %s\n",filename.c_str());
   bFile.close();
 }
 
 
 template<typename T, typename Manage>
 void SavePXM(const std::string                                      filename,
-             roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   vol,
+             roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
              std::string                                            ppm_type = "P5",
              int                                                    num_colors = 255)
 {
-  printf("[SavePXM] try to save pxm..\n");
+  printf("\n[SavePXM] try to save pxm.. Active Grids of target BBVolumeGrid is %d\n",rDVol.GetActiveGridVolNum());
 
   // load data from device to host
   roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
-  hvol.init(vol.m_w,vol.m_h,vol.m_d,vol.m_nVolumeGridRes,vol.m_bbox);
-  hvol.CopyAndInitFrom(vol);
+  hvol.init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
+  hvol.CopyAndInitFrom(rDVol);
+
+  printf("finish copy.. now try to save bb\n");
 
   // first save bounding box
   std::string sBBFileName = filename+"-BB";
-  SavePXMBoundingBox(sBBFileName, vol.m_bbox);
+  SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
 
   // save each active volume in BoundedVolumeGrid to HardDisk
   int nNum =0;
   int nSaveNum = 0;
   int nNeedSaveNum = 0;
-  for(int i=0;i!=vol.m_nWholeGridRes;i++)
+  for(int i=0;i!=rDVol.m_nWholeGridRes;i++)
   {
-    for(int j=0;j!=vol.m_nWholeGridRes;j++)
+    for(int j=0;j!=rDVol.m_nWholeGridRes;j++)
     {
-      for(int k=0;k!=vol.m_nWholeGridRes;k++)
+      for(int k=0;k!=rDVol.m_nWholeGridRes;k++)
       {
         if(hvol.CheckIfBasicSDFActive(i)==true)
         {
-          // save
+          // save single grid.
           //      std::string sFileName = filename + "-" + std::to_string(i);
           std::string sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
           std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
@@ -111,7 +113,7 @@ void SavePXM(const std::string                                      filename,
 
   if(nNum==0)
   {
-    printf("[SavePXM] warnning!! does not save any ppm file. WhileGridRes is %d!!!\n",vol.m_nWholeGridRes);
+    printf("[SavePXM] warnning!! Does not save any ppm file. WhileGridRes is %d!!!\n",rDVol.m_nWholeGridRes);
   }
   else
   {

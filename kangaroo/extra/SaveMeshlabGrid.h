@@ -19,7 +19,7 @@ struct KinectKeyframe
     Sophus::SE3d T_iw;
 };
 
-inline void SaveMeshlabGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol)
+inline void SaveMeshlabGrid(std::string sPath, roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol)
 {
     Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
     Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
@@ -28,12 +28,12 @@ inline void SaveMeshlabGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice
     Eigen::Matrix4d T_ml_vis = Eigen::Matrix4d::Identity();
     T_ml_vis.block<3,3>(0,0) = RDFmeshlab.transpose() * RDFvision;
 
-    std::string mesh_filename = "mesh";
-    std::ofstream of("project.mlp");
+    std::string mesh_filename = sPath+ "-Mesh";
+    std::string mlp_file =sPath +"project.mlp";
+    std::ofstream of(mlp_file);
 
     of << "<!DOCTYPE MeshLabDocument>" << std::endl;
     of << "<MeshLabProject>" << std::endl;
-
 
     of << " <MeshGroup>" << std::endl;
 
