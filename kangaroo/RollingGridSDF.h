@@ -182,29 +182,7 @@ public:
   template<typename T> inline
   void SaveGird(std::string sPath, roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>& rVol)
   {
-    //////////////////////////////////////////////////////////////////////////////
-    /// free grid sdf
-    //////////////////////////////////////////////////////////////////////////////
-    int nSaveNum = 0;
-    int nNeedSaveNum = 0;
-
-    for(unsigned int i=0;i!=rVol.m_nWholeGridRes*rVol.m_nWholeGridRes*rVol.m_nWholeGridRes; i++)
-    {
-      if(nNextResetSDFs[i] == 1)
-      {
-        nNeedSaveNum++;
-
-        //  free vol only when it is valid.
-        if (rVol.CheckIfBasicSDFActive(i) == true)
-        {
-          // first save grid to ppm file
-          SavePXM(sPath,rVol);
-          nSaveNum ++;
-        }
-      }
-    }
-
-    printf("[Kangaroo/RollingGridSDF] Actual save %d grid sdf. Plan to save %d grid sdf.\n", nSaveNum, nNeedSaveNum);
+    SavePXM(sPath,rVol);
   }
 
 

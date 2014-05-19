@@ -73,6 +73,8 @@ void SavePXM(const std::string                                      filename,
              std::string                                            ppm_type = "P5",
              int                                                    num_colors = 255)
 {
+  printf("[SavePXM] try to save pxm..\n");
+
   // load data from device to host
   roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
   hvol.init(vol.m_w,vol.m_h,vol.m_d,vol.m_nVolumeGridRes,vol.m_bbox);
@@ -83,6 +85,9 @@ void SavePXM(const std::string                                      filename,
   SavePXMBoundingBox(sBBFileName, vol.m_bbox);
 
   // save each active volume in BoundedVolumeGrid to HardDisk
+  int nNum =0;
+  int nSaveNum = 0;
+  int nNeedSaveNum = 0;
   for(int i=0;i!=vol.m_nWholeGridRes;i++)
   {
     for(int j=0;j!=vol.m_nWholeGridRes;j++)
@@ -96,10 +101,21 @@ void SavePXM(const std::string                                      filename,
           std::string sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
           std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
           SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i*j*k],ppm_type,num_colors);
-          std::cout<<"Save grid "<<sFileName<<" success."<<std::endl;
+
+          std::cout<<"[SavePXM]Save grid "<<sFileName<<" success."<<std::endl;
+          nNum++;
         }
       }
     }
+  }
+
+  if(nNum==0)
+  {
+    printf("[SavePXM] warnning!! does not save any ppm file. WhileGridRes is %d!!!\n",vol.m_nWholeGridRes);
+  }
+  else
+  {
+    printf("[Kangaroo/RollingGridSDF] Actual save %d grid sdf. Plan to save %d grid sdf.\n", nSaveNum, nNeedSaveNum);
   }
 }
 
