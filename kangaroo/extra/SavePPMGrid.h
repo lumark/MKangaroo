@@ -70,6 +70,7 @@ inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox
 template<typename T, typename Manage>
 void SavePXM(const std::string                                      filename,
              roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
+             bool                                                   bGlobalPose = false,
              std::string                                            ppm_type = "P5",
              int                                                    num_colors = 255)
 {
@@ -80,7 +81,7 @@ void SavePXM(const std::string                                      filename,
   hvol.init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
   hvol.CopyAndInitFrom(rDVol);
 
-  printf("finish copy.. now try to save bb\n");
+  printf("[SavePXM] Finish copy volume from device to host. Now try to save bb\n");
 
   // first save bounding box
   std::string sBBFileName = filename+"-BB";
@@ -90,17 +91,30 @@ void SavePXM(const std::string                                      filename,
   int nNum =0;
   int nSaveNum = 0;
   int nNeedSaveNum = 0;
+
   for(int i=0;i!=rDVol.m_nWholeGridRes;i++)
   {
     for(int j=0;j!=rDVol.m_nWholeGridRes;j++)
     {
       for(int k=0;k!=rDVol.m_nWholeGridRes;k++)
       {
-        if(hvol.CheckIfBasicSDFActive(i)==true)
+        if(hvol.CheckIfBasicSDFActive(hvol.GetIndex(i,j,k))==true)
         {
-          // save single grid.
-          //      std::string sFileName = filename + "-" + std::to_string(i);
-          std::string sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
+          // save local index (without rolling)
+          std::string sFileName;
+          if(bGlobalPose==false)
+          {
+            sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
+          }
+          else
+          {
+            // save global index (with rolling)
+            sFileName =filename+"-"+std::to_string(hvol.m_global_shift.x)+
+                "-"+std::to_string(hvol.m_global_shift.y)+
+                "-"+std::to_string(hvol.m_global_shift.z)+
+                "-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
+          }
+
           std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
           SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i*j*k],ppm_type,num_colors);
 
@@ -113,7 +127,7 @@ void SavePXM(const std::string                                      filename,
 
   if(nNum==0)
   {
-    printf("[SavePXM] warnning!! Does not save any ppm file. WhileGridRes is %d!!!\n",rDVol.m_nWholeGridRes);
+    printf("[SavePXM] Warnning!! Does not save any ppm file. WhileGridRes is %d!!!\n",rDVol.m_nWholeGridRes);
   }
   else
   {

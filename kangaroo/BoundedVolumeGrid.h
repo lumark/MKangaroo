@@ -141,8 +141,6 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
   {
-    printf("device wholegridres is %d\n",rVol.m_nWholeGridRes);
-
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
       // skip void volum grid, only copy non-void grid
@@ -153,6 +151,12 @@ public:
           if(InitSingleBasicSDFWithIndex(i)==false)
           {
             printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+            exit(-1);
+          }
+
+          if(CheckIfBasicSDFActive(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! Init grid sdf fail!!\n");
             exit(-1);
           }
         }
@@ -166,8 +170,6 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
   {
-    printf("hvol wholegridres is %d\n",rHVol.m_nWholeGridRes);
-
     for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
     {
       // skip void volum grid
@@ -180,9 +182,11 @@ public:
             printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
             exit(-1);
           }
-          else
+
+          if(CheckIfBasicSDFActive(i)==false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] Init New grid sdf %d\n",i);
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! Init grid sdf fail!!\n");
+            exit(-1);
           }
         }
 
