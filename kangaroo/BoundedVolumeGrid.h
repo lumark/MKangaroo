@@ -42,12 +42,16 @@ public:
 
       m_bbox           = r_bbox;
       m_nVolumeGridRes = n_res;
-      m_nWholeGridRes  = m_w/m_nVolumeGridRes;
 
-      if(m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes > MAX_SUPPORT_GRID_NUM)
+      m_nWholeGridRes_w  = m_w/m_nVolumeGridRes;
+      m_nWholeGridRes_h  = m_h/m_nVolumeGridRes;
+      m_nWholeGridRes_d  = m_d/m_nVolumeGridRes;
+
+
+      if(m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d > MAX_SUPPORT_GRID_NUM)
       {
         printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
-               m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes);
+               m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d);
         printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
         exit(-1);
       }
@@ -123,7 +127,7 @@ public:
   inline __host__
   void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
     }
@@ -132,7 +136,7 @@ public:
   inline __host__
   void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
     }
@@ -141,7 +145,7 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       // skip void volum grid, only copy non-void grid
       if(rVol.CheckIfBasicSDFActive(i)== true)
@@ -170,7 +174,7 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       // skip void volum grid
       if(rHVol.CheckIfBasicSDFActive(i)== true)
@@ -201,7 +205,7 @@ public:
   inline __host__
   void FreeMemory()
   {
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       if(m_GridVolumes[i].d == m_nVolumeGridRes &&
          m_GridVolumes[i].h == m_nVolumeGridRes &&
@@ -255,7 +259,7 @@ public:
 
     int nNum = 0;
 
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!=m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       if(m_GridVolumes[i].d !=m_nVolumeGridRes &&
          m_GridVolumes[i].h !=m_nVolumeGridRes &&
@@ -310,9 +314,9 @@ public:
              int(floorf(x/m_nVolumeGridRes)),
              int(floorf(y/m_nVolumeGridRes)),
              int(floorf(z/m_nVolumeGridRes)),
-             m_nWholeGridRes-1,
-             m_nWholeGridRes-1,
-             m_nWholeGridRes-1);
+             m_nWholeGridRes_w-1,
+             m_nWholeGridRes_h-1,
+             m_nWholeGridRes_d-1);
     }
 
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
@@ -455,7 +459,7 @@ public:
     m_subVolShift = make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
 
     // change point of it
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!=m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       SubBoundedVolumeGrid.m_GridVolumes[i] = m_GridVolumes[i];
     }
@@ -480,85 +484,85 @@ public:
   {
     if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
     {
-      const unsigned int nIndex =x + m_nWholeGridRes* (y+ m_nWholeGridRes* z);
+      const unsigned int nIndex =x + m_nWholeGridRes_w* (y+ m_nWholeGridRes_h* z);
       return nIndex;
     }
 
     // for x
-    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes)
+    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes_w)
     {
-      if( x<=m_nWholeGridRes-1-m_shift.x)
+      if( x<=m_nWholeGridRes_w-1-m_shift.x)
       {
         x = x+m_shift.x;
       }
-      else if(x>=m_nWholeGridRes-1-m_shift.x)
+      else if(x>=m_nWholeGridRes_w-1-m_shift.x)
       {
-        x = x-(m_nWholeGridRes-1)+(m_shift.x-1);
+        x = x-(m_nWholeGridRes_w-1)+(m_shift.x-1);
       }
     }
-    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes)
+    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes_w)
     {
-      if(x>=abs(m_shift.x) && x<=m_nWholeGridRes)
+      if(x>=abs(m_shift.x) && x<=m_nWholeGridRes_w)
       {
         x = x+m_shift.x;
       }
       else if( x<=abs(m_shift.x) )
       {
-        x = x+m_nWholeGridRes-1-abs(m_shift.x) ;
+        x = x+m_nWholeGridRes_w-1-abs(m_shift.x) ;
       }
     }
 
 
     // for y
-    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes)
+    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes_h)
     {
-      if( y<=m_nWholeGridRes-1-m_shift.y)
+      if( y<=m_nWholeGridRes_h-1-m_shift.y)
       {
         y = y+m_shift.y;
       }
-      else if(y>=m_nWholeGridRes-1-m_shift.y)
+      else if(y>=m_nWholeGridRes_h-1-m_shift.y)
       {
-        y = y-(m_nWholeGridRes-1)+(m_shift.y-1);
+        y = y-(m_nWholeGridRes_h-1)+(m_shift.y-1);
       }
     }
-    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes)
+    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes_h)
     {
-      if(y>=abs(m_shift.y) && y<=m_nWholeGridRes)
+      if(y>=abs(m_shift.y) && y<=m_nWholeGridRes_h)
       {
         y = y+m_shift.y;
       }
       else if( y<=abs(m_shift.y) )
       {
-        y = y+m_nWholeGridRes-1-abs(m_shift.y) ;
+        y = y+m_nWholeGridRes_h-1-abs(m_shift.y) ;
       }
     }
 
     // for z
-    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes)
+    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes_d)
     {
-      if( z<=m_nWholeGridRes-1-m_shift.z)
+      if( z<=m_nWholeGridRes_d-1-m_shift.z)
       {
         z = z+m_shift.z;
       }
-      else if(z>=m_nWholeGridRes-1-m_shift.z)
+      else if(z>=m_nWholeGridRes_d-1-m_shift.z)
       {
-        z = z-(m_nWholeGridRes-1)+(m_shift.z-1);
+        z = z-(m_nWholeGridRes_d-1)+(m_shift.z-1);
       }
     }
-    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes)
+    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes_d)
     {
-      if(z>=abs(m_shift.z) && z<=m_nWholeGridRes)
+      if(z>=abs(m_shift.z) && z<=m_nWholeGridRes_d)
       {
         z = z+m_shift.z;
       }
       else if( z<=abs(m_shift.z) )
       {
-        z = z+m_nWholeGridRes-1-abs(m_shift.z) ;
+        z = z+m_nWholeGridRes_d-1-abs(m_shift.z) ;
       }
     }
 
     // compute actual index
-    const unsigned int nIndex =x + m_nWholeGridRes* (y+ m_nWholeGridRes* z);
+    const unsigned int nIndex =x + m_nWholeGridRes_w* (y+ m_nWholeGridRes_h* z);
     return  nIndex;
   }
 
@@ -578,14 +582,14 @@ public:
     int3 GlobalShift = m_global_shift;
 
     // for x
-    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes)
+    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes_w)
     {
-      if(x>=m_nWholeGridRes-1-m_shift.x)
+      if(x>=m_nWholeGridRes_w-1-m_shift.x)
       {
         GlobalShift.x = m_global_shift.x+1;
       }
     }
-    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes)
+    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes_w)
     {
       if( x<=abs(m_shift.x) )
       {
@@ -594,14 +598,14 @@ public:
     }
 
     // for y
-    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes)
+    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes_h)
     {
-      if(y>=m_nWholeGridRes-1-m_shift.y)
+      if(y>=m_nWholeGridRes_h-1-m_shift.y)
       {
         GlobalShift.y = m_global_shift.y+1;
       }
     }
-    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes)
+    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes_h)
     {
       if( y<=abs(m_shift.y) )
       {
@@ -610,14 +614,14 @@ public:
     }
 
     // for z
-    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes)
+    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes_d)
     {
-      if(z>=m_nWholeGridRes-1-m_shift.z)
+      if(z>=m_nWholeGridRes_d-1-m_shift.z)
       {
         GlobalShift.z = m_global_shift.z+1;
       }
     }
-    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes)
+    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes_d)
     {
       if( z<=abs(m_shift.z) )
       {
@@ -631,54 +635,56 @@ public:
 
 
   inline __host__
-  void UpdateShift(int3 shift_index)
+  void ResetShift(int3 shift_index)
   {
     m_shift = m_shift + shift_index;
 
-    if(m_shift.x == m_nWholeGridRes)
+    printf("check if need to reset shift. WholeGridRes is %d\n",m_nWholeGridRes_w);
+
+    if(m_shift.x == m_nWholeGridRes_w)
     {
       m_shift.x = 0;
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
     }
 
-    if(m_shift.x == -m_nWholeGridRes)
+    if(m_shift.x == -m_nWholeGridRes_w)
     {
       m_shift.x = 0;
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
     }
 
-    if(m_shift.y == m_nWholeGridRes)
+    if(m_shift.y == m_nWholeGridRes_h)
     {
       m_shift.y = 0;
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
     }
 
-    if(m_shift.y == -m_nWholeGridRes)
+    if(m_shift.y == -m_nWholeGridRes_h)
     {
       m_shift.y = 0;
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
     }
 
-    if(m_shift.z == m_nWholeGridRes)
+    if(m_shift.z == m_nWholeGridRes_d)
     {
       m_shift.z = 0;
       m_global_shift.z++;
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
-    if(m_shift.z == -m_nWholeGridRes)
+    if(m_shift.z == -m_nWholeGridRes_d)
     {
       m_shift.z = 0;
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Global shift is x=%d,,y=%d,z=%d; Max shift is %d \n",
-           m_shift.x,m_shift.y,m_shift.z, m_global_shift.x,m_global_shift.y,m_global_shift.z, m_nWholeGridRes);
+    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Global shift is x=%d,y=%d,z=%d; Max shift is %d \n",
+           m_shift.x,m_shift.y,m_shift.z, m_global_shift.x,m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
   }
 
 
@@ -704,7 +710,7 @@ public:
   {
     int nNum = 0;
 
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!=m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
     {
       if(CheckIfBasicSDFActive(i)==true)
       {
@@ -731,7 +737,9 @@ public:
   BoundingBox                                 m_bbox;
 
   unsigned int                                m_nVolumeGridRes;            // resolution of a single grid in one dim.
-  unsigned int                                m_nWholeGridRes;             // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nWholeGridRes_w;             // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nWholeGridRes_h;             // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nWholeGridRes_d;             // resolution of a whole grid in one dim. usually 4, 8, 16
 
   // volume that save all data
   // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.

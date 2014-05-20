@@ -16,7 +16,8 @@
 /////////////////////////////////////////////////////////////////////////////
 
 template<typename T, typename Manage>
-void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
+             std::string ppm_type = "P5", int num_colors = 255)
 {
   bFile << ppm_type << std::endl;
   bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
@@ -31,7 +32,8 @@ void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manag
 }
 
 template<typename T, typename Manage>
-void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
+             std::string ppm_type = "P5", int num_colors = 255)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   SavePXM<T,Manage>(bFile, vol, ppm_type, num_colors);
@@ -39,7 +41,8 @@ void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetHost
 
 
 template<typename T, typename Manage>
-void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol,
+             std::string ppm_type = "P5", int num_colors = 255)
 {
   roo::VolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.InitVolume(vol.w, vol.h, vol.d);
@@ -49,7 +52,8 @@ void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetDevice,Man
 
 
 template<typename T, typename Manage>
-void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(const std::string filename, const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol,
+             std::string ppm_type = "P5", int num_colors = 255)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   SavePXM<T,Manage>(bFile,vol,ppm_type,num_colors);
@@ -74,65 +78,60 @@ void SavePXM(const std::string                                      filename,
              std::string                                            ppm_type = "P5",
              int                                                    num_colors = 255)
 {
-  printf("\n[SavePXM] try to save pxm.. Active Grids of target BBVolumeGrid is %d\n",rDVol.GetActiveGridVolNum());
-
-  // load data from device to host
-  roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
-  hvol.init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
-  hvol.CopyAndInitFrom(rDVol);
-
-  printf("[SavePXM] Finish copy volume from device to host. Now try to save bb\n");
-
-  // first save bounding box
-  std::string sBBFileName = filename+"-BB";
-  SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
-
-  // save each active volume in BoundedVolumeGrid to HardDisk
-  int nNum =0;
-  int nSaveNum = 0;
-  int nNeedSaveNum = 0;
-
-  for(int i=0;i!=rDVol.m_nWholeGridRes;i++)
+  if(rDVol.GetActiveGridVolNum()==0)
   {
-    for(int j=0;j!=rDVol.m_nWholeGridRes;j++)
-    {
-      for(int k=0;k!=rDVol.m_nWholeGridRes;k++)
-      {
-        if(hvol.CheckIfBasicSDFActive(hvol.GetIndex(i,j,k))==true)
-        {
-          // save local index (without rolling)
-          std::string sFileName;
-          if(bGlobalPose==false)
-          {
-            sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
-          }
-          else
-          {
-            // save global index (with rolling)
-            sFileName =filename+"-"+std::to_string(hvol.m_global_shift.x)+
-                "-"+std::to_string(hvol.m_global_shift.y)+
-                "-"+std::to_string(hvol.m_global_shift.z)+
-                "-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
-          }
-
-          std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
-          SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i*j*k],ppm_type,num_colors);
-
-          std::cout<<"[SavePXM]Save grid "<<sFileName<<" success."<<std::endl;
-          nNum++;
-        }
-      }
-    }
-  }
-
-  if(nNum==0)
-  {
-    printf("[SavePXM] Warnning!! Does not save any ppm file. WhileGridRes is %d!!!\n",rDVol.m_nWholeGridRes);
+    std::cerr<<"[Kangaroo/SavePXMGrid] Cannot save model for void volume. Empty vol."<<std::endl;
   }
   else
   {
-    printf("[Kangaroo/RollingGridSDF] Actual save %d grid sdf. Plan to save %d grid sdf.\n", nSaveNum, nNeedSaveNum);
+    // load data from device to host
+    roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
+    hvol.init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
+    hvol.CopyAndInitFrom(rDVol);
+
+    // First save bounding box to HardDisk
+    std::string sBBFileName = filename+"-BB";
+    SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
+
+    // Second save each active volume in BoundedVolumeGrid to HardDisk
+    int nNum =0;
+
+    for(int i=0;i!=rDVol.m_nWholeGridRes_w;i++)
+    {
+      for(int j=0;j!=rDVol.m_nWholeGridRes_h;j++)
+      {
+        for(int k=0;k!=rDVol.m_nWholeGridRes_d;k++)
+        {
+          if(hvol.CheckIfBasicSDFActive(hvol.GetIndex(i,j,k))==true)
+          {
+            // save local index (without rolling)
+            std::string sFileName;
+            if(bGlobalPose==false)
+            {
+              sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
+            }
+            else
+            {
+              // save global index (with rolling)
+              sFileName =filename+"-"+std::to_string(hvol.m_global_shift.x)+
+                  "-"+std::to_string(hvol.m_global_shift.y)+
+                  "-"+std::to_string(hvol.m_global_shift.z)+
+                  "-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
+            }
+
+            std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
+            SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i*j*k],ppm_type,num_colors);
+
+            std::cout<<"[Kangaroo/SavePXMGrid] Save "<<sFileName<<" success."<<std::endl;
+            nNum++;
+          }
+        }
+      }
+    }
+
+    printf("[Kangaroo/SavePXMGrid] Save %d grid sdf.\n", nNum);
   }
+
 }
 
 
