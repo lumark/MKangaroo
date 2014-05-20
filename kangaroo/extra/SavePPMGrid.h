@@ -88,6 +88,7 @@ void SavePXM(const std::string                                      filename,
     roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
     hvol.init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
     hvol.CopyAndInitFrom(rDVol);
+    hvol.m_global_shift = rDVol.m_global_shift;
 
     // First save bounding box to HardDisk
     std::string sBBFileName = filename+"-BB";
@@ -108,6 +109,7 @@ void SavePXM(const std::string                                      filename,
             std::string sFileName;
             if(bGlobalPose==false)
             {
+              // only save local grid
               sFileName = filename+"-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
             }
             else
@@ -137,11 +139,14 @@ void SavePXM(const std::string                                      filename,
 
 
 
+
 /////////////////////////////////////////////////////////////////////////////
-// Load Volume types
+//                           Load Volume types.
 /////////////////////////////////////////////////////////////////////////////
+
 template<typename T>
-bool LoadPXMSingleGrid(const std::string filename, roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
+bool LoadPXMSingleGrid(const std::string filename,
+                       roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
 
@@ -229,14 +234,13 @@ bool LoadPXMGrid(std::string                        sDirName,
   // read bb box..
   int nNum = 0;
 
-  printf("[LoadPXMGrid] Try to copy data from disk to host, available gpu memory is %d.\n", GetAvailableGPUMemory());
-
   // load each single VolumeGrid
   for(int i=0;i!=vfilename.size();i++)
   {
     // get index from file name
     std::string sFileName = vfilename[i];
-    std::string sIndex = sFileName.substr(sFileName.find_last_of("-")+1, sFileName.size() - sFileName.find_last_of("-"));
+    std::string sIndex = sFileName.substr(sFileName.find_last_of("-")+1,
+                                          sFileName.size() - sFileName.find_last_of("-"));
 
     if(sIndex!="BB")
     {
