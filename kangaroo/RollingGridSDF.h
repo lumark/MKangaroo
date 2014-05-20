@@ -182,7 +182,7 @@ public:
   template<typename T> inline
   void SaveGird(std::string sPath, roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>& rVol)
   {
-    SavePXM(sPath,rVol);
+    SavePXM(sPath,rVol,true);
   }
 
 
