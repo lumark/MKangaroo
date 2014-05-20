@@ -115,9 +115,10 @@ void SavePXM(const std::string                                      filename,
             else
             {
               // save global index (with rolling)
-              sFileName =filename+"-"+std::to_string(hvol.m_global_shift.x)+
-                  "-"+std::to_string(hvol.m_global_shift.y)+
-                  "-"+std::to_string(hvol.m_global_shift.z)+
+              int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
+              sFileName =filename+"-"+std::to_string(GlobalIndex.x)+
+                  "-"+std::to_string(GlobalIndex.y)+
+                  "-"+std::to_string(GlobalIndex.z)+
                   "-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
             }
 

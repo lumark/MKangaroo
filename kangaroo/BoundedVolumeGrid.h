@@ -567,7 +567,7 @@ public:
   }
 
 
-  // input the index of grid sdf that we want to access. return the global index for it
+  // input the index of grid sdf that we want to access. return the global index for it.
   // If the index is shift, its global index will ++. Otherwise, the global index
   // will be the same as it was. The role of this function is to see if the m_global_shift
   // does not reset yet but there is a current shift for the grid.
@@ -720,6 +720,7 @@ public:
 
     return nNum;
   }
+
 
 
 
