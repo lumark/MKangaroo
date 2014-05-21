@@ -408,6 +408,48 @@ void SaveMeshGrid(std::string filename,
 }
 
 
+// get global index and local index from file name
+void GetIndexFromFileName(std::string sFileName, int3 GlobalIndex, int3 LocalIndex )
+{
+  std::vector<int> vIndex;
+  std::string sTemp = sFileName;
+  bool bFlag = true;
+  while(bFlag == true)
+  {
+    size_t nIndex = sTemp.find_first_of("-");
+    if(nIndex!=std::string::npos)
+    {
+      vIndex.push_back(nIndex);
+      sTemp = sTemp.substr(nIndex+1, sTemp.size() - nIndex);
+    }
+    else
+    {
+      bFlag = false;
+    }
+  }
+
+  // now get global index
+  if(vIndex.size()!=6)
+  {
+    printf("[] fatal error! wrong file name.\n");
+    exit(-1);
+  }
+  else
+  {
+    GlobalIndex.x = std::stoi(sFileName.substr(vIndex[0], vIndex[1]));
+    GlobalIndex.y = std::stoi(sFileName.substr(vIndex[1], vIndex[2]));
+    GlobalIndex.z = std::stoi(sFileName.substr(vIndex[2], vIndex[3]));
+
+    LocalIndex.x = std::stoi(sFileName.substr(vIndex[3], vIndex[4]));
+    LocalIndex.x = std::stoi(sFileName.substr(vIndex[4], vIndex[5]));
+    LocalIndex.x = std::stoi(sFileName.substr(vIndex[5], sFileName.size() - vIndex[5]));
+  }
+
+//  printf("Filename %s; global index %d,%d,%d; local index %d,%d,%d. \n",
+//         sFileName,  GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
+//         LocalIndex.x, LocalIndex.y, LocalIndex.z);
+}
+
 
 // ================================================================================
 // Generate one single mesh from ppm files.
@@ -418,7 +460,7 @@ void GenMeshFromPPM(std::string              sDirName,
                     std::vector<std::string> vfilename,
                     std::string              sMeshFileName)
 {
-  printf("in SaveMeshGrid/cpp..\n");
+  printf("[Kangaroo/GenMeshFromPPM] Start.\n");
 
   std::vector<aiVector3D> verts;
   std::vector<aiVector3D> norms;
@@ -431,13 +473,17 @@ void GenMeshFromPPM(std::string              sDirName,
   roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
 
   // init sdf in host
-  hvol.init(nVolRes, nVolRes, nVolRes, nGridRes,BBox);
+  hvol.init(nVolRes, nVolRes, nVolRes, nGridRes, BBox);
 
   // load each grid and save it to mesh
   for(int i=0;i!=vfilename.size();i++)
   {
     // get index from file name
     std::string sFileName = vfilename[i];
+
+    // get index from file name
+
+
     std::string sIndex = sFileName.substr(sFileName.find_last_of("-")+1,
                                           sFileName.size() - sFileName.find_last_of("-"));
 
