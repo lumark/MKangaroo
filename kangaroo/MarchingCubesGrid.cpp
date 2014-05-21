@@ -153,9 +153,13 @@ void vMarchCubeGridNOTexture(
   float afCubeValue[8];
   for(int iVertex = 0; iVertex < 8; iVertex++)
   {
-    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2])) == true)
+    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]),
+                             int(y+a2fVertexOffset[iVertex][1]),
+                             int(z+a2fVertexOffset[iVertex][2])) == true)
     {
-      afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]), int(y+a2fVertexOffset[iVertex][1]), int(z+a2fVertexOffset[iVertex][2]));
+      afCubeValue[iVertex] = vol(int(x+a2fVertexOffset[iVertex][0]),
+          int(y+a2fVertexOffset[iVertex][1]),
+          int(z+a2fVertexOffset[iVertex][2]));
     }
 
     if(!std::isfinite(afCubeValue[iVertex])) return;
@@ -220,7 +224,7 @@ void vMarchCubeGridNOTexture(
 
       face.mIndices[iCorner] = verts.size();
       verts.push_back(aiVector3D(asEdgeVertex[iVertex].x, asEdgeVertex[iVertex].y, asEdgeVertex[iVertex].z) );
-      norms.push_back(aiVector3D(asEdgeNorm[iVertex].x,   asEdgeNorm[iVertex].y,   asEdgeNorm[iVertex].z) );
+      norms.push_back(aiVector3D(asEdgeNorm[iVertex].x, asEdgeNorm[iVertex].y, asEdgeNorm[iVertex].z) );
 
     }
 
@@ -306,13 +310,13 @@ void SaveMeshGrid(std::string filename, aiMesh* mesh)
 
 // now do it for each grid instead of each voxel
 template<typename T, typename TColor>
-void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>& vol,
+void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
                         BoundedVolumeGrid<TColor, TargetHost, Manage>& volColor,
                         int i,int j,int k,
-                        std::vector<aiVector3D>& verts,
-                        std::vector<aiVector3D>& norms,
-                        std::vector<aiFace>& faces,
-                        std::vector<aiColor4D>& colors)
+                        std::vector<aiVector3D>&        verts,
+                        std::vector<aiVector3D>&        norms,
+                        std::vector<aiFace>&            faces,
+                        std::vector<aiColor4D>&         colors)
 {
   for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
   {
@@ -374,11 +378,11 @@ void SaveMeshGridSingleNOColor(BoundedVolumeGrid<T, TargetHost, Manage>& vol,
 
 // now do it for each grid instead of each voxel
 template<typename T, typename TColor>
-void SaveMeshGrid(std::string filename,
-                  BoundedVolumeGrid<T, TargetHost, Manage> vol,
+void SaveMeshGrid(std::string                                   filename,
+                  BoundedVolumeGrid<T, TargetHost, Manage>      vol,
                   BoundedVolumeGrid<TColor, TargetHost, Manage> volColor )
 {
-  printf("in SaveMeshGrid/cpp..\n");
+  printf("[SaveMeshGrid] In SaveMeshGrid/cpp..\n");
 
   std::vector<aiVector3D> verts;
   std::vector<aiVector3D> norms;
@@ -395,13 +399,13 @@ void SaveMeshGrid(std::string filename,
         if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
         {
           SaveMeshGridSingle(vol,volColor,i,j,k,verts, norms, faces, colors);
-          printf("Finish march cube grid for (%d,%d,%d).\n", i,j,k);
+          printf("[SaveMeshGrid] Finish march cube grid for (%d,%d,%d).\n", i,j,k);
         }
       }
     }
   }
 
-  printf("finish march cube grid Sepreate..\n");
+  printf("[SaveMeshGrid] Finish march cube grid Sepreate..\n");
 
   aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
   SaveMeshGrid(filename, mesh);
@@ -417,40 +421,42 @@ void GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
 {
   std::vector<int> vIndex;
   std::string sTemp = sFileName;
-  bool bFlag = true;
-  while(bFlag == true)
+
+  for(unsigned int i=0;i!=sTemp.size();i++)
   {
-    size_t nIndex = sTemp.find_first_of("-");
-    if(nIndex!=std::string::npos)
+    if(sTemp.substr(i,1) == "-")
     {
-      vIndex.push_back(nIndex);
-      sTemp = sTemp.substr(nIndex+1, sTemp.size() - nIndex);
-    }
-    else
-    {
-      bFlag = false;
+      vIndex.push_back(i);
+//      std::cout<<"get index "<<i<<" for str "<<sTemp<<std::endl;
     }
   }
 
   // now get global index
-  if(vIndex.size()!=6)
+  if(vIndex.size()!=7)
   {
     std::cerr<<"[GetIndexFromFileName] Skip file "<< sFileName<<std::endl;
   }
   else
   {
-    GlobalIndex.x = std::stoi(sFileName.substr(vIndex[0], vIndex[1]));
-    GlobalIndex.y = std::stoi(sFileName.substr(vIndex[1], vIndex[2]));
-    GlobalIndex.z = std::stoi(sFileName.substr(vIndex[2], vIndex[3]));
+    GlobalIndex.x = std::stoi(sFileName.substr(vIndex[1]+1, vIndex[2]-vIndex[1]-1));
+    GlobalIndex.y = std::stoi(sFileName.substr(vIndex[2]+1, vIndex[3]-vIndex[2]-1));
+    GlobalIndex.z = std::stoi(sFileName.substr(vIndex[3]+1, vIndex[4]-vIndex[3]-1));
 
-    LocalIndex.x = std::stoi(sFileName.substr(vIndex[3], vIndex[4]));
-    LocalIndex.x = std::stoi(sFileName.substr(vIndex[4], vIndex[5]));
-    LocalIndex.x = std::stoi(sFileName.substr(vIndex[5], sFileName.size() - vIndex[5]));
-  }
+    LocalIndex.x = std::stoi(sFileName.substr(vIndex[4]+1, vIndex[5]-vIndex[4]-1));
+    LocalIndex.y = std::stoi(sFileName.substr(vIndex[5]+1, vIndex[6]-vIndex[5]-1));
+    LocalIndex.z = std::stoi(sFileName.substr(vIndex[6]+1, sFileName.size() - vIndex[6]-1));
+
+//    std::cout<<"string is "<<sFileName.substr(vIndex[1]+1, vIndex[2]-vIndex[1]-1)
+//        <<","<<sFileName.substr(vIndex[2]+1, vIndex[3]-vIndex[2]-1)
+//        <<","<<sFileName.substr(vIndex[3]+1, vIndex[4]-vIndex[3]-1)
+//        <<","<<sFileName.substr(vIndex[4]+1, vIndex[5]-vIndex[4]-1)
+//        <<","<<sFileName.substr(vIndex[5]+1, vIndex[6]-vIndex[5]-1)
+//        <<","<<sFileName.substr(vIndex[6]+1, sFileName.size() - vIndex[6]-1)<<std::endl;
 
     printf("[GetIndexFromFileName] Global index %d,%d,%d; local index %d,%d,%d. \n",
            GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
            LocalIndex.x, LocalIndex.y, LocalIndex.z);
+  }
 }
 
 
@@ -490,22 +496,22 @@ void GenMeshFromPPM(std::string              sDirName,
 
     // for each global
     // read non-bb file
-//    if(sIndex!="BB")
-//    {
-//      int nIndex = std::atoi(sIndex.c_str());
+    //    if(sIndex!="BB")
+    //    {
+    //      int nIndex = std::atoi(sIndex.c_str());
 
-//      if(LoadPXMSingleGrid(sDirName+sFileName, hvol.m_GridVolumes[nIndex]) == false)
-//      {
-//        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
-//                   " with index "<<nIndex<<" from hard disk."<<std::endl;
-//        exit(-1);
-//      }
-//      else
-//      {
-//        //        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
-//        printf("Finish march cube grid for \n");
-//      }
-//    }
+    //      if(LoadPXMSingleGrid(sDirName+sFileName, hvol.m_GridVolumes[nIndex]) == false)
+    //      {
+    //        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
+    //                   " with index "<<nIndex<<" from hard disk."<<std::endl;
+    //        exit(-1);
+    //      }
+    //      else
+    //      {
+    //        //        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
+    //        printf("Finish march cube grid for \n");
+    //      }
+    //    }
   }
 
   printf("finish march cube grid Sepreate..\n");
