@@ -60,46 +60,50 @@ inline void SaveMeshlabGrid(std::string sPath, roo::BoundedVolumeGrid<roo::SDF_t
 }
 
 
-//inline void GenMeshlabFromPXM(std::vector vFiles)
-//{
-//    Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
-//    Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
-//    Eigen::Matrix4d T_vis_ml = Eigen::Matrix4d::Identity();
-//    T_vis_ml.block<3,3>(0,0) = RDFvision.transpose() * RDFmeshlab;
-//    Eigen::Matrix4d T_ml_vis = Eigen::Matrix4d::Identity();
-//    T_ml_vis.block<3,3>(0,0) = RDFmeshlab.transpose() * RDFvision;
+//
+inline void GenMeshlabFromPPM(std::string              sDirName,
+                              std::string              sBBFileName,
+                              int                      nVolRes,
+                              int                      nGridRes,
+                              std::vector<std::string> vfilename,
+                              std::string              sMeshFileName)
+{
+    Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
+    Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
+    Eigen::Matrix4d T_vis_ml = Eigen::Matrix4d::Identity();
+    T_vis_ml.block<3,3>(0,0) = RDFvision.transpose() * RDFmeshlab;
+    Eigen::Matrix4d T_ml_vis = Eigen::Matrix4d::Identity();
+    T_ml_vis.block<3,3>(0,0) = RDFmeshlab.transpose() * RDFvision;
 
-//    std::string mesh_filename = "mesh";
-//    std::ofstream of("project.mlp");
+    std::string mesh_filename = "mesh";
+    std::ofstream of("project.mlp");
 
-//    of << "<!DOCTYPE MeshLabDocument>" << std::endl;
-//    of << "<MeshLabProject>" << std::endl;
+    of << "<!DOCTYPE MeshLabDocument>" << std::endl;
+    of << "<MeshLabProject>" << std::endl;
 
-//    of << " <MeshGroup>" << std::endl;
+    of << " <MeshGroup>" << std::endl;
 
-//    roo::SaveMeshGrid(vFiles);
+    roo::GenMeshFromPPM(sDirName, sBBFileName, nVolRes, nGridRes, vfilename, sMeshFileName);
 
-//    of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
-//    of << "   <MLMatrix44>" << std::endl;
-//    of << "1 0 0 0 " << std::endl;
-//    of << "0 1 0 0 " << std::endl;
-//    of << "0 0 1 0 " << std::endl;
-//    of << "0 0 0 1 " << std::endl;
-//    of << "</MLMatrix44>" << std::endl;
-//    of << "  </MLMesh>" << std::endl;
+    of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
+    of << "   <MLMatrix44>" << std::endl;
+    of << "1 0 0 0 " << std::endl;
+    of << "0 1 0 0 " << std::endl;
+    of << "0 0 1 0 " << std::endl;
+    of << "0 0 0 1 " << std::endl;
+    of << "</MLMatrix44>" << std::endl;
+    of << "  </MLMesh>" << std::endl;
 
-//    of << " </MeshGroup>" << std::endl;
+    of << " </MeshGroup>" << std::endl;
 
-//    of << " <RasterGroup>" << std::endl;
+    of << " <RasterGroup>" << std::endl;
 
-//    of << " </RasterGroup>" << std::endl;
+    of << " </RasterGroup>" << std::endl;
 
-//    of << "</MeshLabProject> " << std::endl;
+    of << "</MeshLabProject> " << std::endl;
 
-//    of.close();
-//}
-
-
+    of.close();
+}
 
 
 inline void SaveMeshlabGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol,
