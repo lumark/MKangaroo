@@ -43,7 +43,7 @@ void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>
 
 void GenMeshFromPPM(std::string              sDirName,
                     std::string              sBBFileName,
-                    int                      nVolRes,
+                    int3                     nVolRes,
                     int                      nGridRes,
                     std::vector<std::string> vfilename,
                     std::string              sMeshFileName);

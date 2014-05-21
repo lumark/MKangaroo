@@ -722,8 +722,6 @@ public:
   }
 
 
-
-
 public:
   size_t                                      m_d;
   size_t                                      m_w;

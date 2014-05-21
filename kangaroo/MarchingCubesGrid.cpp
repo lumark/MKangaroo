@@ -408,8 +408,12 @@ void SaveMeshGrid(std::string filename,
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+///                 Save Single Mesh from Several BBVolumes                 ///
+///////////////////////////////////////////////////////////////////////////////
+
 // get global index and local index from file name
-void GetIndexFromFileName(std::string sFileName, int3 GlobalIndex, int3 LocalIndex )
+void GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalIndex )
 {
   std::vector<int> vIndex;
   std::string sTemp = sFileName;
@@ -431,8 +435,7 @@ void GetIndexFromFileName(std::string sFileName, int3 GlobalIndex, int3 LocalInd
   // now get global index
   if(vIndex.size()!=6)
   {
-    printf("[] fatal error! wrong file name.\n");
-    exit(-1);
+    std::cerr<<"[GetIndexFromFileName] Skip file "<< sFileName<<std::endl;
   }
   else
   {
@@ -445,17 +448,17 @@ void GetIndexFromFileName(std::string sFileName, int3 GlobalIndex, int3 LocalInd
     LocalIndex.x = std::stoi(sFileName.substr(vIndex[5], sFileName.size() - vIndex[5]));
   }
 
-//  printf("Filename %s; global index %d,%d,%d; local index %d,%d,%d. \n",
-//         sFileName,  GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
-//         LocalIndex.x, LocalIndex.y, LocalIndex.z);
+    printf("[GetIndexFromFileName] Global index %d,%d,%d; local index %d,%d,%d. \n",
+           GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
+           LocalIndex.x, LocalIndex.y, LocalIndex.z);
 }
 
 
 // ================================================================================
-// Generate one single mesh from ppm files.
+// Generate one single mesh from several ppm files.
 void GenMeshFromPPM(std::string              sDirName,
                     std::string              sBBFileName,
-                    int                      nVolRes,
+                    int3                     nVolRes,
                     int                      nGridRes,
                     std::vector<std::string> vfilename,
                     std::string              sMeshFileName)
@@ -473,37 +476,36 @@ void GenMeshFromPPM(std::string              sDirName,
   roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
 
   // init sdf in host
-  hvol.init(nVolRes, nVolRes, nVolRes, nGridRes, BBox);
+  hvol.init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
-  // load each grid and save it to mesh
-  for(int i=0;i!=vfilename.size();i++)
+  // load each grid and save it to mesh.
+  for(unsigned int i=0;i!=vfilename.size();i++)
   {
     // get index from file name
     std::string sFileName = vfilename[i];
 
     // get index from file name
+    int3 GlobalIndex, LocalIndex;
+    GetIndexFromFileName(sFileName, GlobalIndex, LocalIndex);
 
-
-    std::string sIndex = sFileName.substr(sFileName.find_last_of("-")+1,
-                                          sFileName.size() - sFileName.find_last_of("-"));
-
+    // for each global
     // read non-bb file
-    if(sIndex!="BB")
-    {
-      int nIndex = std::atoi(sIndex.c_str());
+//    if(sIndex!="BB")
+//    {
+//      int nIndex = std::atoi(sIndex.c_str());
 
-      if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[nIndex]) == false)
-      {
-        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
-                   " with index "<<nIndex<<" from hard disk."<<std::endl;
-        exit(-1);
-      }
-      else
-      {
-        //        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
-        printf("Finish march cube grid for \n");
-      }
-    }
+//      if(LoadPXMSingleGrid(sDirName+sFileName, hvol.m_GridVolumes[nIndex]) == false)
+//      {
+//        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
+//                   " with index "<<nIndex<<" from hard disk."<<std::endl;
+//        exit(-1);
+//      }
+//      else
+//      {
+//        //        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
+//        printf("Finish march cube grid for \n");
+//      }
+//    }
   }
 
   printf("finish march cube grid Sepreate..\n");
