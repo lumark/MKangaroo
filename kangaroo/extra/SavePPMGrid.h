@@ -19,6 +19,12 @@ template<typename T, typename Manage>
 void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
              std::string ppm_type = "P5", int num_colors = 255)
 {
+  if(vol.w<=0 || vol.w<=0 || vol.w<=0)
+  {
+    std::cerr<<"[Kangaroo/SavePXMGrid]Fatal error! cannot save empty PXM file!"<<std::endl;
+    exit(-1);
+  }
+
   bFile << ppm_type << std::endl;
   bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
   bFile << num_colors << '\n';
@@ -151,6 +157,12 @@ bool LoadPXMSingleGrid(const std::string filename,
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
 
+  if(bFile.fail()==true)
+  {
+    std::cout<<"[Kangaroo/LoadPXMSIngleGrid]error! cannot open file "<<filename<<std::endl;
+    return false;
+  }
+
   // Parse header
   std::string ppm_type = "P5";
   int num_colors = 0;
@@ -184,6 +196,9 @@ bool LoadPXMSingleGrid(const std::string filename,
   }
   else
   {
+    std::cout<<"[Kangaroo/LoadPXMSIngleGrid] error! dim error. input dim are: "
+            <<"w:"<<w<<",h"<<h<<",d"<<d<<std::endl;
+
     bFile.close();
     return false;
   }
@@ -191,6 +206,8 @@ bool LoadPXMSingleGrid(const std::string filename,
   bFile.close();
   return true;
 }
+
+
 
 inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
 {
