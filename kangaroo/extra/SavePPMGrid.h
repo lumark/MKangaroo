@@ -19,9 +19,9 @@ template<typename T, typename Manage>
 void SavePXM(std::ofstream& bFile, const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
              std::string ppm_type = "P5", int num_colors = 255)
 {
-  if(vol.w<=0 || vol.w<=0 || vol.w<=0)
+  if(vol.w<=0 || vol.h<=0 || vol.d<=0)
   {
-    std::cerr<<"[Kangaroo/SavePXMGrid]Fatal error! cannot save empty PXM file!"<<std::endl;
+    std::cerr<<"[Kangaroo/SavePXMGrid] Fatal error! Cannot save empty PXM file!"<<std::endl;
     exit(-1);
   }
 
@@ -109,7 +109,9 @@ void SavePXM(const std::string                                      filename,
       {
         for(int k=0;k!=rDVol.m_nWholeGridRes_d;k++)
         {
-          if(hvol.CheckIfBasicSDFActive(hvol.GetIndex(i,j,k))==true)
+          int nGridIndex = hvol.GetIndex(i,j,k);
+
+          if(hvol.CheckIfBasicSDFActive(nGridIndex)==true)
           {
             // save local index (without rolling)
             std::string sFileName;
@@ -129,7 +131,7 @@ void SavePXM(const std::string                                      filename,
             }
 
             std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
-            SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i*j*k],ppm_type,num_colors);
+            SavePXM<T,Manage>(bFile, hvol.m_GridVolumes[nGridIndex], ppm_type,num_colors);
 
             std::cout<<"[Kangaroo/SavePXMGrid] Save "<<sFileName<<" success."<<std::endl;
             nNum++;
@@ -142,9 +144,6 @@ void SavePXM(const std::string                                      filename,
   }
 
 }
-
-
-
 
 
 /////////////////////////////////////////////////////////////////////////////

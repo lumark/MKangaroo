@@ -50,7 +50,7 @@ template<typename T, typename Manage>
 void SavePXM(std::ofstream& bFile, const roo::Volume<T,roo::TargetHost,Manage>& vol,
              std::string ppm_type = "P5", int num_colors = 255)
 {
-  if(vol.w<=0 || vol.w<=0 || vol.w<=0)
+  if(vol.w<=0 || vol.h<=0 || vol.d<=0)
   {
     std::cerr<<"[Kangaroo/SavePXM] Fatal error! canot save empty PXM file!"<<std::endl;
     exit(-1);
@@ -169,7 +169,6 @@ bool LoadPXM(const std::string filename, roo::BoundedVolume<T,roo::TargetHost,ro
   bFile.ignore(1,'\n');
   return LoadPXM<T>(bFile,vol);
 }
-
 
 template<typename T>
 bool LoadPXM(const std::string filename, roo::Volume<T,roo::TargetDevice,roo::Manage>& vol)
