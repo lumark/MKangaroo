@@ -324,17 +324,17 @@ void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
     {
       for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
       {
-        if(vol.CheckIfVoxelExist(i*vol.m_nVolumeGridRes + x,
-                                 j*vol.m_nVolumeGridRes + y,
-                                 k*vol.m_nVolumeGridRes + z) == true)
-        {
-          // get voxel index for each grid.
-          roo::vMarchCubeGrid(vol, volColor,
-                              i*vol.m_nVolumeGridRes + x,
-                              j*vol.m_nVolumeGridRes + y,
-                              k*vol.m_nVolumeGridRes + z,
-                              verts, norms, faces, colors);
-        }
+        //        if(vol.CheckIfVoxelExist(i*vol.m_nVolumeGridRes + x,
+        //                                 j*vol.m_nVolumeGridRes + y,
+        //                                 k*vol.m_nVolumeGridRes + z) == true)
+        //        {
+        //           get voxel index for each grid.
+        roo::vMarchCubeGrid(vol, volColor,
+                            i*vol.m_nVolumeGridRes + x,
+                            j*vol.m_nVolumeGridRes + y,
+                            k*vol.m_nVolumeGridRes + z,
+                            verts, norms, faces, colors);
+        //        }
       }
     }
   }
@@ -490,6 +490,7 @@ void GenMeshFromPPM(std::string               sDirName,
            vVolumes[i].GlobalIndex.z == GlobalIndex.z)
         {
           vVolumes[i].vLocalIndex.push_back(LocalIndex);
+          vVolumes[i].vFileName.push_back(sFileName);
           bFlag=true;
         }
       }
@@ -533,6 +534,7 @@ void GenMeshFromPPM(std::string               sDirName,
       std::string sFile = sDirName+vVolumes[i].vFileName[j];
 
       std::cout<<"load file "<<sFile<<std::endl;
+      printf("i:%d,j:%d\n",i,j);
 
       if(LoadPXMSingleGrid(sFile, hvol.m_GridVolumes[nIndex])==false)
       {
@@ -544,9 +546,11 @@ void GenMeshFromPPM(std::string               sDirName,
         if(hvol.CheckIfBasicSDFActive(nIndex) == true)
         {
           // save local volume
-          std::cout<<"load single file success. now save mesh of it. "<<std::endl;
+          std::cout<<"load single file success. Now save mesh of it. "<<std::endl;
+
           SaveMeshGridSingle(hvol, hvolcolor, LocalIndex.x, LocalIndex.y, LocalIndex.z,
                              verts, norms, faces, colors);
+
           printf("Finish march cube grid for \n");
         }
         else
@@ -556,6 +560,7 @@ void GenMeshFromPPM(std::string               sDirName,
         }
       }
     }
+
 
     // reset previous grid
     //    SdfReset(hvol);

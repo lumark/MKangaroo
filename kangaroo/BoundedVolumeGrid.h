@@ -269,7 +269,7 @@ public:
       }
     }
 
-    return nNum>0 && m_w >= 8 && m_h >= 8 && m_d >= 8;
+    return nNum>0 && m_w >= 2 && m_h >= 2 && m_d >= 2;
   }
 
 
