@@ -342,38 +342,36 @@ void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
 
 
 
-// now do it for each grid instead of each voxel
-template<typename T, typename TColor>
-void SaveMeshGridSingleNOColor(BoundedVolumeGrid<T, TargetHost, Manage>& vol,
-                               int i,int j,int k,
-                               std::vector<aiVector3D>& verts,
-                               std::vector<aiVector3D>& norms,
-                               std::vector<aiFace>& faces,
-                               std::vector<aiColor4D>& colors)
-{
-  for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
-  {
-    for(GLint y=0;y!=vol.m_nVolumeGridRes;y++)
-    {
-      for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
-      {
-        if(vol.CheckIfVoxelExist(i*vol.m_nVolumeGridRes + x,
-                                 j*vol.m_nVolumeGridRes + y,
-                                 k*vol.m_nVolumeGridRes + z) == true)
-        {
-          // get voxel index for each grid.
-          roo::vMarchCubeGrid(vol,
-                              i*vol.m_nVolumeGridRes + x,
-                              j*vol.m_nVolumeGridRes + y,
-                              k*vol.m_nVolumeGridRes + z,
-                              verts, norms, faces, colors);
-        }
-      }
-    }
-  }
-}
-
-
+//// now do it for each grid instead of each voxel
+//template<typename T,typename TColor>
+//void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>& vol,
+//                        int i,int j,int k,
+//                        std::vector<aiVector3D>& verts,
+//                        std::vector<aiVector3D>& norms,
+//                        std::vector<aiFace>& faces,
+//                        std::vector<aiColor4D>& colors)
+//{
+//  for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
+//  {
+//    for(GLint y=0;y!=vol.m_nVolumeGridRes;y++)
+//    {
+//      for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
+//      {
+//        if(vol.CheckIfVoxelExist(i*vol.m_nVolumeGridRes + x,
+//                                 j*vol.m_nVolumeGridRes + y,
+//                                 k*vol.m_nVolumeGridRes + z) == true)
+//        {
+//          // get voxel index for each grid.
+//          roo::vMarchCubeGrid(vol,
+//                              i*vol.m_nVolumeGridRes + x,
+//                              j*vol.m_nVolumeGridRes + y,
+//                              k*vol.m_nVolumeGridRes + z,
+//                              verts, norms, faces, colors);
+//        }
+//      }
+//    }
+//  }
+//}
 
 
 // now do it for each grid instead of each voxel
@@ -419,8 +417,9 @@ void SaveMeshGrid(std::string                                   filename,
 class SingleVolume
 {
 public:
-  int3               GlobalIndex;
-  std::vector<int3>  vLocalIndex;
+  int3                     GlobalIndex;
+  std::vector<int3>        vLocalIndex;
+  std::vector<std::string> vFileName;
 };
 
 // get global index and local index from file name
@@ -472,22 +471,10 @@ void GenMeshFromPPM(std::string              sDirName,
 {
   printf("[Kangaroo/GenMeshFromPPM] Start.\n");
 
-  std::vector<aiVector3D> verts;
-  std::vector<aiVector3D> norms;
-  std::vector<aiFace>     faces;
-  std::vector<aiColor4D>  colors;
 
-  // load mesh configure
-  // to load it from disk, we need to use host volume
-  roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
-  roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
-
-  // init sdf in host
-  hvol.init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
   // read all grid sdf and sort them into volumes
   std::vector<SingleVolume>  vVolumes;
-
   for(unsigned int i=0;i!=vfilename.size();i++)
   {
     // get index from file name
@@ -506,43 +493,64 @@ void GenMeshFromPPM(std::string              sDirName,
         {
           vVolumes[i].vLocalIndex.push_back(LocalIndex);
           bFlag=true;
-          std::cout<<"push back Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
-                "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
+          //          std::cout<<"push back Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
+          //                "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
         }
       }
 
       if(bFlag==false)
       {
-        std::cout<<"add new single volume. Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
-              "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
+        //        std::cout<<"add new single volume. Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
+        //              "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
         SingleVolume mSingVolume;
         mSingVolume.GlobalIndex = GlobalIndex;
         mSingVolume.vLocalIndex.push_back(LocalIndex);
+        mSingVolume.vFileName.push_back(sFileName);
         vVolumes.push_back(mSingVolume);
       }
     }
   }
 
-  std::cout<<"finish get all index, total global index size is "<<vVolumes.size()<<std::endl;
+  // load each single volume into BBVolume.
+  std::vector<aiVector3D> verts;
+  std::vector<aiVector3D> norms;
+  std::vector<aiFace>     faces;
+  std::vector<aiColor4D>  colors;
 
-  // for each global
-  // read non-bb file
-  //    if(sIndex!="BB")
-  //    {
-  //      int nIndex = std::atoi(sIndex.c_str());
+  // load mesh configure
+  // to load it from disk, we need to use host volume
+  roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
 
-  //      if(LoadPXMSingleGrid(sDirName+sFileName, hvol.m_GridVolumes[nIndex]) == false)
-  //      {
-  //        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
-  //                   " with index "<<nIndex<<" from hard disk."<<std::endl;
-  //        exit(-1);
-  //      }
-  //      else
-  //      {
-  //        //        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
-  //        printf("Finish march cube grid for \n");
-  //      }
-  //    }
+  roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
+  hvol.init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
+
+  roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
+  hvolcolor.init(1,1,1, nGridRes, BBox );
+
+  // load ppm into volume grid
+  for(unsigned int i=0;i!=vVolumes.size();i++)
+  {
+    for(unsigned int j=0;j!=vVolumes[i].vLocalIndex.size();j++)
+    {
+      int3 LocalIndex = vVolumes[i].vLocalIndex[j];
+      int nIndex = hvol.GetIndex(LocalIndex.x, LocalIndex.y,LocalIndex.z);
+      if(LoadPXMSingleGrid(sDirName+vVolumes[i].vFileName[j], hvol.m_GridVolumes[nIndex])==false)
+      {
+        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sDirName+vVolumes[i].vFileName[j]<<
+                   " with index "<<nIndex<<" from hard disk."<<std::endl;
+        exit(-1);
+      }
+      else
+      {
+        SaveMeshGridSingle(hvol,hvolcolor, LocalIndex.x,LocalIndex.y,LocalIndex.z,verts, norms, faces, colors);
+        printf("Finish march cube grid for \n");
+      }
+    }
+
+    // reset previous grid
+//    SdfReset(hvol);
+    hvol.ResetAllGridVol();
+  }
 
   printf("finish march cube grid Sepreate..\n");
 

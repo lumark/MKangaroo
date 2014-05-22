@@ -19,6 +19,7 @@ void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>
   hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
+  // init a fake color vol
   roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
   hvolcolor.init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
 

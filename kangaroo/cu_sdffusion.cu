@@ -1194,7 +1194,6 @@ void SdfReset(BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> vol)
   }
 }
 
-
 void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetDevice, roo::Manage> vol)
 {
   for(unsigned int i=0;i!=vol.m_nWholeGridRes_w*vol.m_nWholeGridRes_h*vol.m_nWholeGridRes_d;i++)
