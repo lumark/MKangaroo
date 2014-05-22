@@ -416,8 +416,15 @@ void SaveMeshGrid(std::string                                   filename,
 ///                 Save Single Mesh from Several BBVolumes                 ///
 ///////////////////////////////////////////////////////////////////////////////
 
+class SingleVolume
+{
+public:
+  int3               GlobalIndex;
+  std::vector<int3>  vLocalIndex;
+};
+
 // get global index and local index from file name
-void GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalIndex )
+bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalIndex )
 {
   std::vector<int> vIndex;
   std::string sTemp = sFileName;
@@ -427,7 +434,6 @@ void GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
     if(sTemp.substr(i,1) == "-")
     {
       vIndex.push_back(i);
-//      std::cout<<"get index "<<i<<" for str "<<sTemp<<std::endl;
     }
   }
 
@@ -435,6 +441,7 @@ void GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
   if(vIndex.size()!=7)
   {
     std::cerr<<"[GetIndexFromFileName] Skip file "<< sFileName<<std::endl;
+    return false;
   }
   else
   {
@@ -446,16 +453,10 @@ void GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
     LocalIndex.y = std::stoi(sFileName.substr(vIndex[5]+1, vIndex[6]-vIndex[5]-1));
     LocalIndex.z = std::stoi(sFileName.substr(vIndex[6]+1, sFileName.size() - vIndex[6]-1));
 
-//    std::cout<<"string is "<<sFileName.substr(vIndex[1]+1, vIndex[2]-vIndex[1]-1)
-//        <<","<<sFileName.substr(vIndex[2]+1, vIndex[3]-vIndex[2]-1)
-//        <<","<<sFileName.substr(vIndex[3]+1, vIndex[4]-vIndex[3]-1)
-//        <<","<<sFileName.substr(vIndex[4]+1, vIndex[5]-vIndex[4]-1)
-//        <<","<<sFileName.substr(vIndex[5]+1, vIndex[6]-vIndex[5]-1)
-//        <<","<<sFileName.substr(vIndex[6]+1, sFileName.size() - vIndex[6]-1)<<std::endl;
-
     printf("[GetIndexFromFileName] Global index %d,%d,%d; local index %d,%d,%d. \n",
            GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
            LocalIndex.x, LocalIndex.y, LocalIndex.z);
+    return true;
   }
 }
 
@@ -484,7 +485,9 @@ void GenMeshFromPPM(std::string              sDirName,
   // init sdf in host
   hvol.init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
-  // load each grid and save it to mesh.
+  // read all grid sdf and sort them into volumes
+  std::vector<SingleVolume>  vVolumes;
+
   for(unsigned int i=0;i!=vfilename.size();i++)
   {
     // get index from file name
@@ -492,27 +495,54 @@ void GenMeshFromPPM(std::string              sDirName,
 
     // get index from file name
     int3 GlobalIndex, LocalIndex;
-    GetIndexFromFileName(sFileName, GlobalIndex, LocalIndex);
+    if(GetIndexFromFileName(sFileName, GlobalIndex, LocalIndex)==true)
+    {
+      bool bFlag = false;
+      for(unsigned int i=0;i!=vVolumes.size();i++)
+      {
+        if(vVolumes[i].GlobalIndex.x ==GlobalIndex.x &&
+           vVolumes[i].GlobalIndex.y == GlobalIndex.y &&
+           vVolumes[i].GlobalIndex.z == GlobalIndex.z)
+        {
+          vVolumes[i].vLocalIndex.push_back(LocalIndex);
+          bFlag=true;
+          std::cout<<"push back Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
+                "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
+        }
+      }
 
-    // for each global
-    // read non-bb file
-    //    if(sIndex!="BB")
-    //    {
-    //      int nIndex = std::atoi(sIndex.c_str());
-
-    //      if(LoadPXMSingleGrid(sDirName+sFileName, hvol.m_GridVolumes[nIndex]) == false)
-    //      {
-    //        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
-    //                   " with index "<<nIndex<<" from hard disk."<<std::endl;
-    //        exit(-1);
-    //      }
-    //      else
-    //      {
-    //        //        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
-    //        printf("Finish march cube grid for \n");
-    //      }
-    //    }
+      if(bFlag==false)
+      {
+        std::cout<<"add new single volume. Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
+              "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
+        SingleVolume mSingVolume;
+        mSingVolume.GlobalIndex = GlobalIndex;
+        mSingVolume.vLocalIndex.push_back(LocalIndex);
+        vVolumes.push_back(mSingVolume);
+      }
+    }
   }
+
+  std::cout<<"finish get all index, total global index size is "<<vVolumes.size()<<std::endl;
+
+  // for each global
+  // read non-bb file
+  //    if(sIndex!="BB")
+  //    {
+  //      int nIndex = std::atoi(sIndex.c_str());
+
+  //      if(LoadPXMSingleGrid(sDirName+sFileName, hvol.m_GridVolumes[nIndex]) == false)
+  //      {
+  //        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
+  //                   " with index "<<nIndex<<" from hard disk."<<std::endl;
+  //        exit(-1);
+  //      }
+  //      else
+  //      {
+  //        //        SaveMeshGridSingleNOColor(hvol,i,j,k,verts, norms, faces, colors);
+  //        printf("Finish march cube grid for \n");
+  //      }
+  //    }
 
   printf("finish march cube grid Sepreate..\n");
 
