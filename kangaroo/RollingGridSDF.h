@@ -174,15 +174,13 @@ public:
         }
       }
     }
-
-//    printf("[Kangaroo/RollingGridSDF] Actual free %d grid sdf. Plan to free %d grid sdf.\n", nFreeNum, nNeedFreeNum);
   }
 
 
   template<typename T> inline
   void SaveGird(std::string sPath, roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>& rVol)
   {
-    SavePXM(sPath,rVol,true);
+    SavePXM(sPath,rVol);
   }
 
 

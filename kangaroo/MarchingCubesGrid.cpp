@@ -313,10 +313,10 @@ template<typename T, typename TColor>
 void SaveMeshGridSingle(BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
                         BoundedVolumeGrid<TColor, TargetHost, Manage>& volColor,
                         int i,int j,int k,
-                        std::vector<aiVector3D>&        verts,
-                        std::vector<aiVector3D>&        norms,
-                        std::vector<aiFace>&            faces,
-                        std::vector<aiColor4D>&         colors)
+                        std::vector<aiVector3D>&                       verts,
+                        std::vector<aiVector3D>&                       norms,
+                        std::vector<aiFace>&                           faces,
+                        std::vector<aiColor4D>&                        colors)
 {
   for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
   {
@@ -462,16 +462,14 @@ bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
 
 // ================================================================================
 // Generate one single mesh from several ppm files.
-void GenMeshFromPPM(std::string              sDirName,
-                    std::string              sBBFileName,
-                    int3                     nVolRes,
-                    int                      nGridRes,
-                    std::vector<std::string> vfilename,
-                    std::string              sMeshFileName)
+void GenMeshFromPPM(std::string               sDirName,
+                    std::string               sBBFileName,
+                    int3                      nVolRes,
+                    int                       nGridRes,
+                    std::vector<std::string>  vfilename,
+                    std::string               sMeshFileName)
 {
   printf("[Kangaroo/GenMeshFromPPM] Start.\n");
-
-
 
   // read all grid sdf and sort them into volumes
   std::vector<SingleVolume>  vVolumes;
@@ -493,15 +491,11 @@ void GenMeshFromPPM(std::string              sDirName,
         {
           vVolumes[i].vLocalIndex.push_back(LocalIndex);
           bFlag=true;
-          //          std::cout<<"push back Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
-          //                "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
         }
       }
 
       if(bFlag==false)
       {
-        //        std::cout<<"add new single volume. Global Index: "<<GlobalIndex.x<<","<<GlobalIndex.y<<","<<GlobalIndex.z<<
-        //              "local Index:"<<LocalIndex.x<<","<<LocalIndex.y<<","<<LocalIndex.z<<std::endl;
         SingleVolume mSingVolume;
         mSingVolume.GlobalIndex = GlobalIndex;
         mSingVolume.vLocalIndex.push_back(LocalIndex);
@@ -525,30 +519,46 @@ void GenMeshFromPPM(std::string              sDirName,
   hvol.init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
   roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(1,1,1, nGridRes, BBox );
+  hvolcolor.init(1,1,1, nGridRes, BBox);
 
   // load ppm into volume grid
+  // for each global volume
   for(unsigned int i=0;i!=vVolumes.size();i++)
   {
+    // for each single local grid volume, load it
     for(unsigned int j=0;j!=vVolumes[i].vLocalIndex.size();j++)
     {
       int3 LocalIndex = vVolumes[i].vLocalIndex[j];
-      int nIndex = hvol.GetIndex(LocalIndex.x, LocalIndex.y,LocalIndex.z);
-      if(LoadPXMSingleGrid(sDirName+vVolumes[i].vFileName[j], hvol.m_GridVolumes[nIndex])==false)
+      int nIndex = hvol.GetIndex(LocalIndex.x, LocalIndex.y, LocalIndex.z);
+      std::string sFile = sDirName+vVolumes[i].vFileName[j];
+
+      std::cout<<"load file "<<sFile<<std::endl;
+
+      if(LoadPXMSingleGrid(sFile, hvol.m_GridVolumes[nIndex])==false)
       {
-        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sDirName+vVolumes[i].vFileName[j]<<
-                   " with index "<<nIndex<<" from hard disk."<<std::endl;
+        printf("fatal error! load file fail.. exit\n");
         exit(-1);
       }
       else
       {
-        SaveMeshGridSingle(hvol,hvolcolor, LocalIndex.x,LocalIndex.y,LocalIndex.z,verts, norms, faces, colors);
-        printf("Finish march cube grid for \n");
+        if(hvol.CheckIfBasicSDFActive(nIndex) == true)
+        {
+          // save local volume
+          std::cout<<"load single file success. now save mesh of it. "<<std::endl;
+          SaveMeshGridSingle(hvol, hvolcolor, LocalIndex.x, LocalIndex.y, LocalIndex.z,
+                             verts, norms, faces, colors);
+          printf("Finish march cube grid for \n");
+        }
+        else
+        {
+          printf("fatal error! invalid sdf!\n");
+          exit(-1);
+        }
       }
     }
 
     // reset previous grid
-//    SdfReset(hvol);
+    //    SdfReset(hvol);
     hvol.ResetAllGridVol();
   }
 
