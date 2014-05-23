@@ -257,7 +257,7 @@ void SaveMeshGrid(std::string filename, aiMesh* mesh)
   scene.mMaterials[0] = material;
 
   aiReturn res = aiExportScene(&scene, "ply", (filename + ".ply").c_str(), 0);
-  std::cout << "Mesh export result: " << res << std::endl;
+  std::cout << "Finish save mesh. Mesh export result: " << res << std::endl;
 }
 
 
@@ -533,8 +533,7 @@ void GenMeshFromPPM(std::string               sDirName,
       int nIndex = hvol.GetIndex(LocalIndex.x, LocalIndex.y, LocalIndex.z);
       std::string sFile = sDirName+vVolumes[i].vFileName[j];
 
-      std::cout<<"load file "<<sFile<<std::endl;
-      printf("i:%d,j:%d\n",i,j);
+      //      std::cout<<"load file "<<sFile<<std::endl;
 
       if(LoadPXMSingleGrid(sFile, hvol.m_GridVolumes[nIndex])==false)
       {
@@ -546,12 +545,10 @@ void GenMeshFromPPM(std::string               sDirName,
         if(hvol.CheckIfBasicSDFActive(nIndex) == true)
         {
           // save local volume
-          std::cout<<"load single file success. Now save mesh of it. "<<std::endl;
-
           SaveMeshGridSingle(hvol, hvolcolor, LocalIndex.x, LocalIndex.y, LocalIndex.z,
                              verts, norms, faces, colors);
 
-          printf("Finish march cube grid for \n");
+          std::cout<<"Finish march cube grid for "<<sFile<<std::endl;
         }
         else
         {
@@ -561,13 +558,12 @@ void GenMeshFromPPM(std::string               sDirName,
       }
     }
 
-
     // reset previous grid
-    //    SdfReset(hvol);
+    SdfReset(hvol);
     hvol.ResetAllGridVol();
   }
 
-  printf("finish march cube grid Sepreate..\n");
+  printf("[Kangaroo/GenMeshFromPPM] finish march cube for all Grids.\n");
 
   aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
   SaveMeshGrid(sMeshFileName, mesh);

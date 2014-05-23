@@ -78,6 +78,7 @@ void SdfReset(BoundedVolume<float> vol);
 
 void SdfReset(BoundedVolume<uchar3> vol);
 
+// grid sdf in device memory
 void SdfReset(VolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol);
 
 void SdfReset(VolumeGrid<float, roo::TargetDevice, roo::Manage> vol);
@@ -85,6 +86,16 @@ void SdfReset(VolumeGrid<float, roo::TargetDevice, roo::Manage> vol);
 void SdfReset(BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> vol);
 
 void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetDevice, roo::Manage> vol);
+
+// grid sdf in host memory
+void SdfReset(VolumeGrid<SDF_t, roo::TargetHost, roo::Manage> vol);
+
+void SdfReset(VolumeGrid<float, roo::TargetHost, roo::Manage> vol);
+
+void SdfReset(BoundedVolumeGrid<float,roo::TargetHost, roo::Manage> vol);
+
+void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetHost, roo::Manage> vol);
+
 
 void SdfSphere(BoundedVolume<SDF_t> vol, float3 center, float r);
 

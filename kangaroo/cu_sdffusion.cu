@@ -1172,6 +1172,7 @@ void SdfReset(BoundedVolume<uchar3> vol)
   vol.Fill(make_uchar3( 0,0,0 ));
 }
 
+// for grid sdf (in device memory)
 void SdfReset(VolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol)
 {
   vol.Fill(SDF_t(0.0/0.0, 0));
@@ -1206,6 +1207,41 @@ void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetDevice, roo::Manage> vol)
   }
 }
 
+
+// for grid sdf (in host memory)
+void SdfReset(VolumeGrid<SDF_t,roo::TargetHost, roo::Manage> vol)
+{
+  vol.Fill(SDF_t(0.0/0.0, 0));
+}
+
+void SdfReset(VolumeGrid<float,roo::TargetHost, roo::Manage> vol)
+{
+  vol.Fill(0.5);
+}
+
+void SdfReset(BoundedVolumeGrid<float,roo::TargetHost, roo::Manage> vol)
+{
+  for(unsigned int i=0;i!=vol.m_nWholeGridRes_w*vol.m_nWholeGridRes_h*vol.m_nWholeGridRes_d;i++)
+  {
+    // reset for each valid rolling grid sdf
+    if(vol.CheckIfBasicSDFActive(i)==true)
+    {
+      roo::SdfReset(vol.m_GridVolumes[i]);
+    }
+  }
+}
+
+void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetHost, roo::Manage> vol)
+{
+  for(unsigned int i=0;i!=vol.m_nWholeGridRes_w*vol.m_nWholeGridRes_h*vol.m_nWholeGridRes_d;i++)
+  {
+    // reset for each valid rolling grid sdf
+    if(vol.CheckIfBasicSDFActive(i)==true)
+    {
+      roo::SdfReset(vol.m_GridVolumes[i]);
+    }
+  }
+}
 
 //////////////////////////////////////////////////////
 // Create SDF representation of sphere
