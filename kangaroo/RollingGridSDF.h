@@ -196,7 +196,7 @@ public:
   }
 
 
-private:
+public:
   int  nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
   int3 TotalShift;
 };
