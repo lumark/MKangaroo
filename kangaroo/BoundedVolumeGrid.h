@@ -644,16 +644,16 @@ public:
     m_shift = m_shift + shift_index;
 
     // for x
-    if(m_shift.x == m_nWholeGridRes_w)
+    if(m_shift.x >= int(m_nWholeGridRes_w))
     {
-      m_shift.x = 0;
+      m_shift.x = m_shift.x-int(m_nWholeGridRes_w);
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
     }
 
-    if(m_shift.x == -m_nWholeGridRes_w)
+    if(m_shift.x <= -int(m_nWholeGridRes_w))
     {
-      m_shift.x = 0;
+      m_shift.x = m_shift.x-(-int(m_nWholeGridRes_w));
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
     }
@@ -661,16 +661,16 @@ public:
 
 
     // for y
-    if(m_shift.y == m_nWholeGridRes_h)
+    if(m_shift.y >= int(m_nWholeGridRes_h))
     {
-      m_shift.y = 0;
+      m_shift.y = m_shift.y - int(m_nWholeGridRes_h);
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
     }
 
-    if(m_shift.y == -m_nWholeGridRes_h)
+    if(m_shift.y <= -int(m_nWholeGridRes_h))
     {
-      m_shift.y = 0;
+      m_shift.y = m_shift.y-(-int(m_nWholeGridRes_h));
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
     }
@@ -678,16 +678,16 @@ public:
 
 
     // for z
-    if(m_shift.z == m_nWholeGridRes_d)
+    if(m_shift.z >= int(m_nWholeGridRes_d))
     {
-      m_shift.z = 0;
+      m_shift.z = m_shift.z-int(m_nWholeGridRes_d);
       m_global_shift.z++;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
 
-    if(m_shift.z == -m_nWholeGridRes_d)
+    if(m_shift.z <= -int(m_nWholeGridRes_d))
     {
-      m_shift.z = 0;
+      m_shift.z = m_shift.z-(-int(m_nWholeGridRes_d));
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
