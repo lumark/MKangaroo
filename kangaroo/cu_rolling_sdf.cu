@@ -276,9 +276,9 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-  printf("[kangaroo/cu_rolling_sdf] Positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
-         positive_shift.x,positive_shift.y,positive_shift.z,
-         negative_shift.x,negative_shift.y,negative_shift.z);
+//  printf("[kangaroo/cu_rolling_sdf] Positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
+//         positive_shift.x,positive_shift.y,positive_shift.z,
+//         negative_shift.x,negative_shift.y,negative_shift.z);
 
   g_vol.FreeMemory();
   GpuCheckErrors();

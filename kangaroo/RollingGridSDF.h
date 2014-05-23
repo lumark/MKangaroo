@@ -20,14 +20,17 @@ public:
 
   // update shift parameters
   template<typename T> inline
-  void UpdateShift(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol, int3 shift_index)
+  void UpdateShift(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol,
+                   int3 shift_index, bool bVerbose=false)
   {
     //////////////////////////////////////////////////////////////////////////////
     /// change bbox min and max value based on shif parameters
     //////////////////////////////////////////////////////////////////////////////
-    printf("BB size x=%f, y=%f, z=%f; Current shift is x=%d,y=%d,z=%d\n ",
-           pVol->m_bbox.Size().x,pVol->m_bbox.Size().y,pVol->m_bbox.Size().z,
-           shift_index.x, shift_index.y,shift_index.z);
+    if(bVerbose==true)
+    {
+      printf("[UpdateShift] Current shift is x=%d,y=%d,z=%d\n",
+             shift_index.x, shift_index.y,shift_index.z);
+    }
 
     float3 BBSize = pVol->m_bbox.Size();
 
@@ -40,9 +43,12 @@ public:
       pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x +
           float(shift_index.x) * BBSize.x/float(pVol->m_nWholeGridRes_w);
 
-      printf("shift x is %d, total shift x is %f, change bbox bbmin x to %f, bbmax x to %f\n",
-             shift_index.x, float(shift_index.x) * BBSize.x/float(pVol->m_nWholeGridRes_w),
-             pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
+      if(bVerbose==true)
+      {
+        printf("[UpdateShift] shift x:%d (index), %f(m), change bbox bbmin x to %f, bbmax x to %f\n",
+               shift_index.x, float(shift_index.x) * BBSize.x/float(pVol->m_nWholeGridRes_w),
+               pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
+      }
     }
 
     if(shift_index.y!=0)
@@ -53,9 +59,12 @@ public:
       pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y +
           float(shift_index.y) * BBSize.y/float(pVol->m_nWholeGridRes_h);
 
-      printf("shift y is %d, total shift y is %f, change bbox bbmin y to %f, bbmax y to %f\n",
-             shift_index.y, float(shift_index.y) * BBSize.y/float(pVol->m_nWholeGridRes_h),
-             pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
+      if(bVerbose==true)
+      {
+        printf("[UpdateShift] shift y:%d(index), %f(m), change bbox bbmin y to %f, bbmax y to %f\n",
+               shift_index.y, float(shift_index.y) * BBSize.y/float(pVol->m_nWholeGridRes_h),
+               pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
+      }
     }
 
     if(shift_index.z!=0)
@@ -66,9 +75,12 @@ public:
       pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z +
           float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes_d);
 
-      printf("shift z index is %d, shift z is %f, change bbox bbmin z to %f, bbmax z to %f\n",
-             shift_index.z, float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes_d),
-             pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
+      if(bVerbose==true)
+      {
+        printf("[UpdateShift] shift z:%d(index), %f(m), change bbox bbmin z to %f, bbmax z to %f\n",
+               shift_index.z, float(shift_index.z) * BBSize.z/float(pVol->m_nWholeGridRes_d),
+               pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
+      }
     }
 
     // save shift params in grid and grid grey sdf data struct

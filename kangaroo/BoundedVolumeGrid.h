@@ -637,56 +637,62 @@ public:
   }
 
 
+  // check if need to reset local shift and set global shift
   inline __host__
   void ResetShift(int3 shift_index)
   {
     m_shift = m_shift + shift_index;
 
-    printf("check if need to reset shift. WholeGridRes is %d\n",m_nWholeGridRes_w);
-
+    // for x
     if(m_shift.x == m_nWholeGridRes_w)
     {
       m_shift.x = 0;
       m_global_shift.x++;
-      printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
+      printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
     }
 
     if(m_shift.x == -m_nWholeGridRes_w)
     {
       m_shift.x = 0;
       m_global_shift.x--;
-      printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
+      printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
     }
 
+
+
+    // for y
     if(m_shift.y == m_nWholeGridRes_h)
     {
       m_shift.y = 0;
       m_global_shift.y++;
-      printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
+      printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
     }
 
     if(m_shift.y == -m_nWholeGridRes_h)
     {
       m_shift.y = 0;
       m_global_shift.y--;
-      printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
+      printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
     }
 
+
+
+    // for z
     if(m_shift.z == m_nWholeGridRes_d)
     {
       m_shift.z = 0;
       m_global_shift.z++;
-      printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
+      printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
 
     if(m_shift.z == -m_nWholeGridRes_d)
     {
       m_shift.z = 0;
       m_global_shift.z--;
-      printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
+      printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Global shift is x=%d,y=%d,z=%d; Max shift is %d \n",
+    printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d; Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
            m_shift.x,m_shift.y,m_shift.z, m_global_shift.x,m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
   }
 
