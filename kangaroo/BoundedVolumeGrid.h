@@ -471,9 +471,12 @@ public:
   // ======================== Index/Shift ====================================
 
   inline __device__
-  float3 GetShiftValue(float3 pos_w) const
+  float3 GetShiftValue(float3 pos_w, float3 cam_pose) const
   {
     /// get pose of voxel in whole sdf, in %
+    // change pos_w to global pose
+    pos_w = pos_w+cam_pose;
+
     return (pos_w - m_bbox.Min()) / (m_bbox.Size());
   }
 

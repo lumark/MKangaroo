@@ -185,7 +185,7 @@ __device__ float3 g_positive_shift;
 __device__ float3 g_negative_shift;
 
 __global__ void KernDetectRollingSdfShift(
-    Image<float> imgdepth, const Mat<float,3,4> T_wc, ImageIntrinsics K )
+    Image<float> imgdepth, const Mat<float,3,4> T_wc, float3 T_wc_translate, ImageIntrinsics K )
 {
   const int u = blockIdx.x*blockDim.x + threadIdx.x;
   const int v = blockIdx.y*blockDim.y + threadIdx.y;
@@ -197,7 +197,10 @@ __global__ void KernDetectRollingSdfShift(
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
 
-      float3 shift = g_vol.GetShiftValue(ray_w);
+      // check if the valid pixel is out of grid.
+      float3 shift = g_vol.GetShiftValue(ray_w,T_wc_translate);
+
+//      printf("d:%f,x:%f,y:%f,z:%f;",imgdepth(u,v), shift.x, shift.y, shift.z);
 
       if(abs(shift.x)>1 )
       {
@@ -265,7 +268,7 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
-  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
+  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, SE3Translation(T_wc), K);
   GpuCheckErrors();
 
   //  cudaMemcpy(&positive_shift,&g_positive_shift,sizeof(positive_shift),cudaMemcpyDeviceToHost);
