@@ -104,6 +104,7 @@ public:
     /// iterator through all grid sdf and see if it need to be free
     //////////////////////////////////////////////////////////////////////////////
     // for each grid sdf in the volume
+    bool bReset = false;
     for(int i=0;i!=int(pVol->m_nWholeGridRes_w);i++)
     {
       for(int j=0;j!=int(pVol->m_nWholeGridRes_h);j++)
@@ -111,18 +112,18 @@ public:
         for(int k=0;k!=int(pVol->m_nWholeGridRes_d);k++)
         {
           // set it back to 0;
-          nNextResetSDFs[i]=0;
-
+          nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] = 0;
+          bReset = false;
           // for x
           if(m_local_shift.x>0 && i<m_local_shift.x)
           {
-            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
+            bReset = true;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
 
           if(m_local_shift.x<0 && i>= int(pVol->m_nWholeGridRes_w) + m_local_shift.x)
           {
-            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
+            bReset = true;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
 
@@ -130,13 +131,13 @@ public:
           // for y
           if(m_local_shift.y>0 && j<m_local_shift.y)
           {
-            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
+            bReset = true;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
 
           if(m_local_shift.y<0 && j>= int(pVol->m_nWholeGridRes_h) + m_local_shift.y)
           {
-            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
+            bReset = true;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
 
@@ -144,14 +145,19 @@ public:
           // for z
           if(m_local_shift.z>0 && k<m_local_shift.z)
           {
-            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
+            bReset = true;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
           }
 
           if(m_local_shift.z<0 && k>= int(pVol->m_nWholeGridRes_d) + m_local_shift.z)
           {
-            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
+            bReset = true;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
+          }
+
+          if(bReset = true)
+          {
+            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
           }
         }
       }
