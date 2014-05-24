@@ -122,7 +122,7 @@ public:
             if(current_shift.x>0 && i>=m_local_shift.x - current_shift.x && i<m_local_shift.x)
             {
               bReset = true;
-              printf("[x]prepare free index %d,%d,%d\n", i, j, k);
+              //              printf("[x]prepare free index %d,%d,%d\n", i, j, k);
             }
 
             if(current_shift.x<0 && i>= int(pVol->m_nWholeGridRes_w) + current_shift.x)
@@ -136,7 +136,7 @@ public:
             if(current_shift.y>0 && j>=m_local_shift.y - current_shift.y && j <m_local_shift.y)
             {
               bReset = true;
-              printf("[y]prepare free index %d,%d,%d\n", i, j, k);
+              //              printf("[y]prepare free index %d,%d,%d\n", i, j, k);
             }
 
             if(current_shift.y<0 && j>= int(pVol->m_nWholeGridRes_h) + current_shift.y)
@@ -150,7 +150,7 @@ public:
             if(current_shift.z>0 && k>=m_local_shift.z - current_shift.z && k<m_local_shift.z)
             {
               bReset = true;
-              printf("[z]prepare free index %d,%d,%d\n", i, j, k);
+              //              printf("[z]prepare free index %d,%d,%d\n", i, j, k);
             }
 
             if(current_shift.z<0 && k>= int(pVol->m_nWholeGridRes_d) + current_shift.z)

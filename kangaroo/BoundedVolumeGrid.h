@@ -543,7 +543,7 @@ public:
     // for z
     if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d) )
     {
-      if(z<= int(m_nWholeGridRes_d) -1 - m_local_shift.z  )
+      if(z <= int(m_nWholeGridRes_d) -1 - m_local_shift.z  )
       {
         z = z + m_local_shift.z;
       }
@@ -563,6 +563,7 @@ public:
         z = z+int(m_nWholeGridRes_d)-1-abs(m_local_shift.z) ;
       }
     }
+
 
     // compute actual index
     const unsigned int nIndex =x + m_nWholeGridRes_w* (y+ m_nWholeGridRes_h* z);
