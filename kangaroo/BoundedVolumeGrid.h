@@ -424,6 +424,7 @@ public:
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
+  // ===========================================================================
   // get sub bounding volume by bounding box for speed.
   inline __device__ __host__
   BoundedVolumeGrid<T,Target,Management> SubBoundingVolume(const BoundingBox& region)
@@ -469,7 +470,6 @@ public:
 
 
   // ======================== Index/Shift ====================================
-
   inline __device__
   float3 GetShiftValue(float3 pos_w, float3 cam_pose) const
   {
@@ -481,7 +481,9 @@ public:
   }
 
 
+  // ===========================================================================
   // get local index of grid sdf
+  // ===========================================================================
   inline __device__ __host__
   unsigned int GetLocalIndex(int x, int y, int z) const
   {
@@ -571,10 +573,12 @@ public:
   }
 
 
+  // ===========================================================================
   // input the index of grid sdf that we want to access. return the global index for it.
   // If the index is shift, its global index will ++. Otherwise, the global index
   // will be the same as it was. The role of this function is to see if the m_global_shift
   // does not reset yet but there is a current shift for the grid.
+  // ===========================================================================
   inline __device__ __host__
   int3 GetGlobalIndex(unsigned int x, unsigned int y, unsigned int z) const
   {
@@ -638,6 +642,7 @@ public:
   }
 
 
+  // ===========================================================================
   // check if need to reset local shift and set global shift
   inline __host__
   void ResetShift(int3 shift_index)
@@ -679,7 +684,7 @@ public:
 
 
     // for z
-    if(m_local_shift.z >= int(m_nWholeGridRes_d))
+    if(m_local_shift.z >= int(m_nWholeGridRes_d)+1)
     {
       m_local_shift.z = m_local_shift.z-int(m_nWholeGridRes_d);
       m_global_shift.z++;
@@ -694,12 +699,13 @@ public:
     }
 
     printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d; Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
-           m_local_shift.x,m_local_shift.y,m_local_shift.z, m_global_shift.x,m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
+           m_local_shift.x,m_local_shift.y,m_local_shift.z, m_global_shift.x,
+           m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
   }
 
 
 
-  // ========================= Others =================================
+  // =============================== Others ===================================
   inline __host__ __device__
   bool CheckIfBasicSDFActive(const int nIndex) const
   {
@@ -745,10 +751,10 @@ public:
   // bounding box ofbounded volume grid
   BoundingBox                                 m_bbox;
 
-  unsigned int                                m_nVolumeGridRes;            // resolution of a single grid in one dim.
-  unsigned int                                m_nWholeGridRes_w;             // resolution of a whole grid in one dim. usually 4, 8, 16
-  unsigned int                                m_nWholeGridRes_h;             // resolution of a whole grid in one dim. usually 4, 8, 16
-  unsigned int                                m_nWholeGridRes_d;             // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nVolumeGridRes;         // resolution of a single grid in one dim.
+  unsigned int                                m_nWholeGridRes_w;        // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nWholeGridRes_h;        // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nWholeGridRes_d;        // resolution of a whole grid in one dim. usually 4, 8, 16
 
   // volume that save all data
   // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.
