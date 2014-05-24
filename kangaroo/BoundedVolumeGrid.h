@@ -88,8 +88,8 @@ public:
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
     int nIndex =GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
-                          int(floorf(y/m_nVolumeGridRes)),
-                          int(floorf(z/m_nVolumeGridRes)) );
+                               int(floorf(y/m_nVolumeGridRes)),
+                               int(floorf(z/m_nVolumeGridRes)) );
 
     if(m_GridVolumes[nIndex].d !=m_nVolumeGridRes &&
        m_GridVolumes[nIndex].h !=m_nVolumeGridRes &&
@@ -287,8 +287,8 @@ public:
   bool CheckIfVoxelExist(int x, int y, int z)
   {
     int nIndex = GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
-                           int(floorf(y/m_nVolumeGridRes)),
-                           int(floorf(z/m_nVolumeGridRes)) );
+                                int(floorf(y/m_nVolumeGridRes)),
+                                int(floorf(z/m_nVolumeGridRes)) );
 
     if( CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -302,8 +302,8 @@ public:
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
     int nIndex = GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
-                           int(floorf(y/m_nVolumeGridRes)),
-                           int(floorf(z/m_nVolumeGridRes)) );
+                                int(floorf(y/m_nVolumeGridRes)),
+                                int(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
@@ -500,7 +500,7 @@ public:
       }
       else
       {
-        x = x-(int(m_nWholeGridRes_w)-1)+(m_local_shift.x-1);
+        x = x-( int(m_nWholeGridRes_w) - m_local_shift.x );
       }
     }
     else if(m_local_shift.x<0 && m_local_shift.x>=-int(m_nWholeGridRes_w))
@@ -525,7 +525,7 @@ public:
       }
       else
       {
-        y = y-(int(m_nWholeGridRes_h)-1)+(m_local_shift.y-1);
+        y = y- ( int(m_nWholeGridRes_h) - m_local_shift.y );
       }
     }
     else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nWholeGridRes_h))
@@ -541,15 +541,15 @@ public:
     }
 
     // for z
-    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d))
+    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d) )
     {
-      if( z < m_local_shift.z)
+      if(z<= int(m_nWholeGridRes_d) -1 - m_local_shift.z  )
       {
         z = z + m_local_shift.z;
       }
       else
       {
-        z = z - (  int(m_nWholeGridRes_d) - m_local_shift.z );
+        z = z - ( int(m_nWholeGridRes_d) - m_local_shift.z );
       }
     }
     else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nWholeGridRes_d))
