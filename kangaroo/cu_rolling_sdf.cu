@@ -143,7 +143,7 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
   }
 
   // save shift params in grid sdf data struct
-  vol.m_shift = shift;
+  vol.m_local_shift = shift;
 
   // 2, Kernel functin. Initialization for GPU parallelization
   dim3 blockDim(16,16);
@@ -265,6 +265,8 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
   cudaMemcpyToSymbol(g_positive_shift,&positive_shift,sizeof(positive_shift),0,cudaMemcpyHostToDevice);
   cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
+
+  printf("camera translate x%f,y%f,z%f\n",SE3Translation(T_wc).x,SE3Translation(T_wc).y,SE3Translation(T_wc).z);
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);

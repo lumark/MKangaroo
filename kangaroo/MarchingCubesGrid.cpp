@@ -394,7 +394,7 @@ void SaveMeshGrid(std::string                                   filename,
     {
       for(int k=0;k!=vol.m_nWholeGridRes_d;k++)
       {
-        if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
+        if(vol.CheckIfBasicSDFActive(vol.GetLocalIndex(i,j,k)) == true)
         {
           SaveMeshGridSingle(vol,volColor,i,j,k,verts, norms, faces, colors);
           printf("[SaveMeshGrid] Finish march cube grid for (%d,%d,%d).\n", i,j,k);
@@ -530,7 +530,7 @@ void GenMeshFromPPM(std::string               sDirName,
     for(unsigned int j=0;j!=vVolumes[i].vLocalIndex.size();j++)
     {
       int3 LocalIndex = vVolumes[i].vLocalIndex[j];
-      int nIndex = hvol.GetIndex(LocalIndex.x, LocalIndex.y, LocalIndex.z);
+      int nIndex = hvol.GetLocalIndex(LocalIndex.x, LocalIndex.y, LocalIndex.z);
       std::string sFile = sDirName+vVolumes[i].vFileName[j];
 
       //      std::cout<<"load file "<<sFile<<std::endl;

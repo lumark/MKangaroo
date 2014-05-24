@@ -109,7 +109,7 @@ void SavePXM(const std::string                                      filename,
       {
         for(int k=0;k!=rDVol.m_nWholeGridRes_d;k++)
         {
-          int nGridIndex = hvol.GetIndex(i,j,k);
+          int nGridIndex = hvol.GetLocalIndex(i,j,k);
 
           if(hvol.CheckIfBasicSDFActive(nGridIndex)==true)
           {
@@ -179,7 +179,7 @@ void SavePXM(const std::string                                      filename,
       {
         for(int k=0;k!=rDVol.m_nWholeGridRes_d;k++)
         {
-          int nGridIndex = hvol.GetIndex(i,j,k);
+          int nGridIndex = hvol.GetLocalIndex(i,j,k);
 
           if(pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex)==true)
           {

@@ -34,37 +34,37 @@ public:
   void init(unsigned int n_w, unsigned int n_h, unsigned int n_d, unsigned int n_res, const BoundingBox& r_bbox)
   {
     // init grid sdf
-//    if(n_w == n_h && n_h == n_d)
-//    {
-      m_w              = n_w;
-      m_h              = n_h;
-      m_d              = n_d;
+    //    if(n_w == n_h && n_h == n_d)
+    //    {
+    m_w              = n_w;
+    m_h              = n_h;
+    m_d              = n_d;
 
-      m_bbox           = r_bbox;
-      m_nVolumeGridRes = n_res;
+    m_bbox           = r_bbox;
+    m_nVolumeGridRes = n_res;
 
-      m_nWholeGridRes_w  = m_w/m_nVolumeGridRes;
-      m_nWholeGridRes_h  = m_h/m_nVolumeGridRes;
-      m_nWholeGridRes_d  = m_d/m_nVolumeGridRes;
+    m_nWholeGridRes_w  = m_w/m_nVolumeGridRes;
+    m_nWholeGridRes_h  = m_h/m_nVolumeGridRes;
+    m_nWholeGridRes_d  = m_d/m_nVolumeGridRes;
 
 
-      if(m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d > MAX_SUPPORT_GRID_NUM)
-      {
-        printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
-               m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d);
-        printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
-        exit(-1);
-      }
+    if(m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d > MAX_SUPPORT_GRID_NUM)
+    {
+      printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
+             m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d);
+      printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
+      exit(-1);
+    }
 
-      ResetAllGridVol();
-      m_shift = make_int3(0,0,0);
-      m_global_shift = make_int3(0,0,0);
-//    }
-//    else
-//    {
-//      printf("[BoundedVolumeGrid/init] Fatal error! Only support cube SDF with (n*n*n) size!\n");
-//      exit(-1);
-//    }
+    ResetAllGridVol();
+    m_local_shift = make_int3(0,0,0);
+    m_global_shift = make_int3(0,0,0);
+    //    }
+    //    else
+    //    {
+    //      printf("[BoundedVolumeGrid/init] Fatal error! Only support cube SDF with (n*n*n) size!\n");
+    //      exit(-1);
+    //    }
   }
 
   inline __host__
@@ -87,7 +87,7 @@ public:
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
-    int nIndex =GetIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex =GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
                           int(floorf(y/m_nVolumeGridRes)),
                           int(floorf(z/m_nVolumeGridRes)) );
 
@@ -286,7 +286,7 @@ public:
   inline __host__ __device__
   bool CheckIfVoxelExist(int x, int y, int z)
   {
-    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex = GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
                            int(floorf(y/m_nVolumeGridRes)),
                            int(floorf(z/m_nVolumeGridRes)) );
 
@@ -301,16 +301,16 @@ public:
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex = GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
                            int(floorf(y/m_nVolumeGridRes)),
                            int(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
       printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
-             m_shift.x,
-             m_shift.y,
-             m_shift.z,
+             m_local_shift.x,
+             m_local_shift.y,
+             m_local_shift.z,
              int(floorf(x/m_nVolumeGridRes)),
              int(floorf(y/m_nVolumeGridRes)),
              int(floorf(z/m_nVolumeGridRes)),
@@ -345,7 +345,7 @@ public:
                                    floorf(pos_v.y/fFactor),
                                    floorf(pos_v.z/fFactor)  );
 
-    int nIndex = GetIndex( Index.x, Index.y, Index.z);
+    int nIndex = GetLocalIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -381,7 +381,7 @@ public:
                                    floorf(pos_v.y/fFactor),
                                    floorf(pos_v.z/fFactor)  );
 
-    int nIndex = GetIndex( Index.x, Index.y, Index.z);
+    int nIndex = GetLocalIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -449,14 +449,14 @@ public:
           VoxelPositionInUnits(max_v)
           );
 
-//    printf("New SubVol Size is %d,%d,%d\n",size_v.x,size_v.y,size_v.z );
+    //    printf("New SubVol Size is %d,%d,%d\n",size_v.x,size_v.y,size_v.z );
 
     // return a new BoundedVolumeGrid
     BoundedVolumeGrid<T,Target,Management> SubBoundedVolumeGrid;
     SubBoundedVolumeGrid.init(size_v.x,size_v.y,size_v.z, m_nVolumeGridRes, nbbox);
 
     // put shift parameters
-    m_subVolShift = make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
+    m_subVol_shift = make_int3(min_v.x * m_w, min_v.y*m_h, min_v.z * m_d);
 
     // change point of it
     for(int i=0;i!=m_nWholeGridRes_w*m_nWholeGridRes_h*m_nWholeGridRes_d;i++)
@@ -481,88 +481,113 @@ public:
   }
 
 
-  // get index of grid sdf in current volume
+  // get local index of grid sdf
   inline __device__ __host__
-  unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
+  unsigned int GetLocalIndex(int x, int y, int z) const
   {
-    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
+    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
       const unsigned int nIndex =x + m_nWholeGridRes_w* (y+ m_nWholeGridRes_h* z);
       return nIndex;
     }
 
     // for x
-    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes_w)
+    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
     {
-      if( x<=m_nWholeGridRes_w-1-m_shift.x)
+      if( x<=int(m_nWholeGridRes_w)-1-m_local_shift.x)
       {
-        x = x+m_shift.x;
+        x = x+m_local_shift.x;
       }
-      else if(x>=m_nWholeGridRes_w-1-m_shift.x)
+      else
       {
-        x = x-(m_nWholeGridRes_w-1)+(m_shift.x-1);
+        x = x-(int(m_nWholeGridRes_w)-1)+(m_local_shift.x-1);
       }
     }
-    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes_w)
+    else if(m_local_shift.x<0 && m_local_shift.x>=-int(m_nWholeGridRes_w))
     {
-      if(x>=abs(m_shift.x) && x<=m_nWholeGridRes_w)
+      if(x>=abs(m_local_shift.x) && x<=int(m_nWholeGridRes_w))
       {
-        x = x+m_shift.x;
+        x = x+m_local_shift.x;
       }
-      else if( x<=abs(m_shift.x) )
+      else if( x<=abs(m_local_shift.x) )
       {
-        x = x+m_nWholeGridRes_w-1-abs(m_shift.x) ;
+        x = x+int(m_nWholeGridRes_w)-1-abs(m_local_shift.x) ;
       }
     }
 
 
     // for y
-    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes_h)
+    if(m_local_shift.y>0 && m_local_shift.y<=int(m_nWholeGridRes_h))
     {
-      if( y<=m_nWholeGridRes_h-1-m_shift.y)
+      if( y<=int(m_nWholeGridRes_h)-1-m_local_shift.y)
       {
-        y = y+m_shift.y;
+        y = y+m_local_shift.y;
       }
-      else if(y>=m_nWholeGridRes_h-1-m_shift.y)
+      else
       {
-        y = y-(m_nWholeGridRes_h-1)+(m_shift.y-1);
+        y = y-(int(m_nWholeGridRes_h)-1)+(m_local_shift.y-1);
       }
     }
-    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes_h)
+    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nWholeGridRes_h))
     {
-      if(y>=abs(m_shift.y) && y<=m_nWholeGridRes_h)
+      if(y>=abs(m_local_shift.y) && y<=int(m_nWholeGridRes_h))
       {
-        y = y+m_shift.y;
+        y = y+m_local_shift.y;
       }
-      else if( y<=abs(m_shift.y) )
+      else if( y<=abs(m_local_shift.y) )
       {
-        y = y+m_nWholeGridRes_h-1-abs(m_shift.y) ;
+        y = y+int(m_nWholeGridRes_h)-1-abs(m_local_shift.y) ;
       }
     }
 
     // for z
-    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes_d)
+    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d))
     {
-      if( z<=m_nWholeGridRes_d-1-m_shift.z)
+      if( z < m_local_shift.z)
       {
-        z = z+m_shift.z;
+        z = z + m_local_shift.z;
       }
-      else if(z>=m_nWholeGridRes_d-1-m_shift.z)
+      else
       {
-        z = z-(m_nWholeGridRes_d-1)+(m_shift.z-1);
+        z = z - (  int(m_nWholeGridRes_d) - m_local_shift.z );
       }
     }
-    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes_d)
+    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nWholeGridRes_d))
     {
-      if(z>=abs(m_shift.z) && z<=m_nWholeGridRes_d)
+      if(z>=abs(m_local_shift.z) && z<=int(m_nWholeGridRes_d))
       {
-        z = z+m_shift.z;
+        z = z+m_local_shift.z;
       }
-      else if( z<=abs(m_shift.z) )
+      else if( z<=abs(m_local_shift.z) )
       {
-        z = z+m_nWholeGridRes_d-1-abs(m_shift.z) ;
+        z = z+int(m_nWholeGridRes_d)-1-abs(m_local_shift.z) ;
       }
     }
+
+
+    //    // for z
+    //    if(m_shift.z>0 && m_shift.z<=int(m_nWholeGridRes_d))
+    //    {
+    //      if( z<=int(m_nWholeGridRes_d)-1-m_shift.z)
+    //      {
+    //        z = z+m_shift.z;
+    //      }
+    //      else
+    //      {
+    //        z = z-(int(m_nWholeGridRes_d)-1)+(m_shift.z-1);
+    //      }
+    //    }
+    //    else if(m_shift.z<0 && m_shift.z>=-int(m_nWholeGridRes_d))
+    //    {
+    //      if(z>=abs(m_shift.z) && z<=int(m_nWholeGridRes_d))
+    //      {
+    //        z = z+m_shift.z;
+    //      }
+    //      else if( z<=abs(m_shift.z) )
+    //      {
+    //        z = z+int(m_nWholeGridRes_d)-1-abs(m_shift.z) ;
+    //      }
+    //    }
 
     // compute actual index
     const unsigned int nIndex =x + m_nWholeGridRes_w* (y+ m_nWholeGridRes_h* z);
@@ -577,7 +602,7 @@ public:
   inline __device__ __host__
   int3 GetGlobalIndex(unsigned int x, unsigned int y, unsigned int z) const
   {
-    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
+    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
       return m_global_shift;
     }
@@ -585,48 +610,48 @@ public:
     int3 GlobalShift = m_global_shift;
 
     // for x
-    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes_w)
+    if(m_local_shift.x>0 && m_local_shift.x<=m_nWholeGridRes_w)
     {
-      if(x>=m_nWholeGridRes_w-1-m_shift.x)
+      if(x>=m_nWholeGridRes_w-1-m_local_shift.x)
       {
         GlobalShift.x = m_global_shift.x+1;
       }
     }
-    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes_w)
+    else if(m_local_shift.x<0 && m_local_shift.x>=-m_nWholeGridRes_w)
     {
-      if( x<=abs(m_shift.x) )
+      if( x<=abs(m_local_shift.x) )
       {
         GlobalShift.x = m_global_shift.x-1;
       }
     }
 
     // for y
-    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes_h)
+    if(m_local_shift.y>0 && m_local_shift.y<=m_nWholeGridRes_h)
     {
-      if(y>=m_nWholeGridRes_h-1-m_shift.y)
+      if(y>=m_nWholeGridRes_h-1-m_local_shift.y)
       {
         GlobalShift.y = m_global_shift.y+1;
       }
     }
-    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes_h)
+    else if(m_local_shift.y<0 && m_local_shift.y>=-m_nWholeGridRes_h)
     {
-      if( y<=abs(m_shift.y) )
+      if( y<=abs(m_local_shift.y) )
       {
         GlobalShift.y = m_global_shift.y-1;
       }
     }
 
     // for z
-    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes_d)
+    if(m_local_shift.z>0 && m_local_shift.z<=m_nWholeGridRes_d)
     {
-      if(z>=m_nWholeGridRes_d-1-m_shift.z)
+      if(z>=m_nWholeGridRes_d-1-m_local_shift.z)
       {
         GlobalShift.z = m_global_shift.z+1;
       }
     }
-    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes_d)
+    else if(m_local_shift.z<0 && m_local_shift.z>=-m_nWholeGridRes_d)
     {
-      if( z<=abs(m_shift.z) )
+      if( z<=abs(m_local_shift.z) )
       {
         GlobalShift.z = m_global_shift.z-1;
       }
@@ -641,19 +666,19 @@ public:
   inline __host__
   void ResetShift(int3 shift_index)
   {
-    m_shift = m_shift + shift_index;
+    m_local_shift = m_local_shift + shift_index;
 
     // for x
-    if(m_shift.x >= int(m_nWholeGridRes_w))
+    if(m_local_shift.x >= int(m_nWholeGridRes_w))
     {
-      m_shift.x = m_shift.x-int(m_nWholeGridRes_w);
+      m_local_shift.x = m_local_shift.x-int(m_nWholeGridRes_w);
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
     }
 
-    if(m_shift.x <= -int(m_nWholeGridRes_w))
+    if(m_local_shift.x <= -int(m_nWholeGridRes_w))
     {
-      m_shift.x = m_shift.x-(-int(m_nWholeGridRes_w));
+      m_local_shift.x = m_local_shift.x-(-int(m_nWholeGridRes_w));
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
     }
@@ -661,16 +686,16 @@ public:
 
 
     // for y
-    if(m_shift.y >= int(m_nWholeGridRes_h))
+    if(m_local_shift.y >= int(m_nWholeGridRes_h))
     {
-      m_shift.y = m_shift.y - int(m_nWholeGridRes_h);
+      m_local_shift.y = m_local_shift.y - int(m_nWholeGridRes_h);
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
     }
 
-    if(m_shift.y <= -int(m_nWholeGridRes_h))
+    if(m_local_shift.y <= -int(m_nWholeGridRes_h))
     {
-      m_shift.y = m_shift.y-(-int(m_nWholeGridRes_h));
+      m_local_shift.y = m_local_shift.y-(-int(m_nWholeGridRes_h));
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
     }
@@ -678,22 +703,22 @@ public:
 
 
     // for z
-    if(m_shift.z >= int(m_nWholeGridRes_d))
+    if(m_local_shift.z >= int(m_nWholeGridRes_d))
     {
-      m_shift.z = m_shift.z-int(m_nWholeGridRes_d);
+      m_local_shift.z = m_local_shift.z-int(m_nWholeGridRes_d);
       m_global_shift.z++;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
 
-    if(m_shift.z <= -int(m_nWholeGridRes_d))
+    if(m_local_shift.z <= -int(m_nWholeGridRes_d))
     {
-      m_shift.z = m_shift.z-(-int(m_nWholeGridRes_d));
+      m_local_shift.z = m_local_shift.z-(-int(m_nWholeGridRes_d));
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
 
     printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d; Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
-           m_shift.x,m_shift.y,m_shift.z, m_global_shift.x,m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
+           m_local_shift.x,m_local_shift.y,m_local_shift.z, m_global_shift.x,m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
   }
 
 
@@ -737,9 +762,9 @@ public:
   size_t                                      m_h;
 
   // for rolling sdf. When this value is not zero, we need to recompute index based on the shift
-  int3                                        m_shift;
+  int3                                        m_local_shift;
   int3                                        m_global_shift; // when m_shift set to 0, global will ++
-  int3                                        m_subVolShift;  // shift for sub bounded volume.
+  int3                                        m_subVol_shift;  // shift for sub bounded volume.
 
   // bounding box ofbounded volume grid
   BoundingBox                                 m_bbox;

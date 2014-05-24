@@ -87,7 +87,7 @@ public:
     pVol->ResetShift(shift_index);
 
     // update total shift
-    TotalShift = pVol->m_shift;
+    TotalShift = pVol->m_local_shift;
   }
 
 
@@ -102,7 +102,6 @@ public:
     /// iterator through all grid sdf and see if it need to be free
     //////////////////////////////////////////////////////////////////////////////
     // for each grid sdf in the volume
-    int nNum = 0;
     for(int i=0;i!=int(pVol->m_nWholeGridRes_w);i++)
     {
       for(int j=0;j!=int(pVol->m_nWholeGridRes_h);j++)
@@ -154,8 +153,6 @@ public:
         }
       }
     }
-
-    printf("[Kangaroo/RollingGridSDF] Num of Grid SDF need to be freed is %d\n", nNum);
   }
 
   template<typename T> inline
