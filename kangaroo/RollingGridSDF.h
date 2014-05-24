@@ -28,7 +28,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     if(bVerbose==true)
     {
-      printf("[UpdateShift] Current shift is x=%d,y=%d,z=%d\n",
+      printf("[UpdateShift] new shift for current frame is x=%d,y=%d,z=%d; Updating BB.\n",
              shift_index.x, shift_index.y,shift_index.z);
     }
 
@@ -97,67 +97,76 @@ public:
 
   // ---------------------------------------------------------------------------
   // compute index of grid sdf that need to be reset and freed.
+  // only free that part that we just "shift"
   template<typename T> inline
-  void GetGridSDFIndexNeedFree(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
+  void GetGridSDFIndexNeedFree(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol, int3 current_shift)
   {
     //////////////////////////////////////////////////////////////////////////////
     /// iterator through all grid sdf and see if it need to be free
     //////////////////////////////////////////////////////////////////////////////
     // for each grid sdf in the volume
-    bool bReset = false;
-    for(int i=0;i!=int(pVol->m_nWholeGridRes_w);i++)
+    if (current_shift.x!=0 || current_shift.y!=0 || current_shift.z!=0)
     {
-      for(int j=0;j!=int(pVol->m_nWholeGridRes_h);j++)
+      bool bReset = false;
+
+      for(int i=0;i!=int(pVol->m_nWholeGridRes_w);i++)
       {
-        for(int k=0;k!=int(pVol->m_nWholeGridRes_d);k++)
+        for(int j=0;j!=int(pVol->m_nWholeGridRes_h);j++)
         {
-          // set it back to 0;
-          nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] = 0;
-          bReset = false;
-          // for x
-          if(m_local_shift.x>0 && i<m_local_shift.x)
+          for(int k=0;k!=int(pVol->m_nWholeGridRes_d);k++)
           {
-            bReset = true;
-            //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
-          }
+            // reset params;
+            bReset = false;
 
-          if(m_local_shift.x<0 && i>= int(pVol->m_nWholeGridRes_w) + m_local_shift.x)
-          {
-            bReset = true;
-            //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
-          }
+            //----- for x
+            if(current_shift.x>0 && i>=m_local_shift.x - current_shift.x && i<m_local_shift.x)
+            {
+              bReset = true;
+              printf("[x]prepare free index %d,%d,%d\n", i, j, k);
+            }
 
-
-          // for y
-          if(m_local_shift.y>0 && j<m_local_shift.y)
-          {
-            bReset = true;
-            //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
-          }
-
-          if(m_local_shift.y<0 && j>= int(pVol->m_nWholeGridRes_h) + m_local_shift.y)
-          {
-            bReset = true;
-            //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
-          }
+            if(current_shift.x<0 && i>= int(pVol->m_nWholeGridRes_w) + current_shift.x)
+            {
+              bReset = true;
+              //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
+            }
 
 
-          // for z
-          if(m_local_shift.z>0 && k<m_local_shift.z)
-          {
-            bReset = true;
-            //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
-          }
+            //----- for y
+            if(current_shift.y>0 && j>=m_local_shift.y - current_shift.y && j <m_local_shift.y)
+            {
+              bReset = true;
+              printf("[y]prepare free index %d,%d,%d\n", i, j, k);
+            }
 
-          if(m_local_shift.z<0 && k>= int(pVol->m_nWholeGridRes_d) + m_local_shift.z)
-          {
-            bReset = true;
-            //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
-          }
+            if(current_shift.y<0 && j>= int(pVol->m_nWholeGridRes_h) + current_shift.y)
+            {
+              bReset = true;
+              //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
+            }
 
-          if(bReset = true)
-          {
-            nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] =1;
+
+            //----- for z
+            if(current_shift.z>0 && k>=m_local_shift.z - current_shift.z && k<m_local_shift.z)
+            {
+              bReset = true;
+              printf("[z]prepare free index %d,%d,%d\n", i, j, k);
+            }
+
+            if(current_shift.z<0 && k>= int(pVol->m_nWholeGridRes_d) + current_shift.z)
+            {
+              bReset = true;
+              //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
+            }
+
+            if(bReset == true)
+            {
+              m_nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] = 1;
+            }
+            else
+            {
+              m_nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] = 0;
+            }
           }
         }
       }
@@ -174,31 +183,20 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     for(unsigned int i=0;i!=pVol->m_nWholeGridRes_w* pVol->m_nWholeGridRes_h* pVol->m_nWholeGridRes_d; i++)
     {
-      if(nNextResetSDFs[i] == 1)
+      if(m_nNextResetSDFs[i] == 1 && pVol->CheckIfBasicSDFActive(i) == true)
       {
-        //  free vol only when it is valid.
-        if (pVol->CheckIfBasicSDFActive(i) == true)
-        {
-          roo::SdfReset(pVol->m_GridVolumes[i]);
-          pVol->FreeMemoryByIndex(i);
-          pVol->m_GridVolumes[i].d = 0;
-          pVol->m_GridVolumes[i].w = 0;
-          pVol->m_GridVolumes[i].h = 0;
-        }
+        roo::SdfReset(pVol->m_GridVolumes[i]);
+        pVol->FreeMemoryByIndex(i);
+        pVol->m_GridVolumes[i].d = 0;
+        pVol->m_GridVolumes[i].w = 0;
+        pVol->m_GridVolumes[i].h = 0;
       }
     }
   }
 
 
-  template<typename T> inline
-  void SaveGird(std::string sPath, roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>& rVol)
-  {
-    SavePXM(sPath,rVol);
-  }
-
-
 public:
-  int  nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
+  int  m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
   int3 m_local_shift;
 };
 
