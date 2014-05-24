@@ -564,31 +564,6 @@ public:
       }
     }
 
-
-    //    // for z
-    //    if(m_shift.z>0 && m_shift.z<=int(m_nWholeGridRes_d))
-    //    {
-    //      if( z<=int(m_nWholeGridRes_d)-1-m_shift.z)
-    //      {
-    //        z = z+m_shift.z;
-    //      }
-    //      else
-    //      {
-    //        z = z-(int(m_nWholeGridRes_d)-1)+(m_shift.z-1);
-    //      }
-    //    }
-    //    else if(m_shift.z<0 && m_shift.z>=-int(m_nWholeGridRes_d))
-    //    {
-    //      if(z>=abs(m_shift.z) && z<=int(m_nWholeGridRes_d))
-    //      {
-    //        z = z+m_shift.z;
-    //      }
-    //      else if( z<=abs(m_shift.z) )
-    //      {
-    //        z = z+int(m_nWholeGridRes_d)-1-abs(m_shift.z) ;
-    //      }
-    //    }
-
     // compute actual index
     const unsigned int nIndex =x + m_nWholeGridRes_w* (y+ m_nWholeGridRes_h* z);
     return  nIndex;
