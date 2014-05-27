@@ -284,6 +284,19 @@ bool LoadPXMSingleGrid(const std::string filename,
 }
 
 
+inline bool CheckIfBBfileExist(std::string filename)
+{
+  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
+  if(bFile.fail()==true)
+  {
+    return false;
+  }
+
+  bFile.close();
+  return true;
+}
+
+
 inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
