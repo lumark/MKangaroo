@@ -439,7 +439,7 @@ bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
   // now get global index
   if(vIndex.size()!=7)
   {
-    std::cerr<<"[GetIndexFromFileName] Skip file "<< sFileName<<std::endl;
+//    std::cerr<<"[GetIndexFromFileName] Skip file "<< sFileName<<std::endl;
     return false;
   }
   else
@@ -452,9 +452,9 @@ bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
     LocalIndex.y = std::stoi(sFileName.substr(vIndex[5]+1, vIndex[6]-vIndex[5]-1));
     LocalIndex.z = std::stoi(sFileName.substr(vIndex[6]+1, sFileName.size() - vIndex[6]-1));
 
-    printf("[GetIndexFromFileName] Global index %d,%d,%d; local index %d,%d,%d. \n",
-           GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
-           LocalIndex.x, LocalIndex.y, LocalIndex.z);
+//    printf("[GetIndexFromFileName] Global index %d,%d,%d; local index %d,%d,%d. \n",
+//           GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
+//           LocalIndex.x, LocalIndex.y, LocalIndex.z);
     return true;
   }
 }
@@ -514,7 +514,7 @@ void GenMeshFromPPM(std::string               sDirName,
 
   // load mesh configure
   // to load it from disk, we need to use host volume
-  roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
+  roo::BoundingBox BBox;
 
   roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
   hvol.init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
@@ -524,8 +524,17 @@ void GenMeshFromPPM(std::string               sDirName,
 
   // load ppm into volume grid
   // for each global volume
+  int nNum = 0;
   for(unsigned int i=0;i!=vVolumes.size();i++)
   {
+    // load bounding box
+    std::string sBBFile = sDirName + sBBFileName+std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
+        std::to_string(vVolumes[i].GlobalIndex.y) + "-" +
+        std::to_string(vVolumes[i].GlobalIndex.z);
+
+    hvol.m_bbox = LoadPXMBoundingBox(sBBFile);
+    hvolcolor.m_bbox = hvol.m_bbox;
+
     // for each single local grid volume, load it
     for(unsigned int j=0;j!=vVolumes[i].vLocalIndex.size();j++)
     {
@@ -548,7 +557,8 @@ void GenMeshFromPPM(std::string               sDirName,
           SaveMeshGridSingle(hvol, hvolcolor, LocalIndex.x, LocalIndex.y, LocalIndex.z,
                              verts, norms, faces, colors);
 
-          std::cout<<"Finish march cube grid for "<<sFile<<std::endl;
+          nNum++;
+//          std::cout<<"Finish march cube grid for "<<sFile<<std::endl;
         }
         else
         {
@@ -563,7 +573,7 @@ void GenMeshFromPPM(std::string               sDirName,
     hvol.ResetAllGridVol();
   }
 
-  printf("[Kangaroo/GenMeshFromPPM] finish march cube for all Grids.\n");
+  printf("[Kangaroo/GenMeshFromPPM] finish march cube for %d Grids.\n",nNum);
 
   aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
   SaveMeshGrid(sMeshFileName, mesh);

@@ -645,7 +645,7 @@ public:
   // ===========================================================================
   // check if need to reset local shift and set global shift
   inline __host__
-  void ResetShift(int3 shift_index)
+  bool ResetShift(int3 shift_index)
   {
     m_local_shift = m_local_shift + shift_index;
 
@@ -655,6 +655,7 @@ public:
       m_local_shift.x = m_local_shift.x-int(m_nWholeGridRes_w);
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
+      return true;
     }
 
     if(m_local_shift.x <= -int(m_nWholeGridRes_w))
@@ -662,6 +663,7 @@ public:
       m_local_shift.x = m_local_shift.x-(-int(m_nWholeGridRes_w));
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
+      return true;
     }
 
 
@@ -672,6 +674,7 @@ public:
       m_local_shift.y = m_local_shift.y - int(m_nWholeGridRes_h);
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
+      return true;
     }
 
     if(m_local_shift.y <= -int(m_nWholeGridRes_h))
@@ -679,6 +682,7 @@ public:
       m_local_shift.y = m_local_shift.y-(-int(m_nWholeGridRes_h));
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
+      return true;
     }
 
 
@@ -689,6 +693,7 @@ public:
       m_local_shift.z = m_local_shift.z-int(m_nWholeGridRes_d);
       m_global_shift.z++;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
+      return true;
     }
 
     if(m_local_shift.z <= -int(m_nWholeGridRes_d))
@@ -696,11 +701,14 @@ public:
       m_local_shift.z = m_local_shift.z-(-int(m_nWholeGridRes_d));
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
+      return true;
     }
 
     printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d; Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
            m_local_shift.x,m_local_shift.y,m_local_shift.z, m_global_shift.x,
            m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
+
+    return false;
   }
 
 

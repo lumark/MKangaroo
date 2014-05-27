@@ -18,9 +18,9 @@ public:
   }
 
   // ---------------------------------------------------------------------------
-  // update shift parameters
+  // update shift parameters. if true repersent update global shift
   template<typename T> inline
-  void UpdateShift(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol,
+  bool UpdateShift(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol,
                    int3 shift_index, bool bVerbose=false)
   {
     //////////////////////////////////////////////////////////////////////////////
@@ -87,10 +87,13 @@ public:
     if(shift_index.x!=0 || shift_index.y!= 0 || shift_index.z!=0)
     {
       pVol->ResetShift(shift_index);
+      m_local_shift = pVol->m_local_shift;
+      return true;
     }
 
     // update total shift
     m_local_shift = pVol->m_local_shift;
+    return false;
   }
 
 

@@ -152,6 +152,7 @@ void SavePXM(const std::string                                      filename,
              int                                                    pGridNeedSave[],
              roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
              bool                                                   bGlobalPose = false,
+             bool                                                   bSaveBBox = false,
              std::string                                            ppm_type = "P5",
              int                                                    num_colors = 255)
 {
@@ -167,11 +168,14 @@ void SavePXM(const std::string                                      filename,
     hvol.CopyAndInitFrom(rDVol);
     hvol.m_global_shift = rDVol.m_global_shift;
 
-    // First save bounding box to HardDisk
-    std::string sBBFileName = filename +"-BB-"+ std::to_string(rDVol.m_global_shift.x) + "-"+
-        std::to_string(rDVol.m_global_shift.y) + "-"+ std::to_string(rDVol.m_global_shift.z);
+    if(bSaveBBox == true)
+    {
+      // First save bounding box to HardDisk
+      std::string sBBFileName = filename +"-BB-"+ std::to_string(rDVol.m_global_shift.x) + "-"+
+          std::to_string(rDVol.m_global_shift.y) + "-"+ std::to_string(rDVol.m_global_shift.z);
 
-    SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
+      SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
+    }
 
     // Second save each active volume in BoundedVolumeGrid to HardDisk
     int nNum =0;
@@ -280,13 +284,12 @@ bool LoadPXMSingleGrid(const std::string filename,
 }
 
 
-
 inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
   if(bFile.fail()==true)
   {
-    std::cerr<<"fatal error! file "<<filename<<" does not exist."<<std::endl;
+    std::cerr<<"[Kangaroo/LoadPXMBoundingBox] Fatal error! file "<<filename<<" does not exist."<<std::endl;
     exit(-1);
   }
 
@@ -301,16 +304,19 @@ inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
   bFile >> BBox.boxmax.z;
   bFile.ignore(1,'\n');
 
-  printf("load bounding box success. Min_x:%f,Max_x: %f\n",BBox.boxmin.x,BBox.boxmax.x);
+  std::cout<<"[SavePPMGrid] load bounding box "<<filename<<" success!"<<" Min ("<<
+             BBox.boxmin.x<<","<<BBox.boxmin.y<<","<<BBox.boxmin.z<<
+             ");Max ("<<BBox.boxmax.x<<","<<BBox.boxmax.y<<","<<BBox.boxmax.z<<")"<<std::endl;
+
   bFile.close();
   return BBox;
 }
 
 
 template<typename T>
-bool LoadPXMGrid(std::string                        sDirName,
-                 const std::vector<std::string>&    vfilename,
-                 std::string                        sBBFileName,
+bool LoadPXMGrid(std::string                                              sDirName,
+                 const std::vector<std::string>&                          vfilename,
+                 std::string                                              sBBFileName,
                  roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
 {
   // to load it from disk, we need to use host volume
