@@ -96,8 +96,9 @@ void SavePXM(const std::string                                      filename,
     hvol.CopyAndInitFrom(rDVol);
     hvol.m_global_shift = rDVol.m_global_shift;
 
-    // First save bounding box to HardDisk
+    // First save bounding box to HardDisk.
     std::string sBBFileName = filename+"-BB";
+
     SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
 
     // Second save each active volume in BoundedVolumeGrid to HardDisk
@@ -167,7 +168,9 @@ void SavePXM(const std::string                                      filename,
     hvol.m_global_shift = rDVol.m_global_shift;
 
     // First save bounding box to HardDisk
-    std::string sBBFileName = filename+"-BB";
+    std::string sBBFileName = filename +"-BB-"+ std::to_string(rDVol.m_global_shift.x) + "-"+
+        std::to_string(rDVol.m_global_shift.y) + "-"+ std::to_string(rDVol.m_global_shift.z);
+
     SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
 
     // Second save each active volume in BoundedVolumeGrid to HardDisk
