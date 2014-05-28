@@ -315,7 +315,7 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
+      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basicSDF doesn't exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
              m_local_shift.x,
              m_local_shift.y,
              m_local_shift.z,
@@ -407,47 +407,6 @@ public:
   }
 
 
-
-//  inline __device__
-//  float3 GetUnitsBackwardDiffDxDyDzGlobal(float3 pos_w, int3 max_global, int3 min_global) const
-//  {
-//    /// get pose of voxel in whole sdf, in %
-//    float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
-
-//    if(pos_v.x>=1) { pos_v.x =0.99999; }
-//    if(pos_v.y>=1) { pos_v.y =0.99999; }
-//    if(pos_v.z>=1) { pos_v.z =0.99999; }
-
-//    if(pos_v.x<0) { pos_v.x =0; }
-//    if(pos_v.y<0) { pos_v.y =0; }
-//    if(pos_v.z<0) { pos_v.z =0; }
-
-//    const float fFactor = float(m_nVolumeGridRes)/float(m_w);
-
-//    // Get the index of voxel in basic sdf
-//    const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
-//                                   floorf(pos_v.y/fFactor),
-//                                   floorf(pos_v.z/fFactor)  );
-
-//    int nIndex = GetLocalIndex( Index.x, Index.y, Index.z);
-
-//    if(CheckIfBasicSDFActive(nIndex)==false)
-//    {
-//      return make_float3(0.0/0.0,0.0/0.0,0.0/0.0);
-//    }
-
-//    /// get axis.
-//    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor,
-//                                     fmod(pos_v.y,fFactor) /fFactor,
-//                                     fmod(pos_v.z,fFactor) /fFactor );
-
-//    const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
-
-//    return deriv / VoxelSizeUnits();
-//  }
-
-
-
   inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
   {
@@ -455,6 +414,7 @@ public:
     return deriv / length(deriv);
   }
 
+  // actual position in current bounding box
   inline __device__ __host__
   float3 VoxelPositionInUnits(int x, int y, int z) const
   {
@@ -477,6 +437,12 @@ public:
   float3 VoxelPositionInUnitsGlobal(int x, int y, int z,
                                     int3 cur_global, int3 max_global, int3 min_global) const
   {
+    if(x>=m_w || y>= m_h || z>=m_d)
+    {
+      printf("[VoxelPositionInUnitsGlobal] fatal error! index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
+             x,y,z,int(m_w),int(m_h),int(m_d));
+    }
+
     const float3 vol_size = m_bbox.Size();
 
     float3 local_pos =  make_float3(
@@ -490,6 +456,10 @@ public:
     float global_pos_z = (float(cur_global.z-min_global.z) + local_pos.z)/float(max_global.z-min_global.z);
 
     float3 global_pos = make_float3(global_pos_x, global_pos_y, global_pos_z);
+
+    printf("LocalPos:(%f,%f,%f) GlobalPos(%f,%f,%f)",
+           local_pos.x,local_pos.y,local_pos.z,
+           global_pos.x,global_pos.y,global_pos.z);
 
     return global_pos;
   }
@@ -715,7 +685,7 @@ public:
   // ===========================================================================
   // check if need to reset local shift and set global shift
   inline __host__
-  bool ResetShift(int3 shift_index)
+  void ResetShift(int3 shift_index)
   {
     m_local_shift = m_local_shift + shift_index;
 
@@ -725,7 +695,6 @@ public:
       m_local_shift.x = m_local_shift.x-int(m_nWholeGridRes_w);
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
-      return true;
     }
 
     if(m_local_shift.x <= -int(m_nWholeGridRes_w))
@@ -733,7 +702,6 @@ public:
       m_local_shift.x = m_local_shift.x-(-int(m_nWholeGridRes_w));
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
-      return true;
     }
 
 
@@ -744,7 +712,6 @@ public:
       m_local_shift.y = m_local_shift.y - int(m_nWholeGridRes_h);
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
-      return true;
     }
 
     if(m_local_shift.y <= -int(m_nWholeGridRes_h))
@@ -752,7 +719,6 @@ public:
       m_local_shift.y = m_local_shift.y-(-int(m_nWholeGridRes_h));
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
-      return true;
     }
 
 
@@ -763,7 +729,6 @@ public:
       m_local_shift.z = m_local_shift.z-int(m_nWholeGridRes_d);
       m_global_shift.z++;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
-      return true;
     }
 
     if(m_local_shift.z <= -int(m_nWholeGridRes_d))
@@ -771,14 +736,12 @@ public:
       m_local_shift.z = m_local_shift.z-(-int(m_nWholeGridRes_d));
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
-      return true;
     }
+
 
     printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d; Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
            m_local_shift.x,m_local_shift.y,m_local_shift.z, m_global_shift.x,
            m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
-
-    return false;
   }
 
 
