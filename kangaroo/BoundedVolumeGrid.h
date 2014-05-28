@@ -424,6 +424,27 @@ public:
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
+  inline __device__ __host__
+  float3 VoxelPositionInUnitsGlobal(int x, int y, int z,
+                                    int3 cur_global, int3 max_global, int3 min_global) const
+  {
+    const float3 vol_size = m_bbox.Size();
+
+    float3 local_pos =  make_float3(
+          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
+          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
+          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
+          );
+
+    float global_pos_x = (cur_global.x-min_global.x + local_pos.x)/(max_global.x-min_global.x);
+    float global_pos_y = (cur_global.y-min_global.y + local_pos.y)/(max_global.y-min_global.y);
+    float global_pos_z = (cur_global.z-min_global.z + local_pos.z)/(max_global.z-min_global.z);
+
+    float3 global_pos = make_float3(global_pos_x, global_pos_y, global_pos_z);
+
+    return global_pos;
+  }
+
   // ===========================================================================
   // get sub bounding volume by bounding box for speed.
   inline __device__ __host__
