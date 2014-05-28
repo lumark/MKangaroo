@@ -249,6 +249,14 @@ public:
     return m_bbox.Size() / make_float3( m_w-1, m_h-1, m_d-1 );
   }
 
+  inline __device__ __host__
+  float3 VoxelSizeUnitsGlobal(int3 max_global, int3 min_global) const
+  {
+    return m_bbox.Size() / make_float3( (max_global.x-min_global.x)*(m_w-1),
+                                        (max_global.y-min_global.y)*(m_h-1),
+                                        (max_global.z-min_global.z)*(m_d-1) );
+  }
+
   //////////////////////////////////////////////////////
   // Return true if this BoundedVolumeGrid represents a positive
   // amount of space.
@@ -399,6 +407,47 @@ public:
   }
 
 
+
+//  inline __device__
+//  float3 GetUnitsBackwardDiffDxDyDzGlobal(float3 pos_w, int3 max_global, int3 min_global) const
+//  {
+//    /// get pose of voxel in whole sdf, in %
+//    float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
+
+//    if(pos_v.x>=1) { pos_v.x =0.99999; }
+//    if(pos_v.y>=1) { pos_v.y =0.99999; }
+//    if(pos_v.z>=1) { pos_v.z =0.99999; }
+
+//    if(pos_v.x<0) { pos_v.x =0; }
+//    if(pos_v.y<0) { pos_v.y =0; }
+//    if(pos_v.z<0) { pos_v.z =0; }
+
+//    const float fFactor = float(m_nVolumeGridRes)/float(m_w);
+
+//    // Get the index of voxel in basic sdf
+//    const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
+//                                   floorf(pos_v.y/fFactor),
+//                                   floorf(pos_v.z/fFactor)  );
+
+//    int nIndex = GetLocalIndex( Index.x, Index.y, Index.z);
+
+//    if(CheckIfBasicSDFActive(nIndex)==false)
+//    {
+//      return make_float3(0.0/0.0,0.0/0.0,0.0/0.0);
+//    }
+
+//    /// get axis.
+//    float3 pos_v_grid = make_float3( fmod(pos_v.x,fFactor) /fFactor,
+//                                     fmod(pos_v.y,fFactor) /fFactor,
+//                                     fmod(pos_v.z,fFactor) /fFactor );
+
+//    const float3 deriv = m_GridVolumes[nIndex].GetFractionalBackwardDiffDxDyDz(pos_v_grid);
+
+//    return deriv / VoxelSizeUnits();
+//  }
+
+
+
   inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
   {
@@ -436,9 +485,9 @@ public:
           m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
           );
 
-    float global_pos_x = (cur_global.x-min_global.x + local_pos.x)/(max_global.x-min_global.x);
-    float global_pos_y = (cur_global.y-min_global.y + local_pos.y)/(max_global.y-min_global.y);
-    float global_pos_z = (cur_global.z-min_global.z + local_pos.z)/(max_global.z-min_global.z);
+    float global_pos_x = (float(cur_global.x-min_global.x) + local_pos.x)/float(max_global.x-min_global.x);
+    float global_pos_y = (float(cur_global.y-min_global.y) + local_pos.y)/float(max_global.y-min_global.y);
+    float global_pos_z = (float(cur_global.z-min_global.z) + local_pos.z)/float(max_global.z-min_global.z);
 
     float3 global_pos = make_float3(global_pos_x, global_pos_y, global_pos_z);
 

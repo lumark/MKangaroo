@@ -10,11 +10,13 @@ namespace roo {
 //////////////////////////////////////////
 
 template<typename T, typename TColor>
-void SaveMeshGrid(std::string filename, const BoundedVolumeGrid<T,TargetHost,Manage> vol,
+void SaveMeshGrid(std::string filename,
+                  const BoundedVolumeGrid<T,TargetHost,Manage> vol,
                   const BoundedVolumeGrid<TColor,TargetHost,Manage> volColor );
 
 template<typename T, typename Manage>
-void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>& vol )
+void SaveMeshGrid(std::string filename,
+                  BoundedVolumeGrid<T,TargetDevice,Manage>& vol )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
@@ -28,7 +30,8 @@ void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>
 }
 
 template<typename T, typename TColor, typename Manage>
-void SaveMeshGrid(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>& vol,
+void SaveMeshGrid(std::string filename,
+                  BoundedVolumeGrid<T,TargetDevice,Manage>& vol,
                   BoundedVolumeGrid<TColor,TargetDevice,Manage>& volColor )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
@@ -66,11 +69,15 @@ bool GenMeshFromPPM(std::string              sDirName,
 
 
 template<typename T, typename TColor>
-void SaveMeshGridSepreate(std::string filename, const BoundedVolumeGrid<T,TargetHost,Manage> vol,
+void SaveMeshGridSepreate(std::string filename,
+                          const BoundedVolumeGrid<T,TargetHost,Manage> vol,
                           const BoundedVolumeGrid<TColor,TargetHost,Manage> volColor );
 
+
+
 template<typename T, typename Manage>
-void SaveMeshGridSepreate(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>& vol )
+void SaveMeshGridSepreate(std::string filename,
+                          BoundedVolumeGrid<T,TargetDevice,Manage>& vol )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
@@ -82,8 +89,12 @@ void SaveMeshGridSepreate(std::string filename, BoundedVolumeGrid<T,TargetDevice
   SaveMeshGridSepreate<T,float>(filename, hvol, hvolcolor);
 }
 
+
+
 template<typename T, typename TColor, typename Manage>
-void SaveMeshGridSepreate(std::string filename, BoundedVolumeGrid<T,TargetDevice,Manage>& vol, BoundedVolumeGrid<TColor,TargetDevice,Manage>& volColor )
+void SaveMeshGridSepreate(std::string filename,
+                          BoundedVolumeGrid<T,TargetDevice,Manage>& vol,
+                          BoundedVolumeGrid<TColor,TargetDevice,Manage>& volColor )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
