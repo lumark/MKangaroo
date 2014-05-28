@@ -147,6 +147,20 @@ void SavePXM(const std::string                                      filename,
 }
 
 
+
+inline bool CheckIfBBfileExist(std::string filename)
+{
+  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
+  if(bFile.fail()==true)
+  {
+    return false;
+  }
+
+  bFile.close();
+  return true;
+}
+
+
 template<typename T, typename Manage>
 void SavePXM(const std::string                                      filename,
              int                                                    pGridNeedSave[],
@@ -168,16 +182,7 @@ void SavePXM(const std::string                                      filename,
     hvol.CopyAndInitFrom(rDVol);
     hvol.m_global_shift = rDVol.m_global_shift;
 
-    if(bSaveBBox == true)
-    {
-      // First save bounding box to HardDisk
-      std::string sBBFileName = filename +"-BB-"+ std::to_string(rDVol.m_global_shift.x) + "-"+
-          std::to_string(rDVol.m_global_shift.y) + "-"+ std::to_string(rDVol.m_global_shift.z);
-
-      SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
-    }
-
-    // Second save each active volume in BoundedVolumeGrid to HardDisk
+    // save each active volume in BoundedVolumeGrid to HardDisk
     int nNum =0;
 
     for(int i=0;i!=rDVol.m_nWholeGridRes_w;i++)
@@ -202,9 +207,35 @@ void SavePXM(const std::string                                      filename,
               // save global index (with rolling)
               int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
               sFileName =filename+"-"+std::to_string(GlobalIndex.x)+
-                  "-"+std::to_string(GlobalIndex.y)+
-                  "-"+std::to_string(GlobalIndex.z)+
+                  "-"+std::to_string(GlobalIndex.y)+"-"+std::to_string(GlobalIndex.z)+
                   "-"+std::to_string(i)+"-"+std::to_string(j)+"-"+std::to_string(k);
+
+              // save bounding box if necessary. scan the disk and see if we need to save bb
+              std::string sBBFileName = filename +"-BB-"+ std::to_string(GlobalIndex.x) + "-"+
+                  std::to_string(GlobalIndex.y) + "-"+ std::to_string(GlobalIndex.z);
+              if( CheckIfBBfileExist(sBBFileName) == false)
+              {
+                // save bb file
+                if(GlobalIndex.x == rDVol.m_global_shift.x &&
+                   GlobalIndex.y == rDVol.m_global_shift.y &&
+                   GlobalIndex.z == rDVol.m_global_shift.z)
+                {
+                  SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
+                }
+                else
+                {
+                  roo::BoundingBox    bbox;
+                  bbox.boxmin.x =  rDVol.m_bbox.boxmin.x+ rDVol.m_bbox.Size().x;
+                  bbox.boxmin.y =  rDVol.m_bbox.boxmin.y+ rDVol.m_bbox.Size().y;
+                  bbox.boxmin.z =  rDVol.m_bbox.boxmin.z+ rDVol.m_bbox.Size().z;
+
+                  bbox.boxmax.x =  rDVol.m_bbox.boxmax.x+ rDVol.m_bbox.Size().x;
+                  bbox.boxmax.y =  rDVol.m_bbox.boxmax.y+ rDVol.m_bbox.Size().y;
+                  bbox.boxmax.z =  rDVol.m_bbox.boxmax.z+ rDVol.m_bbox.Size().z;
+
+                  SavePXMBoundingBox(sBBFileName, bbox);
+                }
+              }
             }
 
             std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
@@ -219,6 +250,21 @@ void SavePXM(const std::string                                      filename,
 
     printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf.\n", nNum);
   }
+
+
+
+  // save bounding box if necessary. scan the disk and see if we need to save bb
+  if(bSaveBBox == true)
+  {
+
+
+    // First save bounding box to HardDisk
+    std::string sBBFileName = filename +"-BB-"+ std::to_string(rDVol.m_global_shift.x) + "-"+
+        std::to_string(rDVol.m_global_shift.y) + "-"+ std::to_string(rDVol.m_global_shift.z);
+
+    SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
+  }
+
 
 }
 
@@ -284,17 +330,7 @@ bool LoadPXMSingleGrid(const std::string filename,
 }
 
 
-inline bool CheckIfBBfileExist(std::string filename)
-{
-  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
-  if(bFile.fail()==true)
-  {
-    return false;
-  }
 
-  bFile.close();
-  return true;
-}
 
 
 inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)

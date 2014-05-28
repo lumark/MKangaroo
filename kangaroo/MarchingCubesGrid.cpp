@@ -33,23 +33,23 @@ namespace roo
 //vMarchCube performs the Marching Cubes algorithm on a single cube
 /// USER SHOULD MAKE SURE VOXEL EXIST!
 template<typename T, typename TColor>
-void vMarchCubeGrid(
+void vMarchCubeGridGlobal(
     BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
     BoundedVolumeGrid<TColor,roo::TargetHost, Manage>&  volColor,
     int x, int y, int z,
-    int3&                    cur_global,
-    int3&                    max_global,
-    int3&                    min_global,
-    std::vector<aiVector3D>& verts,
-    std::vector<aiVector3D>& norms,
-    std::vector<aiFace>&     faces,
-    std::vector<aiColor4D>&  colors,
-    float fTargetValue = 0.0f
+    int3&                                               CurGlobal,
+    int3&                                               MaxGlobal,
+    int3&                                               MinGlobal,
+    std::vector<aiVector3D>&                            verts,
+    std::vector<aiVector3D>&                            norms,
+    std::vector<aiFace>&                                faces,
+    std::vector<aiColor4D>&                             colors,
+    float fTargetValue                                  = 0.0f
     )
 {
   // get voxel position
-  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z,cur_global,max_global,min_global);
-  const float3 fScale = vol.VoxelSizeUnitsGlobal(max_global,min_global);
+  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z,CurGlobal,MaxGlobal,MinGlobal);
+  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
 
   //Make a local copy of the values at the cube's corners
   float afCubeValue[8];
@@ -149,11 +149,11 @@ void vMarchCubeGrid(
     BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
     BoundedVolumeGrid<TColor,roo::TargetHost, Manage>&  volColor,
     int x, int y, int z,
-    std::vector<aiVector3D>& verts,
-    std::vector<aiVector3D>& norms,
-    std::vector<aiFace>&     faces,
-    std::vector<aiColor4D>&  colors,
-    float fTargetValue = 0.0f
+    std::vector<aiVector3D>&                            verts,
+    std::vector<aiVector3D>&                            norms,
+    std::vector<aiFace>&                                faces,
+    std::vector<aiColor4D>&                             colors,
+    float fTargetValue                                  = 0.0f
     )
 {
   // get voxel position
@@ -376,7 +376,7 @@ void SaveMeshGrid(std::string filename, aiMesh* mesh)
 }
 
 
-// now do it for each grid instead of each voxel
+// save mesh of grid SDF in local index
 template<typename T, typename TColor>
 void SaveMeshSingleGrid(BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
                         BoundedVolumeGrid<TColor, TargetHost, Manage>& volColor,
@@ -405,14 +405,14 @@ void SaveMeshSingleGrid(BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
 
 
 
-// now do it for each grid instead of each voxel
+// save mesh of grid SDF in global index
 template<typename T, typename TColor>
 void SaveMeshSingleGridGlobal(BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
                               BoundedVolumeGrid<TColor, TargetHost, Manage>& volColor,
-                              int i,   int j,   int k,
-                              int3&                                          cur_global,
-                              int3&                                          max_global,
-                              int3&                                          min_global,
+                              int i,   int j,   int k, // local index
+                              int3&                                          CurGlobal,
+                              int3&                                          MaxGlobal,
+                              int3&                                          MinGlobal,
                               std::vector<aiVector3D>&                       verts,
                               std::vector<aiVector3D>&                       norms,
                               std::vector<aiFace>&                           faces,
@@ -425,12 +425,12 @@ void SaveMeshSingleGridGlobal(BoundedVolumeGrid<T, TargetHost, Manage>&      vol
       for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
       {
         // get voxel index for each grid.
-        roo::vMarchCubeGrid(vol, volColor,
-                            i*vol.m_nVolumeGridRes + x,
-                            j*vol.m_nVolumeGridRes + y,
-                            k*vol.m_nVolumeGridRes + z,
-                            cur_global, max_global, min_global,
-                            verts, norms, faces, colors);
+        roo::vMarchCubeGridGlobal(vol, volColor,
+                                  i*vol.m_nVolumeGridRes + x,
+                                  j*vol.m_nVolumeGridRes + y,
+                                  k*vol.m_nVolumeGridRes + z,
+                                  CurGlobal, MaxGlobal, MinGlobal,
+                                  verts, norms, faces, colors);
       }
     }
   }
@@ -496,7 +496,6 @@ bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
   // now get global index
   if(vIndex.size()!=7)
   {
-    //    std::cerr<<"[GetIndexFromFileName] Skip file "<< sFileName<<std::endl;
     return false;
   }
   else
@@ -508,16 +507,13 @@ bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
     LocalIndex.x = std::stoi(sFileName.substr(vIndex[4]+1, vIndex[5]-vIndex[4]-1));
     LocalIndex.y = std::stoi(sFileName.substr(vIndex[5]+1, vIndex[6]-vIndex[5]-1));
     LocalIndex.z = std::stoi(sFileName.substr(vIndex[6]+1, sFileName.size() - vIndex[6]-1));
-
-    //    printf("[GetIndexFromFileName] Global index %d,%d,%d; local index %d,%d,%d. \n",
-    //           GlobalIndex.x, GlobalIndex.y, GlobalIndex.z,
-    //           LocalIndex.x, LocalIndex.y, LocalIndex.z);
     return true;
   }
 }
 
 
-
+// ================================================================================
+// get files need saving into mesh
 std::vector<SingleVolume> GetFilesNeedSaving(std::vector<std::string>& vfilename)
 {
   std::vector<SingleVolume>  vVolumes;
@@ -557,7 +553,8 @@ std::vector<SingleVolume> GetFilesNeedSaving(std::vector<std::string>& vfilename
   return vVolumes;
 }
 
-
+// ================================================================================
+// get max and min global index that we works with
 void GetMaxMinGlobalIndex(std::string                sDirName,
                           std::string                sBBFileName,
                           std::vector<SingleVolume>& rvVolumes,
@@ -607,6 +604,10 @@ void GetMaxMinGlobalIndex(std::string                sDirName,
       }
     }
   }
+
+  std::cout<<"[Kangaroo/MarchingCubesGrid] Generating mesh in max global index: ("
+          <<rMaxGlobal.x<<","<<rMaxGlobal.y<<","<<rMaxGlobal.z<<")"
+         <<"; min global index: ("<<rMinGlobal.x<<","<<rMinGlobal.y<<","<<rMinGlobal.z<<")"<<std::endl;
 }
 
 // ================================================================================
@@ -680,9 +681,12 @@ bool GenMeshFromPPM(std::string               sDirName,
         {
           if(hvol.CheckIfBasicSDFActive(nIndex) == true)
           {
-            SaveMeshSingleGridGlobal(hvol, hvolcolor, CurLocalIndex.x, CurLocalIndex.y, CurLocalIndex.z,
-                                     CurGlobalIndex,MaxGlobalIndex,MinGlobalIndex,
-                                     verts, norms, faces, colors);
+            //            SaveMeshSingleGridGlobal(hvol, hvolcolor, CurLocalIndex.x, CurLocalIndex.y, CurLocalIndex.z,
+            //                                     CurGlobalIndex,MaxGlobalIndex,MinGlobalIndex,
+            //                                     verts, norms, faces, colors);
+
+            SaveMeshSingleGrid(hvol, hvolcolor, CurLocalIndex.x, CurLocalIndex.y, CurLocalIndex.z,
+                               verts, norms, faces, colors);
             nNum++;
           }
         }
