@@ -77,6 +77,36 @@ inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox
 }
 
 
+
+inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
+{
+  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
+  if(bFile.fail()==true)
+  {
+    std::cerr<<"[Kangaroo/LoadPXMBoundingBox] Fatal error! file "<<filename<<" does not exist."<<std::endl;
+    exit(-1);
+  }
+
+  //read in the bounding volume bounds
+  roo::BoundingBox BBox;
+
+  bFile >> BBox.boxmin.x;
+  bFile >> BBox.boxmin.y;
+  bFile >> BBox.boxmin.z;
+  bFile >> BBox.boxmax.x;
+  bFile >> BBox.boxmax.y;
+  bFile >> BBox.boxmax.z;
+  bFile.ignore(1,'\n');
+
+  std::cout<<"[SavePPMGrid] load bounding box "<<filename<<" success!"<<" Min ("<<
+             BBox.boxmin.x<<","<<BBox.boxmin.y<<","<<BBox.boxmin.z<<
+             ");Max ("<<BBox.boxmax.x<<","<<BBox.boxmax.y<<","<<BBox.boxmax.z<<")"<<std::endl;
+
+  bFile.close();
+  return BBox;
+}
+
+
 template<typename T, typename Manage>
 void SavePXM(const std::string                                      filename,
              roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
@@ -213,27 +243,39 @@ void SavePXM(const std::string                                      filename,
               // save bounding box if necessary. scan the disk and see if we need to save bb
               std::string sBBFileName = filename +"-BB-"+ std::to_string(GlobalIndex.x) + "-"+
                   std::to_string(GlobalIndex.y) + "-"+ std::to_string(GlobalIndex.z);
+
               if( CheckIfBBfileExist(sBBFileName) == false)
               {
-                // save bb file
+                printf("prepare to save bb file.\n");
+                // save bounding box.
+                // if we just updated the bounding box, we can save it directlly
                 if(GlobalIndex.x == rDVol.m_global_shift.x &&
                    GlobalIndex.y == rDVol.m_global_shift.y &&
                    GlobalIndex.z == rDVol.m_global_shift.z)
                 {
                   SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
+                  printf("save bb file with method 1 success.\n");
                 }
+                // the bounding box is not totally updated yet. so we need to compute it
                 else
                 {
-                  roo::BoundingBox    bbox;
-                  bbox.boxmin.x =  rDVol.m_bbox.boxmin.x+ rDVol.m_bbox.Size().x;
-                  bbox.boxmin.y =  rDVol.m_bbox.boxmin.y+ rDVol.m_bbox.Size().y;
-                  bbox.boxmin.z =  rDVol.m_bbox.boxmin.z+ rDVol.m_bbox.Size().z;
+                  // read origin bounding box.
+                  std::string sOriginBBFileName = filename +"-BB-"+ std::to_string(0) + "-"+
+                      std::to_string(0) + "-"+ std::to_string(0);
 
-                  bbox.boxmax.x =  rDVol.m_bbox.boxmax.x+ rDVol.m_bbox.Size().x;
-                  bbox.boxmax.y =  rDVol.m_bbox.boxmax.y+ rDVol.m_bbox.Size().y;
-                  bbox.boxmax.z =  rDVol.m_bbox.boxmax.z+ rDVol.m_bbox.Size().z;
+                  roo::BoundingBox OriginBB = LoadPXMBoundingBox(sOriginBBFileName);
+
+                  roo::BoundingBox bbox;
+                  bbox.boxmin.x = OriginBB.boxmin.x+ (GlobalIndex.x)*rDVol.m_bbox.Size().x;
+                  bbox.boxmin.y = OriginBB.boxmin.y+ (GlobalIndex.y)*rDVol.m_bbox.Size().y;
+                  bbox.boxmin.z = OriginBB.boxmin.z+ (GlobalIndex.z)*rDVol.m_bbox.Size().z;
+
+                  bbox.boxmax.x = OriginBB.boxmax.x+ (GlobalIndex.x)*rDVol.m_bbox.Size().x;
+                  bbox.boxmax.y = OriginBB.boxmax.y+ (GlobalIndex.y)*rDVol.m_bbox.Size().y;
+                  bbox.boxmax.z = OriginBB.boxmax.z+ (GlobalIndex.z)*rDVol.m_bbox.Size().z;
 
                   SavePXMBoundingBox(sBBFileName, bbox);
+                  printf("save bb file with method 2 success.\n");
                 }
               }
             }
@@ -253,17 +295,17 @@ void SavePXM(const std::string                                      filename,
 
 
 
-  // save bounding box if necessary. scan the disk and see if we need to save bb
-  if(bSaveBBox == true)
-  {
+//  // save bounding box if necessary. scan the disk and see if we need to save bb
+//  if(bSaveBBox == true)
+//  {
 
 
-    // First save bounding box to HardDisk
-    std::string sBBFileName = filename +"-BB-"+ std::to_string(rDVol.m_global_shift.x) + "-"+
-        std::to_string(rDVol.m_global_shift.y) + "-"+ std::to_string(rDVol.m_global_shift.z);
+//    // First save bounding box to HardDisk
+//    std::string sBBFileName = filename +"-BB-"+ std::to_string(rDVol.m_global_shift.x) + "-"+
+//        std::to_string(rDVol.m_global_shift.y) + "-"+ std::to_string(rDVol.m_global_shift.z);
 
-    SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
-  }
+//    SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
+//  }
 
 
 }
@@ -333,33 +375,6 @@ bool LoadPXMSingleGrid(const std::string filename,
 
 
 
-inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
-{
-  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
-  if(bFile.fail()==true)
-  {
-    std::cerr<<"[Kangaroo/LoadPXMBoundingBox] Fatal error! file "<<filename<<" does not exist."<<std::endl;
-    exit(-1);
-  }
-
-  //read in the bounding volume bounds
-  roo::BoundingBox BBox;
-
-  bFile >> BBox.boxmin.x;
-  bFile >> BBox.boxmin.y;
-  bFile >> BBox.boxmin.z;
-  bFile >> BBox.boxmax.x;
-  bFile >> BBox.boxmax.y;
-  bFile >> BBox.boxmax.z;
-  bFile.ignore(1,'\n');
-
-  std::cout<<"[SavePPMGrid] load bounding box "<<filename<<" success!"<<" Min ("<<
-             BBox.boxmin.x<<","<<BBox.boxmin.y<<","<<BBox.boxmin.z<<
-             ");Max ("<<BBox.boxmax.x<<","<<BBox.boxmax.y<<","<<BBox.boxmax.z<<")"<<std::endl;
-
-  bFile.close();
-  return BBox;
-}
 
 
 template<typename T>
