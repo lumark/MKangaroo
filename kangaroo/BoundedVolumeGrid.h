@@ -315,7 +315,8 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basicSDF doesn't exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
+      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basicSDF doesn't exist."
+             "shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
              m_local_shift.x,
              m_local_shift.y,
              m_local_shift.z,
@@ -620,7 +621,7 @@ public:
   // does not reset yet but there is a current shift for the grid.
   // ===========================================================================
   inline __device__ __host__
-  int3 GetGlobalIndex(unsigned int x, unsigned int y, unsigned int z) const
+  int3 GetGlobalIndex(int x, int y, int z) const
   {
     if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
@@ -630,14 +631,14 @@ public:
     int3 GlobalShift = m_global_shift;
 
     // for x
-    if(m_local_shift.x>0 && m_local_shift.x<=m_nWholeGridRes_w)
+    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
     {
-      if(x>=m_nWholeGridRes_w-1-m_local_shift.x)
+      if(x>=int(m_nWholeGridRes_w)-m_local_shift.x)
       {
         GlobalShift.x = m_global_shift.x+1;
       }
     }
-    else if(m_local_shift.x<0 && m_local_shift.x>=-m_nWholeGridRes_w)
+    else if( m_local_shift.x<0 && m_local_shift.x>=-int(m_nWholeGridRes_w) )
     {
       if( x<=abs(m_local_shift.x) )
       {
@@ -646,14 +647,14 @@ public:
     }
 
     // for y
-    if(m_local_shift.y>0 && m_local_shift.y<=m_nWholeGridRes_h)
+    if(m_local_shift.y>0 && m_local_shift.y<= int(m_nWholeGridRes_h))
     {
-      if(y>=m_nWholeGridRes_h-1-m_local_shift.y)
+      if(y>=int(m_nWholeGridRes_h)-m_local_shift.y)
       {
         GlobalShift.y = m_global_shift.y+1;
       }
     }
-    else if(m_local_shift.y<0 && m_local_shift.y>=-m_nWholeGridRes_h)
+    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nWholeGridRes_h))
     {
       if( y<=abs(m_local_shift.y) )
       {
@@ -662,14 +663,14 @@ public:
     }
 
     // for z
-    if(m_local_shift.z>0 && m_local_shift.z<=m_nWholeGridRes_d)
+    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d) )
     {
-      if(z>=m_nWholeGridRes_d-1-m_local_shift.z)
+      if(z>=int(m_nWholeGridRes_d)-m_local_shift.z)
       {
         GlobalShift.z = m_global_shift.z+1;
       }
     }
-    else if(m_local_shift.z<0 && m_local_shift.z>=-m_nWholeGridRes_d)
+    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nWholeGridRes_d))
     {
       if( z<=abs(m_local_shift.z) )
       {
@@ -739,7 +740,8 @@ public:
     }
 
 
-    printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d; Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
+    printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d;"
+           "Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
            m_local_shift.x,m_local_shift.y,m_local_shift.z, m_global_shift.x,
            m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
   }

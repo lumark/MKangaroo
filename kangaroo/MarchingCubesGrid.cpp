@@ -653,6 +653,7 @@ bool GenMeshFromPPM(std::string               sDirName,
 
   // for each global volume
   int nNum = 0;
+  int nNumSkip = 0;
   for(unsigned int i=0;i!=vVolumes.size();i++)
   {
     // load bounding box
@@ -689,12 +690,18 @@ bool GenMeshFromPPM(std::string               sDirName,
                                verts, norms, faces, colors);
             nNum++;
           }
+          else
+          {
+            std::cerr<<"warnning! skip saving mesh.. "<<std::endl;
+            nNumSkip++;
+          }
         }
       }
     }
     else
     {
       std::cerr<<"warnning! cannot load bbox "<<sBBFile<<". Skip!"<<std::endl;
+      nNumSkip = nNumSkip +vVolumes[i].vLocalIndex.size();
     }
 
     // reset previous grid
@@ -702,7 +709,7 @@ bool GenMeshFromPPM(std::string               sDirName,
     hvol.ResetAllGridVol();
   }
 
-  printf("[Kangaroo/GenMeshFromPPM] finish march cube for %d Grids.\n",nNum);
+  printf("[Kangaroo/GenMeshFromPPM] finish march cube for %d Grids. Skip %d\n",nNum, nNumSkip);
 
   aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
   SaveMeshGrid(sMeshFileName, mesh);
