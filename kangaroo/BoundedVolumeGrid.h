@@ -87,7 +87,7 @@ public:
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
-    int nIndex =GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex =GetLocalGridIndex( int(floorf(x/m_nVolumeGridRes)),
                                int(floorf(y/m_nVolumeGridRes)),
                                int(floorf(z/m_nVolumeGridRes)) );
 
@@ -294,7 +294,7 @@ public:
   inline __host__ __device__
   bool CheckIfVoxelExist(int x, int y, int z)
   {
-    int nIndex = GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex = GetLocalGridIndex( int(floorf(x/m_nVolumeGridRes)),
                                 int(floorf(y/m_nVolumeGridRes)),
                                 int(floorf(z/m_nVolumeGridRes)) );
 
@@ -309,7 +309,7 @@ public:
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = GetLocalIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex = GetLocalGridIndex( int(floorf(x/m_nVolumeGridRes)),
                                 int(floorf(y/m_nVolumeGridRes)),
                                 int(floorf(z/m_nVolumeGridRes)) );
 
@@ -354,7 +354,7 @@ public:
                                    floorf(pos_v.y/fFactor),
                                    floorf(pos_v.z/fFactor)  );
 
-    int nIndex = GetLocalIndex( Index.x, Index.y, Index.z);
+    int nIndex = GetLocalGridIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -390,7 +390,7 @@ public:
                                    floorf(pos_v.y/fFactor),
                                    floorf(pos_v.z/fFactor)  );
 
-    int nIndex = GetLocalIndex( Index.x, Index.y, Index.z);
+    int nIndex = GetLocalGridIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -523,10 +523,10 @@ public:
 
 
   // ===========================================================================
-  // get local index of grid sdf
+  // get real local index of desire grid sdf when shift is applied
   // ===========================================================================
   inline __device__ __host__
-  unsigned int GetLocalIndex(int x, int y, int z) const
+  unsigned int GetLocalGridIndex(int x, int y, int z) const
   {
     if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
@@ -629,21 +629,21 @@ public:
     }
 
     // compute global index for single grid
-    int3 GlobalShift = m_global_shift;
+    int3 GlobalIndex = m_global_shift;
 
     // for x
     if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
     {
       if(x>=int(m_nWholeGridRes_w)-m_local_shift.x)
       {
-        GlobalShift.x = m_global_shift.x+1;
+        GlobalIndex.x = m_global_shift.x+1;
       }
     }
     else if( m_local_shift.x<0 && m_local_shift.x>=-int(m_nWholeGridRes_w) )
     {
       if( x<=abs(m_local_shift.x) )
       {
-        GlobalShift.x = m_global_shift.x-1;
+        GlobalIndex.x = m_global_shift.x-1;
       }
     }
 
@@ -652,14 +652,14 @@ public:
     {
       if(y>=int(m_nWholeGridRes_h)-m_local_shift.y)
       {
-        GlobalShift.y = m_global_shift.y+1;
+        GlobalIndex.y = m_global_shift.y+1;
       }
     }
     else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nWholeGridRes_h))
     {
       if( y<=abs(m_local_shift.y) )
       {
-        GlobalShift.y = m_global_shift.y-1;
+        GlobalIndex.y = m_global_shift.y-1;
       }
     }
 
@@ -668,20 +668,39 @@ public:
     {
       if(z>=int(m_nWholeGridRes_d)-m_local_shift.z)
       {
-        GlobalShift.z = m_global_shift.z+1;
+        GlobalIndex.z = m_global_shift.z+1;
       }
     }
     else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nWholeGridRes_d))
     {
       if( z<=abs(m_local_shift.z) )
       {
-        GlobalShift.z = m_global_shift.z-1;
+        GlobalIndex.z = m_global_shift.z-1;
       }
     }
 
     // compute actual index
-    return  GlobalShift;
+    return  GlobalIndex;
   }
+
+
+  // ===========================================================================
+  // in some cases a grid sdf in x, y, z position is actually sdf in x1,y1,z1 with
+  // global pose gx,gy,gz. this function return x1,y1,z1
+  // ===========================================================================
+  inline __host__
+  int3 GetLocalIndex(int x, int y, int z) const
+  {
+    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
+    {
+      return m_local_shift;
+    }
+
+    // compute local index for single grid
+    int3 LocalIndex;
+
+  }
+
 
 
   // ===========================================================================

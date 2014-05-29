@@ -299,7 +299,7 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
             /// here 0.5 is for kinect sensor
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              int nIndex = g_vol.GetLocalIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+              int nIndex = g_vol.GetLocalGridIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                           int(floorf(y/g_vol.m_nVolumeGridRes)),
                                           int(floorf(z/g_vol.m_nVolumeGridRes)) );
               g_NextInitSDFs[nIndex] = 1;
@@ -550,7 +550,7 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
           //        }else if(sd < 5*trunc_dist) {
 
           /// here 0.5 is for kinect sensor
-          int nIndex = g_vol.GetLocalIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+          int nIndex = g_vol.GetLocalGridIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                       int(floorf(y/g_vol.m_nVolumeGridRes)),
                                       int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
@@ -638,7 +638,7 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
   // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < g_vol.m_d; ++z)
   {
-    int nIndex = g_vol.GetLocalIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+    int nIndex = g_vol.GetLocalGridIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                 int(floorf(y/g_vol.m_nVolumeGridRes)),
                                 int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
@@ -848,7 +848,7 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
           /// here 0.5 is for kinect sensor
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
-            int nIndex = g_vol.GetLocalIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+            int nIndex = g_vol.GetLocalGridIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                         int(floorf(y/g_vol.m_nVolumeGridRes)),
                                         int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
