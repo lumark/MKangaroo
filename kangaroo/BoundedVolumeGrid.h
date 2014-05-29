@@ -628,6 +628,7 @@ public:
       return m_global_shift;
     }
 
+    // compute global index for single grid
     int3 GlobalShift = m_global_shift;
 
     // for x
@@ -691,14 +692,14 @@ public:
     m_local_shift = m_local_shift + shift_index;
 
     // for x
-    if(m_local_shift.x >= int(m_nWholeGridRes_w))
+    if(m_local_shift.x >= int(m_nWholeGridRes_w)+1)
     {
       m_local_shift.x = m_local_shift.x-int(m_nWholeGridRes_w);
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
     }
 
-    if(m_local_shift.x <= -int(m_nWholeGridRes_w))
+    if(m_local_shift.x <= -int(m_nWholeGridRes_w+1))
     {
       m_local_shift.x = m_local_shift.x-(-int(m_nWholeGridRes_w));
       m_global_shift.x--;
@@ -708,14 +709,14 @@ public:
 
 
     // for y
-    if(m_local_shift.y >= int(m_nWholeGridRes_h))
+    if(m_local_shift.y >= int(m_nWholeGridRes_h)+1)
     {
       m_local_shift.y = m_local_shift.y - int(m_nWholeGridRes_h);
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
     }
 
-    if(m_local_shift.y <= -int(m_nWholeGridRes_h))
+    if(m_local_shift.y <= -int(m_nWholeGridRes_h+1))
     {
       m_local_shift.y = m_local_shift.y-(-int(m_nWholeGridRes_h));
       m_global_shift.y--;
@@ -732,18 +733,18 @@ public:
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
 
-    if(m_local_shift.z <= -int(m_nWholeGridRes_d))
+    if(m_local_shift.z <= -int(m_nWholeGridRes_d+1))
     {
       m_local_shift.z = m_local_shift.z-(-int(m_nWholeGridRes_d));
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
     }
 
-
     printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d;"
-           "Global shift: x=%d,y=%d,z=%d; Max shift is %d \n",
-           m_local_shift.x,m_local_shift.y,m_local_shift.z, m_global_shift.x,
-           m_global_shift.y,m_global_shift.z, m_nWholeGridRes_w);
+           "Global shift: x=%d,y=%d,z=%d; Max shift (%d,%d,%d) \n",
+           m_local_shift.x,m_local_shift.y,m_local_shift.z,
+           m_global_shift.x,m_global_shift.y,m_global_shift.z,
+           m_nWholeGridRes_w, m_nWholeGridRes_h,m_nWholeGridRes_d);
   }
 
 
