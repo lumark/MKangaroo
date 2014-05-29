@@ -201,7 +201,7 @@ void SavePXM(const std::string                                      sPathName,
       {
         for(int k=0;k!=rDVol.m_nWholeGridRes_d;k++)
         {
-          int nGridIndex = hvol.GetLocalGridIndex(i,j,k);
+          int nGridIndex = hvol.ConvertLocalIndexToRealIndex(i,j,k);
 
           if(hvol.CheckIfBasicSDFActive(nGridIndex)==true)
           {
@@ -270,7 +270,7 @@ void SavePXM(const std::string                                      sPathName,
       {
         for(int k=0;k!=int(rDVol.m_nWholeGridRes_d);k++)
         {
-          int nGridIndex = hvol.GetLocalGridIndex(i,j,k);
+          int nGridIndex = hvol.ConvertLocalIndexToRealIndex(i,j,k);
 
           // --- save vol if necessary
           if(pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex)==true)
@@ -278,7 +278,7 @@ void SavePXM(const std::string                                      sPathName,
             std::string sGridFileName;
 
             int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
-            int3 LocalIndex  = make_int3(i,j,k);
+            int3 LocalIndex  = rDVol.ConvertRealIndexToLocalIndex(i,j,k);
 
             // save without rolling
             if(bSaveGlobalPose==false)

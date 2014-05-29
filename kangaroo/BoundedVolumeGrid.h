@@ -87,7 +87,7 @@ public:
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
-    int nIndex =GetLocalGridIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex =ConvertLocalIndexToRealIndex( int(floorf(x/m_nVolumeGridRes)),
                                int(floorf(y/m_nVolumeGridRes)),
                                int(floorf(z/m_nVolumeGridRes)) );
 
@@ -294,7 +294,7 @@ public:
   inline __host__ __device__
   bool CheckIfVoxelExist(int x, int y, int z)
   {
-    int nIndex = GetLocalGridIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex = ConvertLocalIndexToRealIndex( int(floorf(x/m_nVolumeGridRes)),
                                 int(floorf(y/m_nVolumeGridRes)),
                                 int(floorf(z/m_nVolumeGridRes)) );
 
@@ -309,7 +309,7 @@ public:
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = GetLocalGridIndex( int(floorf(x/m_nVolumeGridRes)),
+    int nIndex = ConvertLocalIndexToRealIndex( int(floorf(x/m_nVolumeGridRes)),
                                 int(floorf(y/m_nVolumeGridRes)),
                                 int(floorf(z/m_nVolumeGridRes)) );
 
@@ -354,7 +354,7 @@ public:
                                    floorf(pos_v.y/fFactor),
                                    floorf(pos_v.z/fFactor)  );
 
-    int nIndex = GetLocalGridIndex( Index.x, Index.y, Index.z);
+    int nIndex = ConvertLocalIndexToRealIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -390,7 +390,7 @@ public:
                                    floorf(pos_v.y/fFactor),
                                    floorf(pos_v.z/fFactor)  );
 
-    int nIndex = GetLocalGridIndex( Index.x, Index.y, Index.z);
+    int nIndex = ConvertLocalIndexToRealIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -523,10 +523,10 @@ public:
 
 
   // ===========================================================================
-  // get real local index of desire grid sdf when shift is applied
+  // given desire grid index (x,y,z), get real index in Volume when shift is applied
   // ===========================================================================
   inline __device__ __host__
-  unsigned int GetLocalGridIndex(int x, int y, int z) const
+  unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
   {
     if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
@@ -689,16 +689,59 @@ public:
   // global pose gx,gy,gz. this function return x1,y1,z1
   // ===========================================================================
   inline __host__
-  int3 GetLocalIndex(int x, int y, int z) const
+  int3 ConvertRealIndexToLocalIndex(int x, int y, int z) const
   {
+    // compute local index for single grid
+    int3 LocalIndex = make_int3(x,y,z);
+
     if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
-      return m_local_shift;
+      return LocalIndex;
     }
 
-    // compute local index for single grid
-    int3 LocalIndex;
 
+//    // x
+//    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
+//    {
+//      if( LocalIndex.x< m_local_shift.x)
+//      {
+//        LocalIndex.x = LocalIndex.x + int(m_nWholeGridRes_w) - m_local_shift.x;
+//      }
+//      else
+//      {
+//        LocalIndex.x = LocalIndex.x- m_local_shift.x ;
+//      }
+//    }
+
+//    // y
+//    if(m_local_shift.y>0 && m_local_shift.y<=int(m_nWholeGridRes_h))
+//    {
+//      if( LocalIndex.y< m_local_shift.y)
+//      {
+//        LocalIndex.y = LocalIndex.y + int(m_nWholeGridRes_h) - m_local_shift.y;
+//      }
+//      else
+//      {
+//        LocalIndex.y = LocalIndex.y- m_local_shift.y ;
+//      }
+//    }
+
+//    // z
+//    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d))
+//    {
+//      if( LocalIndex.z< m_local_shift.z)
+//      {
+//        LocalIndex.z = LocalIndex.z + int(m_nWholeGridRes_d) - m_local_shift.z;
+//      }
+//      else
+//      {
+//        LocalIndex.z = LocalIndex.z - m_local_shift.z ;
+//      }
+//    }
+
+
+
+    return LocalIndex;
   }
 
 
