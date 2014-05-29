@@ -685,68 +685,6 @@ public:
 
 
   // ===========================================================================
-  // in some cases a grid sdf in x, y, z position is actually sdf in x1,y1,z1 with
-  // global pose gx,gy,gz. this function return x1,y1,z1
-  // ===========================================================================
-  inline __host__
-  int3 ConvertRealIndexToLocalIndex(int x, int y, int z) const
-  {
-    // compute local index for single grid
-    int3 LocalIndex = make_int3(x,y,z);
-
-    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
-    {
-      return LocalIndex;
-    }
-
-
-//    // x
-//    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
-//    {
-//      if( LocalIndex.x< m_local_shift.x)
-//      {
-//        LocalIndex.x = LocalIndex.x + int(m_nWholeGridRes_w) - m_local_shift.x;
-//      }
-//      else
-//      {
-//        LocalIndex.x = LocalIndex.x- m_local_shift.x ;
-//      }
-//    }
-
-//    // y
-//    if(m_local_shift.y>0 && m_local_shift.y<=int(m_nWholeGridRes_h))
-//    {
-//      if( LocalIndex.y< m_local_shift.y)
-//      {
-//        LocalIndex.y = LocalIndex.y + int(m_nWholeGridRes_h) - m_local_shift.y;
-//      }
-//      else
-//      {
-//        LocalIndex.y = LocalIndex.y- m_local_shift.y ;
-//      }
-//    }
-
-//    // z
-//    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d))
-//    {
-//      if( LocalIndex.z< m_local_shift.z)
-//      {
-//        LocalIndex.z = LocalIndex.z + int(m_nWholeGridRes_d) - m_local_shift.z;
-//      }
-//      else
-//      {
-//        LocalIndex.z = LocalIndex.z - m_local_shift.z ;
-//      }
-//    }
-
-
-
-    return LocalIndex;
-  }
-
-
-
-  // ===========================================================================
   // check if need to reset local shift and set global shift
   inline __host__
   void ResetShift(int3 shift_index)

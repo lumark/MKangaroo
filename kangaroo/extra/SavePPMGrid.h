@@ -241,13 +241,13 @@ void SavePXM(const std::string                                      sPathName,
 // -----------------------------------------------------------------------------
 // only save desire grids
 template<typename T, typename Manage>
-void SavePXM(const std::string                                      sPathName,
-             int                                                    pGridNeedSave[],
-             roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
-             bool                                                   bSaveGlobalPose = false,
-             bool                                                   bSaveBBox = false,
-             std::string                                            ppm_type = "P5",
-             int                                                    num_colors = 255)
+void SavePXMGridDesire(const std::string                                      sPathName,
+                       int                                                    pGridNeedSave[],
+                       roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
+                       bool                                                   bSaveGlobalPose = false,
+                       bool                                                   bSaveBBox = false,
+                       std::string                                            ppm_type = "P5",
+                       int                                                    num_colors = 255)
 {
   if(rDVol.GetActiveGridVolNum()==0)
   {
@@ -270,7 +270,7 @@ void SavePXM(const std::string                                      sPathName,
       {
         for(int k=0;k!=int(rDVol.m_nWholeGridRes_d);k++)
         {
-          int nGridIndex = hvol.ConvertLocalIndexToRealIndex(i,j,k);
+          int nGridIndex =i + rDVol.m_nWholeGridRes_w* (j+ rDVol.m_nWholeGridRes_h* k);
 
           // --- save vol if necessary
           if(pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex)==true)
@@ -278,7 +278,7 @@ void SavePXM(const std::string                                      sPathName,
             std::string sGridFileName;
 
             int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
-            int3 LocalIndex  = rDVol.ConvertRealIndexToLocalIndex(i,j,k);
+            int3 LocalIndex  = make_int3(i,j,k);// local index is actually i,j,k.
 
             // save without rolling
             if(bSaveGlobalPose==false)
