@@ -654,6 +654,7 @@ bool GenMeshFromPPM(std::string               sDirName,
   // for each global volume
   int nNum = 0;
   int nNumSkip = 0;
+
   for(unsigned int i=0;i!=vVolumes.size();i++)
   {
     // load bounding box
@@ -670,6 +671,7 @@ bool GenMeshFromPPM(std::string               sDirName,
       {
         int3 CurLocalIndex = vVolumes[i].vLocalIndex[j];
         int3 CurGlobalIndex = vVolumes[i].GlobalIndex;
+
         int nIndex = hvol.GetLocalIndex(CurLocalIndex.x, CurLocalIndex.y, CurLocalIndex.z);
         std::string sFile = sDirName+vVolumes[i].vFileName[j];
 

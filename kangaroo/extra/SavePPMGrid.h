@@ -266,11 +266,12 @@ void SavePXM(const std::string                                      filename,
         for(int k=0;k!=int(rDVol.m_nWholeGridRes_d);k++)
         {
           int nGridIndex = hvol.GetLocalIndex(i,j,k);
-          int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
 
           // check if we need to save this vol
           if(pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex)==true)
           {
+            int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
+
             // -- save grid sdf ------------------------------------------------
             // save local index (without rolling)
             std::string sFileName;
@@ -294,14 +295,14 @@ void SavePXM(const std::string                                      filename,
             // scan the disk and see if we need to save bb
             CheckifSaveBB(filename, GlobalIndex, rDVol);
 
-            std::cout<<"[Kangaroo/SavePXMGridDesire] Save "<<sFileName<<" success."<<std::endl;
+//            std::cout<<"[Kangaroo/SavePXMGridDesire] Save "<<sFileName<<" success."<<std::endl;
             nNum++;
           }
         }
       }
-
-      printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf.\n", nNum);
     }
+
+    printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf.\n", nNum);
 
   }
 
@@ -313,7 +314,7 @@ void SavePXM(const std::string                                      filename,
 /////////////////////////////////////////////////////////////////////////////
 
 template<typename T, typename Manage>
-bool LoadPXMSingleGrid(const std::string filename,
+bool LoadPXMSingleGrid(const std::string                          filename,
                        roo::VolumeGrid<T,roo::TargetHost,Manage>& vol)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
