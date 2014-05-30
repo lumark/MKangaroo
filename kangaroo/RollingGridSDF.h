@@ -114,7 +114,6 @@ public:
             {
               bReset = true;
             }
-
             if(CurLocalShift.x<0 && i>= int(pVol->m_nWholeGridRes_w) + CurLocalShift.x)
             {
               bReset = true;
@@ -126,7 +125,6 @@ public:
             {
               bReset = true;
             }
-
             if(CurLocalShift.y<0 && j>= int(pVol->m_nWholeGridRes_h) + CurLocalShift.y)
             {
               bReset = true;
@@ -138,7 +136,6 @@ public:
             {
               bReset = true;
             }
-
             if(CurLocalShift.z<0 && k>= int(pVol->m_nWholeGridRes_d) + CurLocalShift.z)
             {
               bReset = true;

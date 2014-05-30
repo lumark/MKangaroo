@@ -88,8 +88,8 @@ public:
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
     int nIndex =ConvertLocalIndexToRealIndex( int(floorf(x/m_nVolumeGridRes)),
-                               int(floorf(y/m_nVolumeGridRes)),
-                               int(floorf(z/m_nVolumeGridRes)) );
+                                              int(floorf(y/m_nVolumeGridRes)),
+                                              int(floorf(z/m_nVolumeGridRes)) );
 
     if(m_GridVolumes[nIndex].d !=m_nVolumeGridRes &&
        m_GridVolumes[nIndex].h !=m_nVolumeGridRes &&
@@ -295,8 +295,8 @@ public:
   bool CheckIfVoxelExist(int x, int y, int z)
   {
     int nIndex = ConvertLocalIndexToRealIndex( int(floorf(x/m_nVolumeGridRes)),
-                                int(floorf(y/m_nVolumeGridRes)),
-                                int(floorf(z/m_nVolumeGridRes)) );
+                                               int(floorf(y/m_nVolumeGridRes)),
+                                               int(floorf(z/m_nVolumeGridRes)) );
 
     if( CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -310,8 +310,8 @@ public:
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
     int nIndex = ConvertLocalIndexToRealIndex( int(floorf(x/m_nVolumeGridRes)),
-                                int(floorf(y/m_nVolumeGridRes)),
-                                int(floorf(z/m_nVolumeGridRes)) );
+                                               int(floorf(y/m_nVolumeGridRes)),
+                                               int(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
@@ -779,6 +779,24 @@ public:
     }
 
     return nNum;
+  }
+
+
+  // ===========================================================================
+  // get bb of current global index without any shift parameters
+  inline __host__
+  BoundingBox GetCurBB()
+  {
+    BoundingBox mBBox = m_bbox;
+    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w);
+    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h);
+    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d);
+
+    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w);
+    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h);
+    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d);
+
+    return mBBox;
   }
 
 

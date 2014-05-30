@@ -134,36 +134,8 @@ void CheckifSaveBB(const std::string                                      sFilen
 
   if( CheckIfBBfileExist(sBBFileName) == false)
   {
-    // save it directlly if global shift just updated
-    if(GlobalIndex.x == rDVol.m_global_shift.x &&
-       GlobalIndex.y == rDVol.m_global_shift.y &&
-       GlobalIndex.z == rDVol.m_global_shift.z)
-    {
-      SavePXMBoundingBox(sBBFileName, rDVol.m_bbox);
-    }
-    // the bounding box is not totally updated yet. so we need to compute it
-    else
-    {
-      // read origin bounding box.
-      std::string sOriginBBFileName = sFilename +"-BB-"+ std::to_string(0) + "-"+
-          std::to_string(0) + "-"+ std::to_string(0);
-
-      roo::BoundingBox OriginBB = LoadPXMBoundingBox(sOriginBBFileName);
-
-      roo::BoundingBox bbox;
-      bbox.boxmin.x = OriginBB.boxmin.x+ (GlobalIndex.x)*rDVol.m_bbox.Size().x;
-      bbox.boxmin.y = OriginBB.boxmin.y+ (GlobalIndex.y)*rDVol.m_bbox.Size().y;
-      bbox.boxmin.z = OriginBB.boxmin.z+ (GlobalIndex.z)*rDVol.m_bbox.Size().z;
-
-      bbox.boxmax.x = OriginBB.boxmax.x+ (GlobalIndex.x)*rDVol.m_bbox.Size().x;
-      bbox.boxmax.y = OriginBB.boxmax.y+ (GlobalIndex.y)*rDVol.m_bbox.Size().y;
-      bbox.boxmax.z = OriginBB.boxmax.z+ (GlobalIndex.z)*rDVol.m_bbox.Size().z;
-
-      SavePXMBoundingBox(sBBFileName, bbox);
-    }
+    SavePXMBoundingBox(sBBFileName, rDVol.GetCurBB());
   }
-
-
 }
 
 // -----------------------------------------------------------------------------
@@ -263,7 +235,7 @@ void SavePXMGridDesire(
     hvol.m_global_shift = rDVol.m_global_shift;
 
     // save each active volume in BoundedVolumeGrid to HardDisk
-    int nNum =0;
+    int nSaveGridNum =0;
 
     for(int i=0;i!=int(rDVol.m_nWholeGridRes_w);i++)
     {
@@ -278,8 +250,11 @@ void SavePXMGridDesire(
           {
             std::string sGridFileName;
 
+            // The global index does not change for grid before shift
             int3 GlobalIndex = rDVol.m_global_shift;
-            int3 LocalIndex  = make_int3(i,j,k);// local index is actually i,j,k.
+
+            // local index does not change under global index
+            int3 LocalIndex  = make_int3(i,j,k);
 
             // save without rolling
             if(bSaveGlobalPose==false)
@@ -299,7 +274,7 @@ void SavePXMGridDesire(
 
             std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
             SavePXM<T,Manage>(bFile, hvol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
-            nNum++;
+            nSaveGridNum++;
 
             // --- save bounding box if necessary ------------------------------
             // scan the disk and see if we need to save bb
@@ -307,12 +282,11 @@ void SavePXMGridDesire(
             {
               CheckifSaveBB(sPathName, GlobalIndex, rDVol);
             }
-
           }
         }
       }
     }
-    printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf.\n", nNum);
+    printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf.\n", nSaveGridNum);
 
   }
 
