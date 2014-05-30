@@ -241,13 +241,14 @@ void SavePXM(const std::string                                      sPathName,
 // -----------------------------------------------------------------------------
 // only save desire grids
 template<typename T, typename Manage>
-void SavePXMGridDesire(const std::string                                      sPathName,
-                       int                                                    pGridNeedSave[],
-                       roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
-                       bool                                                   bSaveGlobalPose = false,
-                       bool                                                   bSaveBBox = false,
-                       std::string                                            ppm_type = "P5",
-                       int                                                    num_colors = 255)
+void SavePXMGridDesire(
+    const std::string                                      sPathName,
+    int                                                    pGridNeedSave[],
+    roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
+    bool                                                   bSaveGlobalPose = false,
+    bool                                                   bSaveBBox = false,
+    std::string                                            ppm_type = "P5",
+    int                                                    num_colors = 255)
 {
   if(rDVol.GetActiveGridVolNum()==0)
   {
@@ -277,7 +278,7 @@ void SavePXMGridDesire(const std::string                                      sP
           {
             std::string sGridFileName;
 
-            int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
+            int3 GlobalIndex = rDVol.m_global_shift;
             int3 LocalIndex  = make_int3(i,j,k);// local index is actually i,j,k.
 
             // save without rolling
@@ -297,14 +298,14 @@ void SavePXMGridDesire(const std::string                                      sP
             }
 
             std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
-            SavePXM<T,Manage>(bFile, hvol.m_GridVolumes[nGridIndex], ppm_type,num_colors);
+            SavePXM<T,Manage>(bFile, hvol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
+            nNum++;
 
             // --- save bounding box if necessary ------------------------------
             // scan the disk and see if we need to save bb
             if(bSaveBBox == true)
             {
               CheckifSaveBB(sPathName, GlobalIndex, rDVol);
-              nNum++;
             }
 
           }
