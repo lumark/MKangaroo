@@ -87,6 +87,15 @@ public:
 
 
 
+  class NextResetSDF
+  {
+  public:
+    int  m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
+    int  m_x[MAX_SUPPORT_GRID_NUM];
+    int  m_y[MAX_SUPPORT_GRID_NUM];
+    int  m_z[MAX_SUPPORT_GRID_NUM];
+  };
+
   // ---------------------------------------------------------------------------
   // compute index of grid sdf that need to be reset and freed.
   // only free that part that we just "shift"
@@ -99,6 +108,9 @@ public:
     if (CurLocalShift.x!=0 || CurLocalShift.y!=0 || CurLocalShift.z!=0)
     {
       bool bReset = false;
+      bool bx = false;
+      bool by = false;
+      bool bz = false;
 
       for(int i=0;i!=int(pVol->m_nWholeGridRes_w);i++)
       {
@@ -108,14 +120,19 @@ public:
           {
             // reset params;
             bReset = false;
+            bx = false;
+            by = false;
+            bz = false;
 
             //----- for x
             if(CurLocalShift.x>0 && i>=pVol->m_local_shift.x - CurLocalShift.x && i<pVol->m_local_shift.x)
             {
+              bx = true;
               bReset = true;
             }
             if(CurLocalShift.x<0 && i>= int(pVol->m_nWholeGridRes_w) + CurLocalShift.x)
             {
+              bx = true;
               bReset = true;
             }
 
@@ -123,10 +140,12 @@ public:
             //----- for y
             if(CurLocalShift.y>0 && j>=pVol->m_local_shift.y - CurLocalShift.y && j <pVol->m_local_shift.y)
             {
+              by = true;
               bReset = true;
             }
             if(CurLocalShift.y<0 && j>= int(pVol->m_nWholeGridRes_h) + CurLocalShift.y)
             {
+              by = true;
               bReset = true;
             }
 
@@ -134,22 +153,54 @@ public:
             //----- for z
             if(CurLocalShift.z>0 && k>=pVol->m_local_shift.z - CurLocalShift.z && k<pVol->m_local_shift.z)
             {
+              bz = true;
               bReset = true;
             }
             if(CurLocalShift.z<0 && k>= int(pVol->m_nWholeGridRes_d) + CurLocalShift.z)
             {
+              bz = true;
               bReset = true;
             }
 
             // set flag
+            int nIndex = i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k);
+
             if(bReset == true)
             {
-              m_nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] = 1;
+              m_nNextResetSDFs.m_nNextResetSDFs[nIndex] = 1;
             }
             else
             {
-              m_nNextResetSDFs[i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k)] = 0;
+              m_nNextResetSDFs.m_nNextResetSDFs[nIndex] = 0;
             }
+
+            if(bx == true)
+            {
+              m_nNextResetSDFs.m_x[nIndex] = 1;
+            }
+            else
+            {
+              m_nNextResetSDFs.m_x[nIndex] = 0;
+            }
+
+            if(by == true)
+            {
+              m_nNextResetSDFs.m_y[nIndex] = 1;
+            }
+            else
+            {
+              m_nNextResetSDFs.m_y[nIndex] = 0;
+            }
+
+            if(bz == true)
+            {
+              m_nNextResetSDFs.m_z[nIndex] = 1;
+            }
+            else
+            {
+              m_nNextResetSDFs.m_z[nIndex] = 0;
+            }
+
           }
         }
       }
@@ -166,7 +217,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     for(unsigned int i=0;i!=pVol->m_nWholeGridRes_w* pVol->m_nWholeGridRes_h* pVol->m_nWholeGridRes_d; i++)
     {
-      if(m_nNextResetSDFs[i] == 1 && pVol->CheckIfBasicSDFActive(i) == true)
+      if(m_nNextResetSDFs.m_nNextResetSDFs[i] == 1 && pVol->CheckIfBasicSDFActive(i) == true)
       {
         roo::SdfReset(pVol->m_GridVolumes[i]);
         pVol->FreeMemoryByIndex(i);
@@ -178,7 +229,7 @@ public:
   }
 
 public:
-  int  m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
+  NextResetSDF  m_nNextResetSDFs;
 };
 
 

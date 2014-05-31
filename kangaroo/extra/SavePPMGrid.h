@@ -134,7 +134,7 @@ void CheckifSaveBB(const std::string                                      sFilen
 
   if( CheckIfBBfileExist(sBBFileName) == false)
   {
-    SavePXMBoundingBox(sBBFileName, rDVol.GetCurBB());
+    SavePXMBoundingBox(sBBFileName, rDVol.GetDesireBB(GlobalIndex));
   }
 }
 
@@ -216,6 +216,9 @@ template<typename T, typename Manage>
 void SavePXMGridDesire(
     const std::string                                      sPathName,
     int                                                    pGridNeedSave[],
+    int                                                    pFlagX[],
+    int                                                    pFlagY[],
+    int                                                    pFlagZ[],
     roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
     bool                                                   bSaveGlobalPose = false,
     bool                                                   bSaveBBox = false,
@@ -250,8 +253,24 @@ void SavePXMGridDesire(
           {
             std::string sGridFileName;
 
-            // The global index does not change for grid before shift
-            int3 GlobalIndex = rDVol.m_global_shift;
+            // there are two situation for global index
+            // 1, The global index does not change for grid before shift
+            int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
+
+            if (pFlagX[nGridIndex] ==1)
+            {
+              GlobalIndex.x = rDVol.m_global_shift.x;
+            }
+
+            if (pFlagY[nGridIndex] ==1)
+            {
+              GlobalIndex.y = rDVol.m_global_shift.y;
+            }
+
+            if (pFlagZ[nGridIndex] ==1)
+            {
+              GlobalIndex.z = rDVol.m_global_shift.z;
+            }
 
             // local index does not change under global index
             int3 LocalIndex  = make_int3(i,j,k);
