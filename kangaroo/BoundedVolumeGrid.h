@@ -634,7 +634,7 @@ public:
     // for x
     if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
     {
-      if(x>=int(m_nWholeGridRes_w)-m_local_shift.x)
+      if(x<m_local_shift.x)
       {
         GlobalIndex.x = m_global_shift.x+1;
       }
@@ -650,7 +650,7 @@ public:
     // for y
     if(m_local_shift.y>0 && m_local_shift.y<= int(m_nWholeGridRes_h))
     {
-      if(y>=int(m_nWholeGridRes_h)-m_local_shift.y)
+      if(y<m_local_shift.y)
       {
         GlobalIndex.y = m_global_shift.y+1;
       }
@@ -666,7 +666,7 @@ public:
     // for z
     if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d) )
     {
-      if(z>=int(m_nWholeGridRes_d)-m_local_shift.z)
+      if(z<m_local_shift.z)
       {
         GlobalIndex.z = m_global_shift.z+1;
       }
@@ -785,16 +785,17 @@ public:
   // ===========================================================================
   // get bb of current global index without any shift parameters
   inline __host__
-  BoundingBox GetCurBB()
+  BoundingBox GetDesireBB(int3 GlobalIndex)
   {
     BoundingBox mBBox = m_bbox;
-    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w);
-    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h);
-    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d);
 
-    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w);
-    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h);
-    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d);
+    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
+
+    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
 
     return mBBox;
   }
