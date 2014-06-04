@@ -534,7 +534,7 @@ public:
       return nIndex;
     }
 
-    // for x
+    // --- for x
     if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
     {
       if( x<=int(m_nWholeGridRes_w)-1-m_local_shift.x)
@@ -552,14 +552,14 @@ public:
       {
         x = x+m_local_shift.x;
       }
-      else if( x<=abs(m_local_shift.x) )
+      else
       {
         x = x+int(m_nWholeGridRes_w)-1-abs(m_local_shift.x) ;
       }
     }
 
 
-    // for y
+    // --- for y
     if(m_local_shift.y>0 && m_local_shift.y<=int(m_nWholeGridRes_h))
     {
       if( y<=int(m_nWholeGridRes_h)-1-m_local_shift.y)
@@ -577,13 +577,13 @@ public:
       {
         y = y+m_local_shift.y;
       }
-      else if( y<=abs(m_local_shift.y) )
+      else
       {
         y = y+int(m_nWholeGridRes_h)-1-abs(m_local_shift.y) ;
       }
     }
 
-    // for z
+    // --- for z
     if(m_local_shift.z>0 && m_local_shift.z<=int(m_nWholeGridRes_d) )
     {
       if(z <= int(m_nWholeGridRes_d) -1 - m_local_shift.z  )
@@ -601,12 +601,11 @@ public:
       {
         z = z+m_local_shift.z;
       }
-      else if( z<=abs(m_local_shift.z) )
+      else
       {
         z = z+int(m_nWholeGridRes_d)-1-abs(m_local_shift.z) ;
       }
     }
-
 
     // compute actual index
     const unsigned int nIndex =x + m_nWholeGridRes_w* (y+ m_nWholeGridRes_h* z);
@@ -687,9 +686,9 @@ public:
   // ===========================================================================
   // check if need to reset local shift and set global shift
   inline __host__
-  void ResetShift(int3 shift_index)
+  void UpdateGlobalShift(int3 cur_local_shift)
   {
-    m_local_shift = m_local_shift + shift_index;
+    m_local_shift = m_local_shift + cur_local_shift;
 
     // for x
     if(m_local_shift.x >= int(m_nWholeGridRes_w)+1)
@@ -789,13 +788,19 @@ public:
   {
     BoundingBox mBBox = m_bbox;
 
-    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
-    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
-    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
+    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_local_shift.x)/
+        float(m_nWholeGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_local_shift.y)/
+        float(m_nWholeGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_local_shift.z)/
+        float(m_nWholeGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
 
-    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_local_shift.x)/float(m_nWholeGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
-    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_local_shift.y)/float(m_nWholeGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
-    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_local_shift.z)/float(m_nWholeGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
+    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_local_shift.x)/
+        float(m_nWholeGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_local_shift.y)/
+        float(m_nWholeGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_local_shift.z)/
+        float(m_nWholeGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
 
     return mBBox;
   }
@@ -808,21 +813,22 @@ public:
 
   // for rolling sdf. When this value is not zero, we need to recompute index based on the shift
   int3                                        m_local_shift;
-  int3                                        m_global_shift; // when m_shift set to 0, global will ++
+  int3                                        m_global_shift;  // when m_shift set to 0, global will ++
   int3                                        m_subVol_shift;  // shift for sub bounded volume.
 
   // bounding box ofbounded volume grid
   BoundingBox                                 m_bbox;
 
-  unsigned int                                m_nVolumeGridRes;         // resolution of a single grid in one dim.
-  unsigned int                                m_nWholeGridRes_w;        // resolution of a whole grid in one dim. usually 4, 8, 16
-  unsigned int                                m_nWholeGridRes_h;        // resolution of a whole grid in one dim. usually 4, 8, 16
-  unsigned int                                m_nWholeGridRes_d;        // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nVolumeGridRes;     // resolution of a single grid in one dim.
+  unsigned int                                m_nWholeGridRes_w;    // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nWholeGridRes_h;    // resolution of a whole grid in one dim.
+  unsigned int                                m_nWholeGridRes_d;    // resolution of a whole grid in one dim.
 
   // volume that save all data
   // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.
   VolumeGrid<T, Target, Manage>               m_GridVolumes[MAX_SUPPORT_GRID_NUM];
-  int                                         m_NextInitBasicSDFs[MAX_SUPPORT_GRID_NUM];  // an array that record basic SDFs we want to init
+  // an array that record basic SDFs we want to init
+  int                                         m_NextInitBasicSDFs[MAX_SUPPORT_GRID_NUM];
 };
 
 

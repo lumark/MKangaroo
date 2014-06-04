@@ -81,7 +81,7 @@ public:
     // reset local and global shift
     if(shift_index.x!=0 || shift_index.y!= 0 || shift_index.z!=0)
     {
-      pVol->ResetShift(shift_index);
+      pVol->UpdateGlobalShift(shift_index);
     }
   }
 
