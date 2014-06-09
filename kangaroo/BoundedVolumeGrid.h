@@ -688,13 +688,14 @@ public:
   inline __host__
   void UpdateGlobalShift(int3 cur_local_shift)
   {
+    // in case of huge local shift
     m_local_shift.x = m_local_shift.x + cur_local_shift.x % m_nWholeGridRes_w;
     m_local_shift.y = m_local_shift.y + cur_local_shift.y % m_nWholeGridRes_h;
     m_local_shift.z = m_local_shift.z + cur_local_shift.z % m_nWholeGridRes_d;
 
-    m_global_shift.x =cur_local_shift.x/m_nWholeGridRes_w;
-    m_global_shift.y =cur_local_shift.y/m_nWholeGridRes_h;
-    m_global_shift.z =cur_local_shift.z/m_nWholeGridRes_d;
+    m_global_shift.x = m_global_shift.x + cur_local_shift.x/m_nWholeGridRes_w;
+    m_global_shift.y = m_global_shift.x + cur_local_shift.y/m_nWholeGridRes_h;
+    m_global_shift.z = m_global_shift.x + cur_local_shift.z/m_nWholeGridRes_d;
 
     // for x
     if(m_local_shift.x >= int(m_nWholeGridRes_w)+1)
