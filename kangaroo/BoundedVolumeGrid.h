@@ -282,7 +282,7 @@ public:
 
 
   //////////////////////////////////////////////////////
-  // Access Elements
+  /// Access Elements
   //////////////////////////////////////////////////////
 
   inline __device__ __host__
@@ -510,7 +510,7 @@ public:
   }
 
 
-  // ======================== Index/Shift ====================================
+  /// ======================== Index/Shift ====================================
   inline __device__
   float3 GetShiftValue(float3 pos_w, float3 cam_pose) const
   {
@@ -523,7 +523,7 @@ public:
 
 
   // ===========================================================================
-  // given desire grid index (x,y,z), get real index in Volume when shift is applied
+  // For desire grid index (x,y,z), return real index in Volume when shift is applied
   // ===========================================================================
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
@@ -537,24 +537,24 @@ public:
     // --- for x
     if(m_local_shift.x>0 && m_local_shift.x<=int(m_nWholeGridRes_w))
     {
-      if( x<=int(m_nWholeGridRes_w)-1-m_local_shift.x)
+      if( x <= int(m_nWholeGridRes_w) -1- m_local_shift.x )
       {
-        x = x+m_local_shift.x;
+        x = x + m_local_shift.x;
       }
       else
       {
-        x = x-( int(m_nWholeGridRes_w) - m_local_shift.x );
+        x = x - ( int(m_nWholeGridRes_w) - m_local_shift.x );
       }
     }
     else if(m_local_shift.x<0 && m_local_shift.x>=-int(m_nWholeGridRes_w))
     {
-      if(x>=abs(m_local_shift.x) && x<=int(m_nWholeGridRes_w))
+      if( x <= int(m_nWholeGridRes_w) -1 -abs(m_local_shift.x) )
       {
-        x = x+m_local_shift.x;
+        x = x + abs(m_local_shift.x);
       }
       else
       {
-        x = x+int(m_nWholeGridRes_w)-1-abs(m_local_shift.x) ;
+        x = x + ( int(m_nWholeGridRes_w) - abs(m_local_shift.x) );
       }
     }
 
@@ -573,13 +573,13 @@ public:
     }
     else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nWholeGridRes_h))
     {
-      if(y>=abs(m_local_shift.y) && y<=int(m_nWholeGridRes_h))
+      if(y <= int(m_nWholeGridRes_h) -1- abs(m_local_shift.y) )
       {
-        y = y+m_local_shift.y;
+        y = y + abs(m_local_shift.y);
       }
       else
       {
-        y = y+int(m_nWholeGridRes_h)-1-abs(m_local_shift.y) ;
+        y = y + ( int(m_nWholeGridRes_h) - abs(m_local_shift.y) );
       }
     }
 
@@ -597,13 +597,13 @@ public:
     }
     else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nWholeGridRes_d))
     {
-      if(z>=abs(m_local_shift.z) && z<=int(m_nWholeGridRes_d))
+      if(z <= int(m_nWholeGridRes_d) -1- abs(m_local_shift.z) )
       {
-        z = z+m_local_shift.z;
+        z = z + abs(m_local_shift.z);
       }
       else
       {
-        z = z+int(m_nWholeGridRes_d)-1-abs(m_local_shift.z) ;
+        z = z + ( int(m_nWholeGridRes_d) - abs(m_local_shift.z) );
       }
     }
 
