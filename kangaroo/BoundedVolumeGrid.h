@@ -689,61 +689,59 @@ public:
   void UpdateGlobalShift(int3 cur_local_shift)
   {
     // in case of huge local shift
-    m_local_shift.x = m_local_shift.x + cur_local_shift.x % m_nWholeGridRes_w;
-    m_local_shift.y = m_local_shift.y + cur_local_shift.y % m_nWholeGridRes_h;
-    m_local_shift.z = m_local_shift.z + cur_local_shift.z % m_nWholeGridRes_d;
+    m_local_shift.x = m_local_shift.x + cur_local_shift.x % int(m_nWholeGridRes_w);
+    m_local_shift.y = m_local_shift.y + cur_local_shift.y % int(m_nWholeGridRes_h);
+    m_local_shift.z = m_local_shift.z + cur_local_shift.z % int(m_nWholeGridRes_d);
 
-    m_global_shift.x = m_global_shift.x + cur_local_shift.x/m_nWholeGridRes_w;
-    m_global_shift.y = m_global_shift.x + cur_local_shift.y/m_nWholeGridRes_h;
-    m_global_shift.z = m_global_shift.x + cur_local_shift.z/m_nWholeGridRes_d;
+    m_global_shift.x = m_global_shift.x + cur_local_shift.x/int(m_nWholeGridRes_w);
+    m_global_shift.y = m_global_shift.y + cur_local_shift.y/int(m_nWholeGridRes_h);
+    m_global_shift.z = m_global_shift.z + cur_local_shift.z/int(m_nWholeGridRes_d);
 
-    // for x
+    // --- for x
     if(m_local_shift.x >= int(m_nWholeGridRes_w)+1)
     {
       m_local_shift.x = m_local_shift.x-int(m_nWholeGridRes_w);
       m_global_shift.x++;
-      printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
+      printf("[BoundedVolumeGrid] update global shift x\n");
     }
 
     if(m_local_shift.x <= -int(m_nWholeGridRes_w+1))
     {
       m_local_shift.x = m_local_shift.x-(-int(m_nWholeGridRes_w));
       m_global_shift.x--;
-      printf("[BoundedVolumeGrid] Set local shift x back to zero! \n");
+      printf("[BoundedVolumeGrid] update global shift x\n");
     }
 
-
-
-    // for y
+    // --- for y
     if(m_local_shift.y >= int(m_nWholeGridRes_h)+1)
     {
       m_local_shift.y = m_local_shift.y - int(m_nWholeGridRes_h);
       m_global_shift.y++;
-      printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
+      printf("[BoundedVolumeGrid] update global shift y\n");
     }
 
     if(m_local_shift.y <= -int(m_nWholeGridRes_h+1))
     {
       m_local_shift.y = m_local_shift.y-(-int(m_nWholeGridRes_h));
       m_global_shift.y--;
-      printf("[BoundedVolumeGrid] Set local shift y back to zero! \n");
+      printf("[BoundedVolumeGrid] update global shift y\n");
     }
 
 
 
-    // for z
+    // --- for z
     if(m_local_shift.z >= int(m_nWholeGridRes_d)+1)
     {
       m_local_shift.z = m_local_shift.z-int(m_nWholeGridRes_d);
       m_global_shift.z++;
-      printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
+      printf("[BoundedVolumeGrid] update global shift z\n");
     }
 
     if(m_local_shift.z <= -int(m_nWholeGridRes_d+1))
     {
       m_local_shift.z = m_local_shift.z-(-int(m_nWholeGridRes_d));
       m_global_shift.z--;
-      printf("[BoundedVolumeGrid] Set local shift z back to zero! \n");
+      printf("[BoundedVolumeGrid] update global shift z\n");
     }
 
     printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d;"
@@ -751,6 +749,19 @@ public:
            m_local_shift.x,m_local_shift.y,m_local_shift.z,
            m_global_shift.x,m_global_shift.y,m_global_shift.z,
            m_nWholeGridRes_w, m_nWholeGridRes_h,m_nWholeGridRes_d);
+
+    // check for error
+    if(abs(m_global_shift.x)>99999 || abs(m_global_shift.y)>99999 || abs(m_global_shift.z)>99999 )
+    {
+       printf("[BoundedVolumeGrid] fatal error! global shift overflow!\n");
+       exit(-1);
+    }
+
+    if(abs(m_local_shift.x)>99999 || abs(m_local_shift.y)>99999 || abs(m_local_shift.z)>99999 )
+    {
+       printf("[BoundedVolumeGrid] fatal error! local shift overflow!\n");
+       exit(-1);
+    }
   }
 
 
