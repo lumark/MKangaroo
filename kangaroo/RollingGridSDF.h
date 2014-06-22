@@ -112,6 +112,8 @@ public:
       bool by = false;
       bool bz = false;
 
+      printf("cur local shif x%d,y%d,z%d\n", CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
+
       for(int i=0;i!=int(pVol->m_nWholeGridRes_w);i++)
       {
         for(int j=0;j!=int(pVol->m_nWholeGridRes_h);j++)
@@ -125,44 +127,53 @@ public:
             bz = false;
 
             //----- for x
-            if(CurLocalShift.x>0 && i>=pVol->m_local_shift.x - CurLocalShift.x && i<pVol->m_local_shift.x)
+            if(CurLocalShift.x>0 &&
+               i>=pVol->m_local_shift.x - CurLocalShift.x && i<pVol->m_local_shift.x)
             {
               bx = true;
               bReset = true;
             }
-            if(CurLocalShift.x<0 && i>= int(pVol->m_nWholeGridRes_w) + CurLocalShift.x)
+            if(CurLocalShift.x<0 &&
+               i>= int(pVol->m_nWholeGridRes_w) + pVol->m_local_shift.x &&
+               i<int(pVol->m_nWholeGridRes_w) + pVol->m_local_shift.x-CurLocalShift.x)
             {
-              bx = true;
-              bReset = true;
+//              bx = true;
+//              bReset = true;
             }
 
 
             //----- for y
-            if(CurLocalShift.y>0 && j>=pVol->m_local_shift.y - CurLocalShift.y && j <pVol->m_local_shift.y)
+            if(CurLocalShift.y>0 &&
+               j>=pVol->m_local_shift.y - CurLocalShift.y && j <pVol->m_local_shift.y)
             {
               by = true;
               bReset = true;
             }
-            if(CurLocalShift.y<0 && j>= int(pVol->m_nWholeGridRes_h) + CurLocalShift.y)
+            if(CurLocalShift.y<0 &&
+               i>= int(pVol->m_nWholeGridRes_h) + pVol->m_local_shift.y &&
+               i<int(pVol->m_nWholeGridRes_h) + pVol->m_local_shift.y-CurLocalShift.y)
             {
-              by = true;
-              bReset = true;
+//              by = true;
+//              bReset = true;
             }
 
 
             //----- for z
-            if(CurLocalShift.z>0 && k>=pVol->m_local_shift.z - CurLocalShift.z && k<pVol->m_local_shift.z)
+            if(CurLocalShift.z>0 &&
+               k>=pVol->m_local_shift.z - CurLocalShift.z && k<pVol->m_local_shift.z)
             {
               bz = true;
               bReset = true;
             }
-            if(CurLocalShift.z<0 && k>= int(pVol->m_nWholeGridRes_d) + CurLocalShift.z)
+            if(CurLocalShift.z<0 &&
+               i>= int(pVol->m_nWholeGridRes_d) + pVol->m_local_shift.z &&
+               i<int(pVol->m_nWholeGridRes_d) + pVol->m_local_shift.z-CurLocalShift.z)
             {
-              bz = true;
-              bReset = true;
+//              bz = true;
+//              bReset = true;
             }
 
-            // set flag
+            // set flag for grid that need to be freed
             int nIndex = i+pVol->m_nWholeGridRes_w*(j+pVol->m_nWholeGridRes_h*k);
 
             if(bReset == true)

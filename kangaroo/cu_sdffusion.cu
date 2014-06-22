@@ -125,7 +125,8 @@ void SdfFuse(
 {
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
-  KernSdfFuse<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, K, img, T_iw, Kimg, trunc_dist, max_w, mincostheta);
+  KernSdfFuse<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, K, img,
+                                    T_iw, Kimg, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 }
 
@@ -218,15 +219,17 @@ void SdfFuseDirectGrey(
     ) {
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
-  KernSdfFuseDirectGrey<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrey<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw,
+                                              Kdepth, grey, T_iw, Krgb, trunc_dist,
+                                              max_w, mincostheta);
   GpuCheckErrors();
 }
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////// For Grid SDF Fusion /////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// For Grid SDF Fusion ////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
 __device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_colorVol;
@@ -237,15 +240,14 @@ __device__ int                                                       g_NextInitS
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-__global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                                    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-                                    float trunc_dist, float max_w, float mincostheta
-                                    )
+__global__ void KernSdfInitGreyGrid(
+    Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta
+    )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
-
-  //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
 
   // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < g_vol.m_d; ++z)
@@ -299,9 +301,11 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
             /// here 0.5 is for kinect sensor
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                          int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                          int(floorf(z/g_vol.m_nVolumeGridRes)) );
+              int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+                    int(floorf(x/g_vol.m_nVolumeGridRes)),
+                    int(floorf(y/g_vol.m_nVolumeGridRes)),
+                    int(floorf(z/g_vol.m_nVolumeGridRes)) );
+
               g_NextInitSDFs[nIndex] = 1;
             }
           }
@@ -312,13 +316,14 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
 }
 
 
-void SDFInitGreyGrid( int* pNextInitSDFs,
-                      BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
-                      BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
-                      Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                      Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-                      float trunc_dist, float max_w, float mincostheta
-                      )
+void SDFInitGreyGrid(
+    int* pNextInitSDFs,
+    BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
+    BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
+    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta
+    )
 {
   if(vol.m_nWholeGridRes_w*vol.m_nWholeGridRes_h*vol.m_nWholeGridRes_d>MAX_SUPPORT_GRID_NUM)
   {
@@ -335,16 +340,13 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfInitGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfInitGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey,
+                                            T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
-
-  //  printf("[SDFInitGreyGrid.cu] Finished kernel.\n");
 
   int nNextInitSDFs[MAX_SUPPORT_GRID_NUM];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
-
-  //  printf("[SDFInitGreyGrid.cu] Finished copy.\n");
 
   // copy array back
   for(int i=0;i!=vol.m_nWholeGridRes_w*vol.m_nWholeGridRes_h*vol.m_nWholeGridRes_d;i++)
@@ -363,8 +365,6 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
   GpuCheckErrors();
 
   //  free(nNextInitSDFs);
-
-  //  printf("[SDFInitGreyGrid.cu] Finished.\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -389,22 +389,22 @@ __global__ void KernSdfFuseDirectGreyGrid(
     // Get voxel position in certain radius in world coordinate (good)
     const float3 P_w = g_vol.VoxelPositionInUnits(x,y,z);
 
-    // Get voxel position in camera coordinate (good)
+    // Get voxel position in camera coordinate
     const float3 P_c = T_cw * P_w;
-
     // Project a 3D voxel point to 2D depth an grey image coordinate
     const float2 p_c = Kdepth.Project(P_c);
 
+    // Project a 3D voxel point to 2D grey image coordinate
     const float3 P_i = T_iw * P_w;
     const float2 p_i = Krgb.Project(P_i);
 
-    // If the voxel is in image coordinate (inside of image boundary), then we
-    // see if we should fuse this voxel
+    // If the voxel is in image coordinate (inside of image boundary)
     if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
     {
       // prepare to fuse a grey pixel into this voxel
       const float c =  grey.GetBilinear<float>(p_i);
 
+      // Check if we should fuse this voxel
       // discard pixel value equals 0
       if(c!=0)
       {
@@ -469,7 +469,8 @@ void SdfFuseDirectGreyGrid(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey,
+                                                  T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -550,9 +551,10 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
           //        }else if(sd < 5*trunc_dist) {
 
           /// here 0.5 is for kinect sensor
-          int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                      int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                      int(floorf(z/g_vol.m_nVolumeGridRes)) );
+          int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+                int(floorf(x/g_vol.m_nVolumeGridRes)),
+                int(floorf(y/g_vol.m_nVolumeGridRes)),
+                int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
@@ -602,7 +604,9 @@ void SdfFuseDirectGreyGridSafe(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridSafe<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGreyGridSafe<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth,
+                                                      grey, T_iw, Krgb, trunc_dist,
+                                                      max_w, mincostheta);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -633,14 +637,13 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
 
-  //    const int z = blockIdx.z*blockDim.z + threadIdx.z;
-
   // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < g_vol.m_d; ++z)
   {
-    int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                int(floorf(z/g_vol.m_nVolumeGridRes)) );
+    int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+          int(floorf(x/g_vol.m_nVolumeGridRes)),
+          int(floorf(y/g_vol.m_nVolumeGridRes)),
+          int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
     if(g_NextInitSDFs[nIndex] == 1)
     {
@@ -763,7 +766,11 @@ void SdfFuseDirectGreyGridDesireIndex(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectGreyGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw,
+                                                             Kdepth, grey, T_iw,
+                                                             Krgb, trunc_dist,
+                                                             max_w, mincostheta,
+                                                             bWeight);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -848,9 +855,10 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
           /// here 0.5 is for kinect sensor
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0 && costheta > mincostheta )
           {
-            int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                        int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                        int(floorf(z/g_vol.m_nVolumeGridRes)) );
+            int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+                  int(floorf(x/g_vol.m_nVolumeGridRes)),
+                  int(floorf(y/g_vol.m_nVolumeGridRes)),
+                  int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
             if(g_vol.CheckIfBasicSDFActive(nIndex) == true)
             {
@@ -914,7 +922,9 @@ void SdfFuseDirectGreyGridAutoInit(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectGreyGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth,
+                                                          grey, T_iw, Krgb, trunc_dist,
+                                                          max_w, mincostheta, bWeight);
   GpuCheckErrors();
 
   // check if need to init new grid sdf
@@ -1273,7 +1283,9 @@ void SdfSphere(BoundedVolume<SDF_t> vol, float3 center, float r)
 // Take SDF Difference to depthmap
 //////////////////////////////////////////////////////
 
-__global__ void KernSdfDistance(Image<float> dist, Image<float> depth, BoundedVolume<SDF_t> vol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float trunc_distance)
+__global__ void KernSdfDistance(Image<float> dist, Image<float> depth,
+                                BoundedVolume<SDF_t> vol, const Mat<float,3,4> T_wc,
+                                ImageIntrinsics K, float trunc_distance)
 {
   const int u = blockIdx.x*blockDim.x + threadIdx.x;
   const int v = blockIdx.y*blockDim.y + threadIdx.y;
@@ -1289,7 +1301,8 @@ __global__ void KernSdfDistance(Image<float> dist, Image<float> depth, BoundedVo
 }
 
 
-void SdfDistance(Image<float> dist, Image<float> depth, BoundedVolume<SDF_t> vol, const Mat<float,3,4> T_wc, ImageIntrinsics K, float trunc_distance)
+void SdfDistance(Image<float> dist, Image<float> depth, BoundedVolume<SDF_t> vol,
+                 const Mat<float,3,4> T_wc, ImageIntrinsics K, float trunc_distance)
 {
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
