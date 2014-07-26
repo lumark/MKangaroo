@@ -19,48 +19,48 @@ void SdfFuse(BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol, Image<floa
              Mat<float,3,4> T_iw, ImageIntrinsics Kimg,float trunc_dist, float max_w, float mincostheta);
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void SdfFuseDirectGrey(BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
+void SdfFuseDirectGray(BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
                        Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw,
-                       ImageIntrinsics Kdepth, Image<float> grey, Mat<float,3,4> T_iw,
+                       ImageIntrinsics Kdepth, Image<float> gray, Mat<float,3,4> T_iw,
                        ImageIntrinsics Krgb, float trunc_dist, float max_w, float mincostheta);
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void SDFInitGreyGrid(int* pNextInitSDFs,
+void SDFInitGrayGrid(int* pNextInitSDFs,
                      BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
                      BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
                      Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                     Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+                     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
                      float trunc_dist, float max_w, float mincostheta
                      );
 
-void SdfFuseDirectGreyGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage> vol,
+void SdfFuseDirectGrayGrid(roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage> vol,
                            roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
                            Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw,
-                           ImageIntrinsics Kdepth, Image<float> grey, Mat<float,3,4> T_iw,
+                           ImageIntrinsics Kdepth, Image<float> gray, Mat<float,3,4> T_iw,
                            ImageIntrinsics Krgb, float trunc_dist, float max_w, float mincostheta);
 
-void SdfFuseDirectGreyGridSafe(
+void SdfFuseDirectGrayGridSafe(
     BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     );
 
 // -----------------------------------------------------------------------------
 // the following function combine init and fuse together, save time
-void SdfFuseDirectGreyGridAutoInit(int* pNextInitSDFs,
+void SdfFuseDirectGrayGridAutoInit(int* pNextInitSDFs,
                                    BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
                                    BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
                                    Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                                   Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+                                   Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
                                    float trunc_dist, float max_w, float mincostheta, bool bWeight);
 
-void SdfFuseDirectGreyGridDesireIndex(int* pNextInitSDFs,
+void SdfFuseDirectGrayGridDesireIndex(int* pNextInitSDFs,
                                       BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
                                       BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
                                       Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                                      Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+                                      Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
                                       float trunc_dist, float max_w, float mincostheta, bool bWeight);
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

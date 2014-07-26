@@ -185,7 +185,7 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
 
 
 
-// raycast grid grey SDF
+// raycast grid gray SDF
 __device__ float3 g_positive_shift;
 __device__ float3 g_negative_shift;
 __global__ void KernDetectRollingSdfShift(

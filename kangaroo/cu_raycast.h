@@ -37,8 +37,9 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
 // raycast grid sdf
 void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
                 const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
-                const BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> colorVol,
-                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix );
+                const BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> grayVol,
+                const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
+                float trunc_dist, bool subpix );
 
 
 void RaycastBox(Image<float> depth, const Mat<float,3,4> T_wc, ImageIntrinsics K, const BoundingBox bbox );

@@ -60,7 +60,7 @@ struct __align__(8) SDF_t_comp {
             val = (w * val + rhs.w * rhs.val);
             w += rhs.w;
             val /= w;
-            Times=Times++;
+//            Times=Times++;
         }
     }
 

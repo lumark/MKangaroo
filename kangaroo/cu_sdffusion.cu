@@ -63,7 +63,7 @@ void SdfFuse(BoundedVolume<SDF_t> vol, Image<float> depth, Image<float4> norm,
 }
 
 //////////////////////////////////////////////////////
-// Grey Truncated SDF Fusion
+// gray Truncated SDF Fusion
 // Similar extension to KinectFusion as described by:
 // Robust Tracking for Real-Time Dense RGB-D Mapping with Kintinous
 // Whelan et. al.
@@ -132,10 +132,10 @@ void SdfFuse(
 
 //--the following add by luma-----------------------------------------------------------------------------------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-__global__ void KernSdfFuseDirectGrey(
+__global__ void KernSdfFuseDirectGray(
     BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     )
 {
@@ -154,17 +154,17 @@ __global__ void KernSdfFuseDirectGrey(
     // Get voxel position in camera coordinate
     const float3 P_c = T_cw * P_w;
 
-    // Project a 3D voxel point to 2D depth an grey image coordinate
+    // Project a 3D voxel point to 2D depth an gray image coordinate
     const float2 p_c = Kdepth.Project(P_c);
     const float3 P_i = T_iw * P_w;
     const float2 p_i = Krgb.Project(P_i);
 
     // If the voxel is in image coordinate (inside of image boundary), then we
     // see if we should fuse this voxel
-    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+    if( depth.InBounds(p_c, 2) && gray.InBounds(p_i,2) )
     {
-      // prepare to fuse a grey pixel into this voxel
-      const float c =  grey.GetBilinear<float>(p_i);
+      // prepare to fuse a gray pixel into this voxel
+      const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
       if(c!=0)
@@ -210,26 +210,31 @@ __global__ void KernSdfFuseDirectGrey(
   }
 }
 
-void SdfFuseDirectGrey(
+void SdfFuseDirectGray(
     BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     ) {
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
-  KernSdfFuseDirectGrey<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGray<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 }
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////// For Grid SDF Fusion /////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
-__device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_colorVol;
+__device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_grayVol;
 
 // have a large size of array to save index of grid sdf that need to init
 __device__ int                                                       g_NextInitSDFs[102400];
@@ -237,10 +242,11 @@ __device__ int                                                       g_NextInitS
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-__global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                                    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-                                    float trunc_dist, float max_w, float mincostheta
-                                    )
+__global__ void KernSdfInitGrayGrid(
+    Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    float trunc_dist, float max_w, float mincostheta
+    )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
@@ -257,7 +263,7 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
     // Get voxel position in camera coordinate (good)
     const float3 P_c = T_cw * P_w;
 
-    // Project a 3D voxel point to 2D depth an grey image coordinate
+    // Project a 3D voxel point to 2D depth an gray image coordinate
     const float2 p_c = Kdepth.Project(P_c);
 
     const float3 P_i = T_iw * P_w;
@@ -265,10 +271,10 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
 
     // If the voxel is in image coordinate (inside of image boundary), then we
     // see if we should fuse this voxel
-    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+    if( depth.InBounds(p_c, 2) && gray.InBounds(p_i,2) )
     {
-      // prepare to fuse a grey pixel into this voxel
-      const float c =  grey.GetBilinear<float>(p_i);
+      // prepare to fuse a gray pixel into this voxel
+      const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
       if(c>0)
@@ -312,39 +318,39 @@ __global__ void KernSdfInitGreyGrid(Image<float> depth, Image<float4> normals, M
 }
 
 
-void SDFInitGreyGrid( int* pNextInitSDFs,
+void SDFInitGrayGrid( int* pNextInitSDFs,
                       BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
-                      BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
+                      BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> grayVol,
                       Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-                      Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+                      Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
                       float trunc_dist, float max_w, float mincostheta
                       )
 {
   if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
   {
-    printf("[SDFInitGreyGrid.cu] Fatal Error! Array size overflow!\n");
+    printf("[SDFInitgrayGrid.cu] Fatal Error! Array size overflow!\n");
     exit(-1);
   }
 
   // load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_grayVol, &grayVol, sizeof(grayVol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfInitGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfInitGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 
-  //  printf("[SDFInitGreyGrid.cu] Finished kernel.\n");
+  //  printf("[SDFInitgrayGrid.cu] Finished kernel.\n");
 
   int nNextInitSDFs[102400];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-  //  printf("[SDFInitGreyGrid.cu] Finished copy.\n");
+  //  printf("[SDFInitgrayGrid.cu] Finished copy.\n");
 
   // copy array back
   for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
@@ -359,21 +365,21 @@ void SDFInitGreyGrid( int* pNextInitSDFs,
 
   // cuda free memory
   g_vol.FreeMemory();
-  g_colorVol.FreeMemory();
+  g_grayVol.FreeMemory();
   GpuCheckErrors();
 
   //  free(nNextInitSDFs);
 
-  //  printf("[SDFInitGreyGrid.cu] Finished.\n");
+  //  printf("[SDFInitgrayGrid.cu] Finished.\n");
 }
 
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-// the following must be used with SDFInitGreyGrid
-__global__ void KernSdfFuseDirectGreyGrid(
+// the following must be used with SDFInitgrayGrid
+__global__ void KernSdfFuseDirectGrayGrid(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     )
 {
@@ -392,7 +398,7 @@ __global__ void KernSdfFuseDirectGreyGrid(
     // Get voxel position in camera coordinate (good)
     const float3 P_c = T_cw * P_w;
 
-    // Project a 3D voxel point to 2D depth an grey image coordinate
+    // Project a 3D voxel point to 2D depth an gray image coordinate
     const float2 p_c = Kdepth.Project(P_c);
 
     const float3 P_i = T_iw * P_w;
@@ -400,10 +406,10 @@ __global__ void KernSdfFuseDirectGreyGrid(
 
     // If the voxel is in image coordinate (inside of image boundary), then we
     // see if we should fuse this voxel
-    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+    if( depth.InBounds(p_c, 2) && gray.InBounds(p_i,2) )
     {
-      // prepare to fuse a grey pixel into this voxel
-      const float c =  grey.GetBilinear<float>(p_i);
+      // prepare to fuse a gray pixel into this voxel
+      const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
       if(c!=0)
@@ -443,7 +449,7 @@ __global__ void KernSdfFuseDirectGreyGrid(
 
             /// set val
             g_vol(x, y, z) = sdf;
-            g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+            g_grayVol(x,y,z) = (w*c + g_grayVol(x,y,z) * curvol.w) / (w + curvol.w);
           }
         }
       }
@@ -452,34 +458,34 @@ __global__ void KernSdfFuseDirectGreyGrid(
 }
 
 
-void SdfFuseDirectGreyGrid(
+void SdfFuseDirectGrayGrid(
     BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     )
 {
   /// load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_grayVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
   vol.CopyFrom(g_vol);
-  colorVol.CopyFrom(g_colorVol);
+  colorVol.CopyFrom(g_grayVol);
   GpuCheckErrors();
 
   // cuda free memory
   g_vol.FreeMemory();
-  g_colorVol.FreeMemory();
+  g_grayVol.FreeMemory();
   GpuCheckErrors();
 }
 
@@ -488,10 +494,10 @@ void SdfFuseDirectGreyGrid(
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-// the following must be used with SDFInitGreyGrid
-__global__ void KernSdfFuseDirectGreyGridSafe(
+// the following must be used with SDFInitgrayGrid
+__global__ void KernSdfFuseDirectGrayGridSafe(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     )
 {
@@ -510,7 +516,7 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
     // Get voxel position in camera coordinate (good)
     const float3 P_c = T_cw * P_w;
 
-    // Project a 3D voxel point to 2D depth an grey image coordinate
+    // Project a 3D voxel point to 2D depth an gray image coordinate
     const float2 p_c = Kdepth.Project(P_c);
 
     const float3 P_i = T_iw * P_w;
@@ -518,10 +524,10 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
 
     // If the voxel is in image coordinate (inside of image boundary), then we
     // see if we should fuse this voxel
-    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+    if( depth.InBounds(p_c, 2) && gray.InBounds(p_i,2) )
     {
-      // prepare to fuse a grey pixel into this voxel
-      const float c =  grey.GetBilinear<float>(p_i);
+      // prepare to fuse a gray pixel into this voxel
+      const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
       if(c!=0)
@@ -567,11 +573,12 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
 
               /// set val
               g_vol(x, y, z) = sdf;
-              g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+              g_grayVol(x,y,z) = (w*c + g_grayVol(x,y,z) * curvol.w) / (w + curvol.w);
+//              printf("fuse:%f,", c);
             }
             else
             {
-              printf("[KernSdfFuseDirectGreyGridSafe] warnning!!! skip %d,%d,%d when fusing!!!\n",
+              printf("[KernSdfFuseDirectgrayGridSafe] warnning!!! skip %d,%d,%d when fusing!!!\n",
                      int(floorf(x/g_vol.m_nVolumeGridRes)),
                      int(floorf(y/g_vol.m_nVolumeGridRes)),
                      int(floorf(z/g_vol.m_nVolumeGridRes)) );
@@ -585,34 +592,34 @@ __global__ void KernSdfFuseDirectGreyGridSafe(
 }
 
 
-void SdfFuseDirectGreyGridSafe(
+void SdfFuseDirectGrayGridSafe(
     BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta
     )
 {
   /// load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_grayVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridSafe<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrayGridSafe<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
   vol.CopyFrom(g_vol);
-  colorVol.CopyFrom(g_colorVol);
+  colorVol.CopyFrom(g_grayVol);
   GpuCheckErrors();
 
   // cuda free memory
   g_vol.FreeMemory();
-  g_colorVol.FreeMemory();
+  g_grayVol.FreeMemory();
   GpuCheckErrors();
 }
 
@@ -624,9 +631,9 @@ void SdfFuseDirectGreyGridSafe(
 // notice that in this function, we check each voxel we have and see if we need
 // to fuse any information into it. This is different from check each pixel we have
 // and try to fuse it into the sdf.
-__global__ void KernSdfFuseDirectGreyGridDesireIndex(
+__global__ void KernSdfFuseDirectgrayGridDesireIndex(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
@@ -651,7 +658,7 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
       // Get voxel position in camera coordinate (good)
       const float3 P_c = T_cw * P_w;
 
-      // Project a 3D voxel point to 2D depth an grey image coordinate
+      // Project a 3D voxel point to 2D depth an gray image coordinate
       const float2 p_c = Kdepth.Project(P_c);
 
       const float3 P_i = T_iw * P_w;
@@ -659,10 +666,10 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
 
       // If the voxel is in image coordinate (inside of image boundary), then we
       // see if we should fuse this voxel
-      if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+      if( depth.InBounds(p_c, 2) && gray.InBounds(p_i,2) )
       {
-        // prepare to fuse a grey pixel into this voxel
-        const float c =  grey.GetBilinear<float>(p_i);
+        // prepare to fuse a gray pixel into this voxel
+        const float c =  gray.GetBilinear<float>(p_i);
 
         // discard pixel value equals 0
         if(c!=0)
@@ -705,17 +712,17 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
 
               if(bWeight == true)
               {
-                g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+                g_grayVol(x,y,z) = (w*c + g_grayVol(x,y,z) * curvol.w) / (w + curvol.w);
               }
               else
               {
-                if(g_colorVol(x,y,z)>0)
+                if(g_grayVol(x,y,z)>0)
                 {
                   printf("skipFuse;");
                 }
                 else
                 {
-                  g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+                  g_grayVol(x,y,z) = (w*c + g_grayVol(x,y,z) * curvol.w) / (w + curvol.w);
                 }
               }
 
@@ -728,25 +735,25 @@ __global__ void KernSdfFuseDirectGreyGridDesireIndex(
 }
 
 
-void SdfFuseDirectGreyGridDesireIndex(
+void SdfFuseDirectGrayGridDesireIndex(
     int* pNextInitSDFs,
     BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
   if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
   {
-    printf("[SdfFuseDirectGreyGridAutoInit] Fatal Error! Array size overflow!\n");
+    printf("[SdfFuseDirectgrayGridAutoInit] Fatal Error! Array size overflow!\n");
     exit(-1);
   }
 
   /// load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_grayVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // copy array back
@@ -763,20 +770,20 @@ void SdfFuseDirectGreyGridDesireIndex(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectgrayGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
   vol.CopyFrom(g_vol);
-  colorVol.CopyFrom(g_colorVol);
+  colorVol.CopyFrom(g_grayVol);
   GpuCheckErrors();
 
   // cuda free memory
   g_vol.FreeMemory();
-  g_colorVol.FreeMemory();
+  g_grayVol.FreeMemory();
   GpuCheckErrors();
 
-  printf("[SdfFuseDirectGreyGridDesireIndex/cu] Finished all.\n");
+  printf("[SdfFuseDirectgrayGridDesireIndex/cu] Finished all.\n");
 }
 
 
@@ -785,9 +792,9 @@ void SdfFuseDirectGreyGridDesireIndex(
 //--the following add by luma---------------------------------------------------
 // the following do Grid SDF fusion and also mark voxels that cannot be fused in
 // due to uninitialized Grid SDF.
-__global__ void KernSdfFuseDirectGreyGridAutoInit(
+__global__ void KernSdfFuseDirectGrayGridAutoInit(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
@@ -806,7 +813,7 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
     // Get voxel position in camera coordinate (good)
     const float3 P_c = T_cw * P_w;
 
-    // Project a 3D voxel point to 2D depth an grey image coordinate
+    // Project a 3D voxel point to 2D depth an gray image coordinate
     const float2 p_c = Kdepth.Project(P_c);
 
     const float3 P_i = T_iw * P_w;
@@ -814,10 +821,10 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
 
     // If the voxel is in image coordinate (inside of image boundary), then we
     // see if we should fuse this voxel
-    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+    if( depth.InBounds(p_c, 2) && gray.InBounds(p_i,2) )
     {
-      // prepare to fuse a grey pixel into this voxel
-      const float c =  grey.GetBilinear<float>(p_i);
+      // prepare to fuse a gray pixel into this voxel
+      const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
       if(c!=0)
@@ -866,13 +873,13 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
 
               if(bWeight == true)
               {
-                g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+                g_grayVol(x,y,z) = (w*c + g_grayVol(x,y,z) * curvol.w) / (w + curvol.w);
               }
               else
               {
-                if(g_colorVol(x,y,z)==0.5)
+                if(g_grayVol(x,y,z)==0.5)
                 {
-                  g_colorVol(x,y,z) = (w*c + g_colorVol(x,y,z) * curvol.w) / (w + curvol.w);
+                  g_grayVol(x,y,z) = (w*c + g_grayVol(x,y,z) * curvol.w) / (w + curvol.w);
                 }
               }
 
@@ -890,31 +897,31 @@ __global__ void KernSdfFuseDirectGreyGridAutoInit(
 }
 
 
-void SdfFuseDirectGreyGridAutoInit(
+void SdfFuseDirectGrayGridAutoInit(
     int* pNextInitSDFs,
     BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
   if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
   {
-    printf("[SdfFuseDirectGreyGridAutoInit] Fatal Error! Array size overflow!\n");
+    printf("[SdfFuseDirectgrayGridAutoInit] Fatal Error! Array size overflow!\n");
     exit(-1);
   }
 
   /// load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_grayVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGreyGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectGrayGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
   GpuCheckErrors();
 
   // check if need to init new grid sdf
@@ -935,12 +942,12 @@ void SdfFuseDirectGreyGridAutoInit(
 
   // copy data back after launch the kernel
   vol.CopyFrom(g_vol);
-  colorVol.CopyFrom(g_colorVol);
+  colorVol.CopyFrom(g_grayVol);
   GpuCheckErrors();
 
   // cuda free memory
   g_vol.FreeMemory();
-  g_colorVol.FreeMemory();
+  g_grayVol.FreeMemory();
   GpuCheckErrors();
 }
 
@@ -948,8 +955,8 @@ void SdfFuseDirectGreyGridAutoInit(
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
-//__global__ void KernSdfFuseDirectGreyGrid(float* depth, float4* normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-//                                          Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+//__global__ void KernSdfFuseDirectgrayGrid(float* depth, float4* normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
+//                                          Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
 //                                          float trunc_dist, float max_w, float mincostheta
 //                                          )
 //{
@@ -968,7 +975,7 @@ void SdfFuseDirectGreyGridAutoInit(
 //    // Get voxel position in camera coordinate (good)
 //    const float3 P_c = T_cw * P_w;
 
-//    // Project a 3D voxel point to 2D depth an grey image coordinate
+//    // Project a 3D voxel point to 2D depth an gray image coordinate
 //    const float2 p_c = Kdepth.Project(P_c);
 
 //    const float3 P_i = T_iw * P_w;
@@ -976,10 +983,10 @@ void SdfFuseDirectGreyGridAutoInit(
 
 //    // If the voxel is in image coordinate (inside of image boundary), then we
 //    // see if we should fuse this voxel
-//    if( depth.InBounds(p_c, 2) && grey.InBounds(p_i,2) )
+//    if( depth.InBounds(p_c, 2) && gray.InBounds(p_i,2) )
 //    {
-//      // prepare to fuse a grey pixel into this voxel
-//      const float c =  grey.GetBilinear<float>(p_i);
+//      // prepare to fuse a gray pixel into this voxel
+//      const float c =  gray.GetBilinear<float>(p_i);
 
 //      // discard pixel value equals 0
 //      if(c!=0)
@@ -1032,11 +1039,11 @@ void SdfFuseDirectGreyGridAutoInit(
 //}
 
 
-//void SdfFuseDirectGreyGrid(
+//void SdfFuseDirectgrayGrid(
 //    BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol,
 //    BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
 //    float* depth, float4* norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
-//    Image<float> grey, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
+//    Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
 //    float trunc_dist, float max_w, float mincostheta
 //    )
 //{
@@ -1049,7 +1056,7 @@ void SdfFuseDirectGreyGridAutoInit(
 //  // launch kernel for SDF fusion
 //  dim3 blockDim(32,32);
 //  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-//  KernSdfFuseDirectGreyGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, grey, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+//  KernSdfFuseDirectgrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
 //  GpuCheckErrors();
 
 //  // copy data back after launch the kernel

@@ -67,14 +67,14 @@ public:
   {
     for(int i=0;i!=MAX_SUPPORT_GRID_NUM;i++)
     {
-//      if(CheckIfBasicSDFActive(i)==true)
-//      {
-        m_GridVolumes[i].d = 0;
-        m_GridVolumes[i].w = 0;
-        m_GridVolumes[i].h = 0;
-//        m_GridVolumes[i].CleanUp();
-//        GpuCheckErrors();
-//      }
+      //      if(CheckIfBasicSDFActive(i)==true)
+      //      {
+      m_GridVolumes[i].d = 0;
+      m_GridVolumes[i].w = 0;
+      m_GridVolumes[i].h = 0;
+      //        m_GridVolumes[i].CleanUp();
+      //        GpuCheckErrors();
+      //      }
     }
   }
 
@@ -127,8 +127,6 @@ public:
       m_GridVolumes[nIndex].InitVolume(m_nVolumeGridRes,
                                        m_nVolumeGridRes,
                                        m_nVolumeGridRes);
-      GpuCheckErrors();
-
       return true;
     }
     return false;
@@ -235,7 +233,7 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-//       return 0.0/0.0;
+      //       return 0.0/0.0;
     }
 
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
@@ -297,9 +295,9 @@ public:
     const float fFactor = float(m_nVolumeGridRes)/float(m_w);
 
     // Get the index of voxel in basic sdf
-    const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
-                                   floorf(pos_v.y/fFactor),
-                                   floorf(pos_v.z/fFactor)  );
+    const uint3 Index = make_uint3( floorf(pos_v.x/fFactor),
+                                    floorf(pos_v.y/fFactor),
+                                    floorf(pos_v.z/fFactor)  );
 
     int nIndex = GetIndex( Index.x, Index.y, Index.z);
 

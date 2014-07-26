@@ -120,7 +120,7 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
 }
 
 //////////////////////////////////////////////////////
-// Raycast Grey SDF
+// Raycast gray SDF
 //////////////////////////////////////////////////////
 
 __global__ void KernRaycastSdf(Image<float> imgdepth, Image<float4> norm, Image<float> img,
@@ -306,10 +306,10 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<uchar3> imgrgb,
 
 
 //////////////////////////////////////////////////////
-// Raycast grid grey SDF
+// Raycast grid gray SDF
 //////////////////////////////////////////////////////
 __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
-__device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_colorVol;
+__device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_grayVol;
 
 
 // raycast grid SDF
@@ -409,8 +409,8 @@ void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
 }
 
 
-// raycast grid grey SDF
-__global__ void KernRaycastSdfGridGrey(Image<float> imgdepth, Image<float4> norm, Image<float> img,
+// raycast grid gray SDF
+__global__ void KernRaycastSdfGridGray(Image<float> imgdepth, Image<float4> norm, Image<float> img,
                                        const Mat<float,3,4> T_wc, ImageIntrinsics K,
                                        float near, float far, float trunc_dist, bool subpix )
 {
@@ -467,7 +467,7 @@ __global__ void KernRaycastSdfGridGrey(Image<float> imgdepth, Image<float4> norm
     // Compute normal
     const float3 pos_w = c_w + depth * ray_w;
     const float3 _n_w = g_vol.GetUnitsBackwardDiffDxDyDz(pos_w);
-    const float c = g_colorVol.GetUnitsTrilinearClamped(pos_w);
+    const float c = g_grayVol.GetUnitsTrilinearClamped(pos_w);
     const float len_n_w = length(_n_w);
     const float3 n_w = len_n_w > 0 ? _n_w / len_n_w : make_float3(0,0,1);
     const float3 n_c = mulSO3inv(T_wc,n_w);
@@ -489,23 +489,22 @@ __global__ void KernRaycastSdfGridGrey(Image<float> imgdepth, Image<float4> norm
 
 void RaycastSdf(Image<float> depth, Image<float4> norm, Image<float> img,
                 const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
-                const BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> colorVol,
+                const BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> grayVol,
                 const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
                 float trunc_dist, bool subpix )
 {
-
   // load vol val to golbal memory
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_colorVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_grayVol, &grayVol, sizeof(grayVol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, img);
-  KernRaycastSdfGridGrey<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
+  KernRaycastSdfGridGray<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
   GpuCheckErrors();
 
   g_vol.FreeMemory();
-  g_colorVol.FreeMemory();
+  g_grayVol.FreeMemory();
 }
 
 

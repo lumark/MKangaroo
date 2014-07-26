@@ -246,8 +246,7 @@ struct VolumeGrid
     return make_float3(
           v0 - Get(x-1, y, z),
           v0 - Get(x, y-1, z),
-          v0 - Get(x, y, z-1)
-          );
+          v0 - Get(x, y, z-1) );
   }
 
   inline __device__ __host__
