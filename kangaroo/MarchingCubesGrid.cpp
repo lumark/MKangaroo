@@ -259,11 +259,11 @@ void SaveMeshGrid(std::string filename,
   std::vector<aiColor4D> colors;
 
   // scan each grid..
-  for(int i=0;i!=vol.m_nWholeGridRes;i++)
+  for(int i=0;i!=vol.m_nGridRes_w;i++)
   {
-    for(int j=0;j!=vol.m_nWholeGridRes;j++)
+    for(int j=0;j!=vol.m_nGridRes_h;j++)
     {
-      for(int k=0;k!=vol.m_nWholeGridRes;k++)
+      for(int k=0;k!=vol.m_nGridRes_d;k++)
       {
         if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
         {

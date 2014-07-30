@@ -326,7 +326,7 @@ void SDFInitGrayGrid( int* pNextInitSDFs,
                       float trunc_dist, float max_w, float mincostheta
                       )
 {
-  if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
+  if(vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d>102400)
   {
     printf("[SDFInitgrayGrid.cu] Fatal Error! Array size overflow!\n");
     exit(-1);
@@ -353,7 +353,7 @@ void SDFInitGrayGrid( int* pNextInitSDFs,
   //  printf("[SDFInitgrayGrid.cu] Finished copy.\n");
 
   // copy array back
-  for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  for(int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d;i++)
   {
     pNextInitSDFs[i] = nNextInitSDFs[i];
     nNextInitSDFs[i] = 0;
@@ -744,7 +744,7 @@ void SdfFuseDirectGrayGridDesireIndex(
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
-  if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
+  if(vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d>102400)
   {
     printf("[SdfFuseDirectgrayGridAutoInit] Fatal Error! Array size overflow!\n");
     exit(-1);
@@ -759,7 +759,7 @@ void SdfFuseDirectGrayGridDesireIndex(
   // copy array back
   int nNextInitSDFs[102400];
 
-  for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  for(int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d;i++)
   {
     nNextInitSDFs[i] = pNextInitSDFs[i] ;
   }
@@ -906,7 +906,7 @@ void SdfFuseDirectGrayGridAutoInit(
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
-  if(vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes>102400)
+  if(vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d>102400)
   {
     printf("[SdfFuseDirectgrayGridAutoInit] Fatal Error! Array size overflow!\n");
     exit(-1);
@@ -930,7 +930,7 @@ void SdfFuseDirectGrayGridAutoInit(
   GpuCheckErrors();
 
   // copy array back
-  for(int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  for(int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d;i++)
   {
     pNextInitSDFs[i] = nNextInitSDFs[i];
     nNextInitSDFs[i] = 0;
@@ -1191,7 +1191,7 @@ void SdfReset(VolumeGrid<float,roo::TargetDevice, roo::Manage> vol)
 
 void SdfReset(BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> vol)
 {
-  for(unsigned int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  for(unsigned int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d;i++)
   {
     // reset for each valid rolling grid sdf
     if(vol.CheckIfBasicSDFActive(i)==true)
@@ -1204,7 +1204,7 @@ void SdfReset(BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> vol)
 
 void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetDevice, roo::Manage> vol)
 {
-  for(unsigned int i=0;i!=vol.m_nWholeGridRes*vol.m_nWholeGridRes*vol.m_nWholeGridRes;i++)
+  for(unsigned int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d;i++)
   {
     // reset for each valid rolling grid sdf
     if(vol.CheckIfBasicSDFActive(i)==true)

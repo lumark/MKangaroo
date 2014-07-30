@@ -34,31 +34,32 @@ public:
   void init(unsigned int n_w, unsigned int n_h, unsigned int n_d, unsigned int n_res, const BoundingBox& r_bbox)
   {
     // init grid sdf
-    if(n_w == n_h && n_h == n_d)
+
+    m_w              = n_w;
+    m_h              = n_h;
+    m_d              = n_d;
+
+    m_bbox           = r_bbox;
+    m_nVolumeGridRes = n_res;
+    m_nGridRes_w  = m_w/m_nVolumeGridRes;
+    m_nGridRes_h  = m_h/m_nVolumeGridRes;
+    m_nGridRes_d  = m_d/m_nVolumeGridRes;
+
+    if(m_nGridRes_w * m_nGridRes_h * m_nGridRes_d > MAX_SUPPORT_GRID_NUM)
     {
-      m_w              = n_w;
-      m_h              = n_h;
-      m_d              = n_d;
-
-      m_bbox           = r_bbox;
-      m_nVolumeGridRes = n_res;
-      m_nWholeGridRes  = m_w/m_nVolumeGridRes;
-
-      if(m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes > MAX_SUPPORT_GRID_NUM)
-      {
-        printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
-               m_nWholeGridRes * m_nWholeGridRes * m_nWholeGridRes);
-        printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
-        exit(-1);
-      }
-
-      ResetAllGridVol();
-      m_shift = make_int3(0,0,0);
-    }
-    else
-    {
-      printf("[BoundedVolumeGrid/init] Fatal error! Only support cube SDF with (n*n*n) size!\n");
+      printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
+             m_nGridRes_w * m_nGridRes_h * m_nGridRes_d);
+      printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
       exit(-1);
+    }
+
+    ResetAllGridVol();
+    m_shift = make_int3(0,0,0);
+
+    if(n_w != n_h || n_h != n_d || n_w!=n_d)
+
+    {
+      std::cerr<<"[BoundedVolumeGrid/init] non cube SDF does not support yet!"<<std::endl;
     }
   }
 
@@ -160,7 +161,7 @@ public:
 
     int nNum = 0;
 
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!=m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     {
       if(m_GridVolumes[i].d !=m_nVolumeGridRes &&
          m_GridVolumes[i].h !=m_nVolumeGridRes &&
@@ -215,9 +216,9 @@ public:
              int(floorf(x/m_nVolumeGridRes)),
              int(floorf(y/m_nVolumeGridRes)),
              int(floorf(z/m_nVolumeGridRes)),
-             m_nWholeGridRes-1,
-             m_nWholeGridRes-1,
-             m_nWholeGridRes-1);
+             m_nGridRes_w-1,
+             m_nGridRes_h-1,
+             m_nGridRes_d-1);
     }
 
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
@@ -330,86 +331,86 @@ public:
   {
     if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
     {
-      const unsigned int nIndex =x + m_nWholeGridRes* (y+ m_nWholeGridRes* z);
+      const unsigned int nIndex =x + m_nGridRes_h* (y+ m_nGridRes_d* z);
       return  nIndex;
     }
 
     // for x
-    if(m_shift.x>0 && m_shift.x<=m_nWholeGridRes)
+    if(m_shift.x>0 && m_shift.x<=m_nGridRes_w)
     {
-      if( x<=m_nWholeGridRes-1-m_shift.x)
+      if( x<=m_nGridRes_w-1-m_shift.x)
       {
         x = x+m_shift.x;
       }
-      else if(x>=m_nWholeGridRes-1-m_shift.x)
+      else if(x>=m_nGridRes_w-1-m_shift.x)
       {
-        x = x-(m_nWholeGridRes-1)+(m_shift.x-1);
+        x = x-(m_nGridRes_w-1)+(m_shift.x-1);
       }
     }
-    else if(m_shift.x<0 && m_shift.x>=-m_nWholeGridRes)
+    else if(m_shift.x<0 && m_shift.x>=-m_nGridRes_w)
     {
-      if(x>=abs(m_shift.x) && x<=m_nWholeGridRes)
+      if(x>=abs(m_shift.x) && x<=m_nGridRes_w)
       {
         x = x+m_shift.x;
       }
       else if( x<=abs(m_shift.x) )
       {
-        x = x+m_nWholeGridRes-1-abs(m_shift.x) ;
+        x = x+m_nGridRes_w-1-abs(m_shift.x) ;
       }
     }
 
 
     // for y
-    if(m_shift.y>0 && m_shift.y<=m_nWholeGridRes)
+    if(m_shift.y>0 && m_shift.y<=m_nGridRes_h)
     {
-      if( y<=m_nWholeGridRes-1-m_shift.y)
+      if( y<=m_nGridRes_h-1-m_shift.y)
       {
         y = y+m_shift.y;
       }
-      else if(y>=m_nWholeGridRes-1-m_shift.y)
+      else if(y>=m_nGridRes_h-1-m_shift.y)
       {
-        y = y-(m_nWholeGridRes-1)+(m_shift.y-1);
+        y = y-(m_nGridRes_h-1)+(m_shift.y-1);
       }
     }
-    else if(m_shift.y<0 && m_shift.y>=-m_nWholeGridRes)
+    else if(m_shift.y<0 && m_shift.y>=-m_nGridRes_h)
     {
-      if(y>=abs(m_shift.y) && y<=m_nWholeGridRes)
+      if(y>=abs(m_shift.y) && y<=m_nGridRes_h)
       {
         y = y+m_shift.y;
       }
       else if( y<=abs(m_shift.y) )
       {
-        y = y+m_nWholeGridRes-1-abs(m_shift.y) ;
+        y = y+m_nGridRes_h-1-abs(m_shift.y) ;
       }
     }
 
     // for z
-    if(m_shift.z>0 && m_shift.z<=m_nWholeGridRes)
+    if(m_shift.z>0 && m_shift.z<=m_nGridRes_d)
     {
-      if( z<=m_nWholeGridRes-1-m_shift.z)
+      if( z<=m_nGridRes_d-1-m_shift.z)
       {
         z = z+m_shift.z;
       }
-      else if(z>=m_nWholeGridRes-1-m_shift.z)
+      else if(z>=m_nGridRes_d-1-m_shift.z)
       {
-        z = z-(m_nWholeGridRes-1)+(m_shift.z-1);
+        z = z-(m_nGridRes_d-1)+(m_shift.z-1);
       }
     }
-    else if(m_shift.z<0 && m_shift.z>=-m_nWholeGridRes)
+    else if(m_shift.z<0 && m_shift.z>=-m_nGridRes_d)
     {
-      if(z>=abs(m_shift.z) && z<=m_nWholeGridRes)
+      if(z>=abs(m_shift.z) && z<=m_nGridRes_d)
       {
         z = z+m_shift.z;
       }
       else if( z<=abs(m_shift.z) )
       {
-        z = z+m_nWholeGridRes-1-abs(m_shift.z) ;
+        z = z+m_nGridRes_d-1-abs(m_shift.z) ;
       }
     }
 
 
     // compute actual index
-    const unsigned int nIndex =x + m_nWholeGridRes* (y+ m_nWholeGridRes* z);
+    const unsigned int nIndex =x + m_nGridRes_h* (y+ m_nGridRes_d* z);
     return  nIndex;
   }
 
@@ -421,7 +422,7 @@ public:
     return deriv / length(deriv);
   }
 
-  inline __device__
+  inline __device__ __host__
   float3 VoxelPositionInUnits(int x, int y, int z) const
   {
     const float3 vol_size = m_bbox.Size();
@@ -433,7 +434,7 @@ public:
           );
   }
 
-  inline __device__
+  inline __device__ __host__
   float3 VoxelPositionInUnits(int3 p_v) const
   {
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
@@ -446,7 +447,7 @@ public:
   inline __host__
   void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     {
       m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
     }
@@ -455,7 +456,7 @@ public:
   inline __host__
   void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     {
       m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
     }
@@ -465,7 +466,7 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     {
       // skip void volum grid
       if(rVol.CheckIfBasicSDFActive(i)== true)
@@ -488,7 +489,7 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
   {
-    for(int i=0;i!= m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!= m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     {
       // skip void volum grid
       if(rHVol.CheckIfBasicSDFActive(i)== true)
@@ -515,7 +516,7 @@ public:
   inline __host__
   void FreeMemory()
   {
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!=m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     {
       if(m_GridVolumes[i].d == m_nVolumeGridRes &&
          m_GridVolumes[i].h == m_nVolumeGridRes &&
@@ -564,7 +565,7 @@ public:
   {
     int nNum = 0;
 
-    for(int i=0;i!=m_nWholeGridRes*m_nWholeGridRes*m_nWholeGridRes;i++)
+    for(int i=0;i!=m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     {
       if(m_GridVolumes[i].d == m_nVolumeGridRes &&
          m_GridVolumes[i].w == m_nVolumeGridRes &&
@@ -596,28 +597,91 @@ public:
   {
     m_shift = m_shift + shift_index;
 
-    if(m_shift.x == m_nWholeGridRes ||  m_shift.x == -m_nWholeGridRes)
+    if(m_shift.x == m_nGridRes_w ||  m_shift.x == -m_nGridRes_w)
     {
       m_shift.x = 0;
       printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
     }
 
-    if(m_shift.y == m_nWholeGridRes || m_shift.y == -m_nWholeGridRes)
+    if(m_shift.y == m_nGridRes_h || m_shift.y == -m_nGridRes_h)
     {
       m_shift.y = 0;
       printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
     }
 
-    if(m_shift.z == m_nWholeGridRes || m_shift.z == -m_nWholeGridRes)
+    if(m_shift.z == m_nGridRes_d || m_shift.z == -m_nGridRes_d)
     {
       m_shift.z = 0;
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift is %d \n",
-           m_shift.x,m_shift.y,m_shift.z, m_nWholeGridRes);
+    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift x is %d \n",
+           m_shift.x,m_shift.y,m_shift.z, m_nGridRes_w);
   }
 
+
+
+  //////////////////////////////////////////////////////
+  // Access sub-regions
+  //////////////////////////////////////////////////////
+
+  inline __device__ __host__
+  void SubBoundingVolume( const BoundingBox& region)
+  {
+    const float3 min_fv = (region.Min() - m_bbox.Min()) / (m_bbox.Size());
+    const float3 max_fv = (region.Max() - m_bbox.Min()) / (m_bbox.Size());
+
+    const int3 min_v = make_int3(
+          fmaxf((m_w-1)*min_fv.x, 0),
+          fmaxf((m_h-1)*min_fv.y, 0),
+          fmaxf((m_d-1)*min_fv.z, 0)
+          );
+    const int3 max_v = make_int3(
+          fminf(ceilf((m_w-1)*max_fv.x), m_w-1),
+          fminf(ceilf((m_h-1)*max_fv.y), m_h-1),
+          fminf(ceilf((m_d-1)*max_fv.z), m_d-1)
+          );
+
+    const int3 size_v = max((max_v - min_v) + make_int3(1,1,1), make_int3(0,0,0) );
+
+    const BoundingBox nbbox(
+          VoxelPositionInUnits(min_v),
+          VoxelPositionInUnits(max_v)
+          );
+
+    printf("min_v: x%d,y%d,z%d\n",min_v.x,min_v.y,min_v.z);
+    printf("size_v: x%d,y%d,z%d\n",size_v.x,size_v.y,size_v.z);
+
+    // now get subvol for rVol
+//    BoundedVolumeGrid<T, Target, Management> rVol;
+//    rVol.init();
+//    for(int i=0;i!= m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d;i++)
+//    {
+//      // skip void volum grid
+//      if(rVol.CheckIfBasicSDFActive(i)== true)
+//      {
+//        if(CheckIfBasicSDFActive(i)==false)
+//        {
+//          if(InitSingleBasicSDFWithIndex(i)==false)
+//          {
+//            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+//            exit(-1);
+//          }
+//        }
+//        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+//        GpuCheckErrors();
+//      }
+//    }
+
+    //    BoundedVolumeGrid<T,Target,DontManage> testBB;
+    //    testBB.CopyAndInitFrom();
+    //    return BoundedVolumeGrid<T,Target,DontManage>();
+
+    //    return BoundedVolumeGrid<T,Target,DontManage>(
+    //          Volume<T,Target,Management>::SubVolume(min_v, size_v),
+    //          nbbox
+    //          );
+  }
 
 
 public:
@@ -628,11 +692,13 @@ public:
   // for rolling sdf. When this value is not zero, we need to recompute index based on the shift
   int3                                        m_shift;
 
-  // bounding box ofbounded volume grid
+  // bounding box of bounded volume grid
   BoundingBox                                 m_bbox;
 
-  unsigned int                                m_nVolumeGridRes;            // resolution of a single grid in one dim.
-  unsigned int                                m_nWholeGridRes;             // resolution of a whole grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nVolumeGridRes;         // resolution of a single grid in one dim.
+  unsigned int                                m_nGridRes_d;             // resolution of grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nGridRes_w;             // resolution of grid in one dim. usually 4, 8, 16
+  unsigned int                                m_nGridRes_h;             // resolution of grid in one dim. usually 4, 8, 16
 
   // volume that save all data
   // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.
