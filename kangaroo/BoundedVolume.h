@@ -47,7 +47,8 @@ public:
   }
 
   inline __host__ __device__
-  BoundedVolume(unsigned int w, unsigned int h, unsigned int d, float3 min_bounds, float3 max_bounds)
+  BoundedVolume(unsigned int w, unsigned int h, unsigned int d,
+                float3 min_bounds, float3 max_bounds)
     : Volume<T,Target,Management>(w,h,d),
       bbox(min_bounds,max_bounds)
   {
@@ -147,9 +148,12 @@ public:
           fmaxf((Volume<T,Target,Management>::d-1)*min_fv.z, 0)
           );
     const int3 max_v = make_int3(
-          fminf(ceilf((Volume<T,Target,Management>::w-1)*max_fv.x), Volume<T,Target,Management>::w-1),
-          fminf(ceilf((Volume<T,Target,Management>::h-1)*max_fv.y), Volume<T,Target,Management>::h-1),
-          fminf(ceilf((Volume<T,Target,Management>::d-1)*max_fv.z), Volume<T,Target,Management>::d-1)
+          fminf(ceilf((Volume<T,Target,Management>::w-1)*max_fv.x),
+                Volume<T,Target,Management>::w-1),
+          fminf(ceilf((Volume<T,Target,Management>::h-1)*max_fv.y),
+                Volume<T,Target,Management>::h-1),
+          fminf(ceilf((Volume<T,Target,Management>::d-1)*max_fv.z),
+                Volume<T,Target,Management>::d-1)
           );
 
     const int3 size_v = max((max_v - min_v) + make_int3(1,1,1), make_int3(0,0,0) );

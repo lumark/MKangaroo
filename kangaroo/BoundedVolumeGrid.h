@@ -31,7 +31,8 @@ public:
   // parameters that we can pass into a kernel function
   // ===========================================================================
   inline __host__
-  void init(unsigned int n_w, unsigned int n_h, unsigned int n_d, unsigned int n_res, const BoundingBox& r_bbox)
+  void init(unsigned int n_w, unsigned int n_h, unsigned int n_d,
+            unsigned int n_res, const BoundingBox& r_bbox)
   {
     // init grid sdf
     m_w              = n_w;
@@ -45,10 +46,10 @@ public:
     m_nGridRes_d     = m_d/m_nVolumeGridRes;
     m_nTotalGridRes = m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;
 
-    if(m_nGridRes_w * m_nGridRes_h * m_nGridRes_d > MAX_SUPPORT_GRID_NUM)
+    if(m_nTotalGridRes > MAX_SUPPORT_GRID_NUM)
     {
-      printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow 4096, request %d .\n",
-             m_nGridRes_w * m_nGridRes_h * m_nGridRes_d);
+      printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow %d, request %d .\n",
+             MAX_SUPPORT_GRID_NUM, m_nTotalGridRes);
       printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
       exit(-1);
     }
@@ -615,8 +616,8 @@ public:
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift x is %d \n",
-           m_shift.x,m_shift.y,m_shift.z, m_nGridRes_w);
+    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift x=%d,y=%d,z=%d \n",
+           m_shift.x,m_shift.y,m_shift.z, m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
   }
 
 

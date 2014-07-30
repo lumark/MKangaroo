@@ -237,7 +237,7 @@ __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
 __device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_grayVol;
 
 // have a large size of array to save index of grid sdf that need to init
-__device__ int                                                       g_NextInitSDFs[102400];
+__device__ int                                                       g_NextInitSDFs[MAX_SUPPORT_GRID_NUM];
 
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
@@ -326,7 +326,7 @@ void SDFInitGrayGrid( int* pNextInitSDFs,
                       float trunc_dist, float max_w, float mincostheta
                       )
 {
-  if(vol.GetTotalGridNum()>102400)
+  if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
   {
     printf("[SDFInitgrayGrid.cu] Fatal Error! Array size overflow!\n");
     exit(-1);
@@ -346,7 +346,7 @@ void SDFInitGrayGrid( int* pNextInitSDFs,
 
   //  printf("[SDFInitgrayGrid.cu] Finished kernel.\n");
 
-  int nNextInitSDFs[102400];
+  int nNextInitSDFs[MAX_SUPPORT_GRID_NUM];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
@@ -744,7 +744,7 @@ void SdfFuseDirectGrayGridDesireIndex(
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
-  if(vol.GetTotalGridNum()>102400)
+  if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
   {
     printf("[SdfFuseDirectgrayGridAutoInit] Fatal Error! Array size overflow!\n");
     exit(-1);
@@ -757,7 +757,7 @@ void SdfFuseDirectGrayGridDesireIndex(
   GpuCheckErrors();
 
   // copy array back
-  int nNextInitSDFs[102400];
+  int nNextInitSDFs[MAX_SUPPORT_GRID_NUM];
 
   for(int i=0;i!=vol.GetTotalGridNum();i++)
   {
@@ -906,7 +906,7 @@ void SdfFuseDirectGrayGridAutoInit(
     float trunc_dist, float max_w, float mincostheta, bool bWeight
     )
 {
-  if(vol.GetTotalGridNum()>102400)
+  if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
   {
     printf("[SdfFuseDirectgrayGridAutoInit] Fatal Error! Array size overflow!\n");
     exit(-1);
@@ -925,7 +925,7 @@ void SdfFuseDirectGrayGridAutoInit(
   GpuCheckErrors();
 
   // check if need to init new grid sdf
-  int nNextInitSDFs[102400];
+  int nNextInitSDFs[MAX_SUPPORT_GRID_NUM];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
