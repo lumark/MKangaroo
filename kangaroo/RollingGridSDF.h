@@ -101,26 +101,26 @@ public:
           // for x
           if(TotalShift.x>0 && i<TotalShift.x)
           {
-            nNextResetSDFs[i+pVol->m_nGridRes_h*(j+pVol->m_nGridRes_d*k)] =1;
+            nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
 
           if(TotalShift.x<0 && i>= int(pVol->m_nGridRes_w) + TotalShift.x)
           {
-            nNextResetSDFs[i+pVol->m_nGridRes_h*(j+pVol->m_nGridRes_d*k)] =1;
+            nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
 
           // for y
           if(TotalShift.y>0 && j<TotalShift.y)
           {
-            nNextResetSDFs[i+pVol->m_nGridRes_h*(j+pVol->m_nGridRes_d*k)] =1;
+            nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
 
           if(TotalShift.y<0 && j>= int(pVol->m_nGridRes_h) + TotalShift.y)
           {
-            nNextResetSDFs[i+pVol->m_nGridRes_h*(j+pVol->m_nGridRes_d*k)] =1;
+            nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
 
@@ -128,13 +128,13 @@ public:
           // for z
           if(TotalShift.z>0 && k<TotalShift.z)
           {
-            nNextResetSDFs[i+pVol->m_nGridRes_d*(j+pVol->m_nGridRes_d*k)] =1;
+            nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
           }
 
           if(TotalShift.z<0 && k>= int(pVol->m_nGridRes_d) + TotalShift.z)
           {
-            nNextResetSDFs[i+pVol->m_nGridRes_d*(j+pVol->m_nGridRes_d*k)] =1;
+            nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[z]prepare free index %d,%d,%d\n", i, j, k);
           }
         }
@@ -152,7 +152,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////
     int nFreeNum = 0;
     int nNeedFreeNum = 0;
-    for(unsigned int i=0;i!=pVol->m_nGridRes_w* pVol->m_nGridRes_h* pVol->m_nGridRes_d; i++)
+    for(unsigned int i=0;i!=pVol->GetTotalGridNum(); i++)
     {
       if(nNextResetSDFs[i] == 1)
       {

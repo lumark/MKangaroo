@@ -98,9 +98,9 @@ __global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
       g_vol(x,y,z) = SDF_t(0.0/0.0,0.0);
 
       // get the index of grid sdf that need to be reseted
-      int nIndex = int(floorf(x/g_vol.m_nVolumeGridRes)) +
-          g_vol.m_nGridRes_h * ( int(floorf(y/g_vol.m_nVolumeGridRes)) +
-                                    g_vol.m_nGridRes_d * int(floorf(z/g_vol.m_nVolumeGridRes)) );
+      int nIndex =  int(floorf(x/g_vol.m_nVolumeGridRes)) +
+          g_vol.m_nGridRes_w * ( int(floorf(y/g_vol.m_nVolumeGridRes)) +
+                                 g_vol.m_nGridRes_h * int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
       // save index of sdf that need to be reset later
       g_NextResetSDFs[nIndex] = 1;
@@ -156,11 +156,11 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
 
 
   // 3, copy array back
-  int nNextResetSDFs[vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d];
+  int nNextResetSDFs[vol.GetTotalGridNum()];
   cudaMemcpyFromSymbol(nNextResetSDFs, g_NextResetSDFs, sizeof(g_NextResetSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-  for(int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d;i++)
+  for(int i=0;i!=vol.GetTotalGridNum();i++)
   {
     pNextInitSDFs[i] = nNextResetSDFs[i];
 
@@ -174,7 +174,7 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
   g_vol.FreeMemory();
 
   // reset
-  for(int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_w;i++)
+  for(int i=0;i!=vol.GetTotalGridNum();i++)
   {
     if(nNextResetSDFs[i]==1)
     {
@@ -209,12 +209,12 @@ __global__ void KernDetectRollingSdfShift(
         if(shift.x > g_positive_shift.x)
         {
           g_positive_shift.x = shift.x;
-//          printf("positive_shift_x:%f;",g_positive_shift.x);
+          //          printf("positive_shift_x:%f;",g_positive_shift.x);
         }
         else if(shift.x < g_negative_shift.x)
         {
           g_negative_shift.x = shift.x;
-//          printf("negative_shift_x:%f;",g_negative_shift.x);
+          //          printf("negative_shift_x:%f;",g_negative_shift.x);
         }
       }
 
@@ -223,12 +223,12 @@ __global__ void KernDetectRollingSdfShift(
         if(shift.y > g_positive_shift.y)
         {
           g_positive_shift.y = shift.y;
-//          printf("positive_shift_y:%f;",g_positive_shift.y);
+          //          printf("positive_shift_y:%f;",g_positive_shift.y);
         }
         else if(shift.y < g_negative_shift.y)
         {
           g_negative_shift.y = shift.y;
-//          printf("negative_shift_y:%f;",g_negative_shift.y);
+          //          printf("negative_shift_y:%f;",g_negative_shift.y);
         }
       }
 
@@ -237,12 +237,12 @@ __global__ void KernDetectRollingSdfShift(
         if(shift.z > g_positive_shift.z)
         {
           g_positive_shift.z = shift.z;
-//          printf("positive_shift_z:%f;",g_positive_shift.z);
+          //          printf("positive_shift_z:%f;",g_positive_shift.z);
         }
         else if(shift.z < g_negative_shift.z)
         {
           g_negative_shift.z = shift.z;
-//          printf("negative_shift_z:%f;",g_negative_shift.z);
+          //          printf("negative_shift_z:%f;",g_negative_shift.z);
         }
       }
     }
@@ -278,9 +278,9 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-//  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
-//         positive_shift.x,positive_shift.y,positive_shift.z,
-//         negative_shift.x,negative_shift.y,negative_shift.z);
+  //  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
+  //         positive_shift.x,positive_shift.y,positive_shift.z,
+  //         negative_shift.x,negative_shift.y,negative_shift.z);
 
   g_vol.FreeMemory();
 }

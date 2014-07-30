@@ -83,7 +83,7 @@ void SavePXM(const std::string                                      filename,
   SavePXMBoundingBox(sBBFileName, vol.m_bbox);
 
   // save each active volume in BoundedVolumeGrid to HardDisk
-  for(int i=0;i!=vol.m_nGridRes_w*vol.m_nGridRes_h*vol.m_nGridRes_d;i++)
+  for(int i=0;i!=vol.GetTotalGridNum();i++)
   {
     if(hvol.CheckIfBasicSDFActive(i)==true)
     {
