@@ -3,6 +3,7 @@
 
 #include "BoundedVolumeGrid.h"
 #include "cu_sdffusion.h"
+#include "cu_sdffusion_grid.h"
 
 namespace roo {
 
