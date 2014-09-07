@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Image.h"
+#include <kangaroo/Image.h>
 
 namespace roo {
 
@@ -53,7 +53,7 @@ inline void BoxReduceIgnoreInvalid(Pyramid<T,Levels> pyramid)
     const int h = pyramid.imgs[0].h;
 
     // Downsample from pyramid.imgs[0]
-    for(int l=1; l<Levels && (w>>l > 0) && (h>>l > 0); ++l) {
+    for(unsigned int l=1; l<Levels && (w>>l > 0) && (h>>l > 0); ++l) {
         BoxHalfIgnoreInvalid<T,UpType,T>(pyramid.imgs[l], pyramid.imgs[l-1]);
     }
 }
@@ -76,24 +76,5 @@ inline void BlurReduce(Pyramid<T,Levels> pyramid, Image<T> temp1, Image<T> temp2
         BoxHalf<T,UpType,T>(pyramid.imgs[l], temp1.SubImage(parentw,parenth) );
     }
 }
-
-//template<typename T, unsigned Levels, typename UpType>
-//inline void BlurReduceGaussian(Pyramid<T,Levels> pyramid, Image<T> temp1, Image<T> temp2)
-//{
-//    // TODO: Make better
-
-//    // pyramid.imgs[0] has size (w,h)
-//    const int w = pyramid.imgs[0].w;
-//    const int h = pyramid.imgs[0].h;
-
-//    // Downsample from pyramid.imgs[0], blurring into temporary, and using BoxHalf.
-//    for(int l=1; l<Levels && (w>>l > 0) && (h>>l > 0); ++l) {
-//        const int parent = l-1;
-//        const int parentw = w >> parent;
-//        const int parenth = h >> parent;
-//        GaussianBlur( temp1.SubImage(parentw,parenth), pyramid.imgs[l-1], temp2.SubImage(parentw,parenth),0,0);
-//        BoxHalf<T,UpType,T>(pyramid.imgs[l], temp1.SubImage(parentw,parenth) );
-//    }
-//}
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Image.h"
+#include <kangaroo/Image.h>
 
 namespace roo
 {
@@ -27,16 +27,18 @@ struct Pyramid {
 
         // Build power of two structure
         for(unsigned l=0; l < Levels && (w>>l > 0) && (h>>l > 0); ++l ) {
-            imgs[l] = roo::Image<T,Target,Management>(w>>l,h>>l);
+            // Avoid r-value assignment in case it isn't available.
+            roo::Image<T,Target,Management> temp(w>>l,h>>l);
+            imgs[l].Swap(temp);
         }
     }
 
-    template<typename ManagementCopyFrom>
+    template<typename TargetFrom, typename ManagementFrom>
     inline __host__ __device__
-    Pyramid(const Pyramid<T,Levels,Target,ManagementCopyFrom>& pyramid)
+    Pyramid(const Pyramid<T,Levels,TargetFrom,ManagementFrom>& pyramid)
     {
-        Management::AssignmentCheck();
-        for(int l=0; l<Levels; ++l) {
+        AssignmentCheck<Management,Target,TargetFrom>();
+        for(unsigned int l=0; l<Levels; ++l) {
             imgs[l] = pyramid.imgs[l];
         }
     }
@@ -63,7 +65,7 @@ struct Pyramid {
     inline __host__
     void CopyFrom(const Pyramid<T,Levels,TargetFrom,ManagementFrom>& pyramid)
     {
-        for(int l=0; l<Levels; ++l) {
+        for(unsigned int l=0; l<Levels; ++l) {
             imgs[l].CopyFrom(pyramid.imgs[l]);
         }
     }
@@ -118,7 +120,7 @@ struct Pyramid {
     void AllocateFromImage(unsigned w, unsigned h, Image<unsigned char, Target, DontManage> scratch )
     {
         // Verify that this is DontManage pyramid type
-        Management::AssignmentCheck();
+        AssignmentCheck<Management,Target,Target>();
 
         // Build power of two structure
         for(unsigned l=0; l < Levels && (w>>l > 0) && (h>>l > 0); ++l ) {

@@ -5,27 +5,29 @@
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
-inline pangolin::View& SetupPangoGLWithCuda(int w, int h, int ui_width = 180, std::string window_title = "-", unsigned int min_gpu_mem_mb = 500 )
+inline pangolin::View& SetupPangoGLWithCuda(int w, int h, int ui_width = 180, std::string window_title = "-", int min_gpu_mem_mb = 100 )
 {
     pangolin::View& container = SetupPangoGL(w,h,ui_width, window_title);
 
+#if CUDART_VERSION < 5000
+    // This is now deprecated and actually seems to fail in 5.0
     // Initialise CUDA, allowing it to use OpenGL context
     if( cudaGLSetGLDevice(0) != cudaSuccess ) {
         std::cerr << "Unable to get CUDA Device" << std::endl;
         exit(-1);
     }
+#endif
+    
     const unsigned bytes_per_mb = 1024*1000;
     size_t cu_mem_start, cu_mem_total;
     if(cudaMemGetInfo( &cu_mem_start, &cu_mem_total ) != cudaSuccess) {
         std::cerr << "Unable to get available memory" << std::endl;
         exit(-1);
     }
-
-    std::cout << cu_mem_start/bytes_per_mb << " MB Video Memory Available. Require At least "<< min_gpu_mem_mb<<" mb Video Memory" << std::endl;
-
-    if( (cu_mem_start/bytes_per_mb) < min_gpu_mem_mb ) {
-        std::cerr << "Fatal Error! Not enough memory to run RTL. Require At least "<< min_gpu_mem_mb << std::endl;
-        exit(-1);
+    std::cout << cu_mem_start/bytes_per_mb << " MB Video Memory Available." << std::endl;
+    if( cu_mem_start < (min_gpu_mem_mb * bytes_per_mb) ) {
+        std::cerr << "Not enough memory to proceed." << std::endl;
+//        exit(-1);
     }
     return container;
 }

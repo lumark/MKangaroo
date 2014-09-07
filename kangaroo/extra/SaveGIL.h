@@ -25,7 +25,7 @@ inline void SaveGIL(const std::string filename, const roo::Image<uchar3,roo::Tar
 }
 
 template<typename T, typename Manage>
-void SaveGIL(const std::string filename, const roo::Image<T,roo::TargetDevice,Manage>& img)
+inline void SaveGIL(const std::string filename, const roo::Image<T,roo::TargetDevice,Manage>& img)
 {
     roo::Image<T,roo::TargetHost,roo::Manage> himg(img.w, img.h);
     himg.CopyFrom(img);

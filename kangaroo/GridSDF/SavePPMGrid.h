@@ -1,8 +1,8 @@
 #ifndef SAVEPPMGRID_H
 #define SAVEPPMGRID_H
 
-#include "SavePPM.h"
-#include <kangaroo/BoundedVolumeGrid.h>
+#include "Kangaroo/extra/SavePPM.h"
+#include "BoundedVolumeGrid.h"
 
 // P1	Portable bitmap	ASCII
 // P2	Portable graymap	ASCII
@@ -190,7 +190,7 @@ bool LoadPXMGrid(std::string                        sDirName,
   // read bb box..
   int nNum = 0;
 
-  printf("[LoadPXMGrid] Try to copy data from disk to host, available gpu memory is %d.\n", GetAvailableGPUMemory());
+//  printf("[LoadPXMGrid] Try to copy data from disk to host, available gpu memory is %d.\n", GetAvailableGPUMemory());
 
   // load each single VolumeGrid
   for(int i=0;i!=vfilename.size();i++)
@@ -220,7 +220,7 @@ bool LoadPXMGrid(std::string                        sDirName,
   vol.CopyAndInitFrom(hvol);
   GpuCheckErrors();
 
-  printf("[LoadPXMGrid] Finish load %d data to device. Available memory is %d\n",nNum, GetAvailableGPUMemory());
+//  printf("[LoadPXMGrid] Finish load %d data to device. Available memory is %d\n",nNum, GetAvailableGPUMemory());
 
   return true;
 }

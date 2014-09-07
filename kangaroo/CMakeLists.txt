@@ -1,12 +1,6 @@
 cmake_minimum_required( VERSION 2.8 )
 project( Kangaroo )
 
-# Build Configures
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-local-typedefs -Wno-unused-parameter -Wno-unknown-pragmas -Wno-deprecated-declarations")
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif()
-
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
@@ -15,18 +9,19 @@ string( TOLOWER ${PROJECT_NAME} LIBRARY_NAME )
 ################################################################################
 
 list(APPEND SRC_H
-    BoundedVolume.h   MarchingCubesTables.h cu_deconvolution.h    cu_painting.h           kangaroo.h
-    BoundingBox.h     Mat.h                 cu_dense_stereo.h     cu_plane_fit.h          launch_utils.h
-    CostVolElem.h     MatUtils.h            cu_depth_tools.h      cu_raycast.h            patch_score.h
-    CudaTimer.h       Pyramid.h             cu_heightmap.h        cu_remap.h              pixel_convert.h
-    Divergence.h      Sdf.h                 cu_index_buffer.h     cu_resample.h           reduce.h
-    Image.h           Volume.h              cu_integral_image.h   cu_rof_denoising.h      reweighting.h
-    ImageApron.h      cu_anaglyph.h         cu_lookup_warp.h      cu_sdffusion.h          sampling.h
-    ImageIntrinsics.h cu_bilateral.h        cu_manhatten.h        cu_segment_test.h       variational.h
+    BoundedVolume.h   MarchingCubesTables.h cu_deconvolution.h    cu_painting.h             kangaroo.h
+    BoundingBox.h     Mat.h                 cu_dense_stereo.h     cu_plane_fit.h            launch_utils.h
+    CostVolElem.h     MatUtils.h            cu_depth_tools.h      cu_raycast.h              patch_score.h
+    CudaTimer.h       Pyramid.h             cu_heightmap.h        cu_remap.h                pixel_convert.h
+    Divergence.h      Sdf.h                 cu_index_buffer.h     cu_resample.h             reduce.h
+    Image.h           Volume.h              cu_integral_image.h   cu_rof_denoising.h        reweighting.h
+    ImageApron.h      cu_anaglyph.h         cu_lookup_warp.h      cu_sdffusion.h            sampling.h
+    ImageIntrinsics.h cu_bilateral.h        cu_manhattan.h        cu_segment_test.h         variational.h
     ImageKeyframe.h   cu_blur.h             cu_median.h           cu_semi_global_matching.h
     InvalidValue.h    cu_census.h           cu_model_refinement.h cu_tgv.h
     LeastSquareSum.h  cu_convert.h          cu_normals.h          disparity.h
-    MarchingCubes.h   cu_convolution.h      cu_operations.h       hamming_distance.h
+    cu_convolution.h      cu_operations.h       hamming_distance.h
+#    MarchingCubes.h
 )
 
 list(APPEND SRC_CU
@@ -35,12 +30,13 @@ list(APPEND SRC_CU
     cu_median.cu cu_normals.cu cu_depth_tools.cu cu_plane_fit.cu
     cu_resample.cu cu_heightmap.cu cu_blur.cu cu_operations.cu
     cu_census.cu cu_semi_global_matching.cu
-    cu_manhatten.cu cu_integral_image.cu
+    cu_manhattan.cu cu_integral_image.cu
     cu_convolution.cu cu_deconvolution.cu
     cu_rof_denoising.cu cu_tgv.cu
     cu_segment_test.cu
     cu_painting.cu cu_remap.cu
-    cu_raycast.cu  cu_sdffusion.cu
+    cu_raycast.cu cu_sdffusion.cu
+#    MarchingCubes.cu
 )
 
 
@@ -53,19 +49,21 @@ list(APPEND SRC_H
     GridSDF/VolumeGrid.h
     GridSDF/cu_raycast_grid.h
     GridSDF/cu_sdffusion_grid.h
+    GridSDF/cu_sdffusion_extra.h
     GridSDF/cu_rolling_sdf.h
     GridSDF/BoundedVolumeGrid.h
-    GridSDF/MarchingCubesGrid.h
     GridSDF/RollingGridSDF.h
 )
 
 list(APPEND SRC_CU
     GridSDF/cu_sdffusion_grid.cu
+    GridSDF/cu_sdffusion_extra.cu
     GridSDF/cu_raycast_grid.cu
     GridSDF/cu_rolling_sdf.cu
 )
 
 endif()
+
 
 
 ################################################################################
@@ -87,9 +85,13 @@ set(CUDA_NVCC_FLAGS "-use_fast_math -gencode arch=compute_30,code=sm_30 -gencode
 if(NOT CUDA_npp_LIBRARY)
     # TODO: Fix FindCUDA or make this more robust
     if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        set(CUDA_npp_LIBRARY "${CUDA_TOOLKIT_ROOT_DIR}/lib/libnpp.dylib")
+        set(CUDA_npp_LIBRARY "${CUDA_TOOLKIT_ROOT_DIR}/lib/libnppc.dylib;${CUDA_TOOLKIT_ROOT_DIR}/lib/libnppi.dylib;${CUDA_TOOLKIT_ROOT_DIR}/lib/libnpps.dylib")
+    elseif(WIN32)
+        set(CUDA_npp_LIBRARY "${CUDA_TOOLKIT_ROOT_DIR}/lib/Win32/nppc.lib;${CUDA_TOOLKIT_ROOT_DIR}/lib/Win32/nppi.lib;${CUDA_TOOLKIT_ROOT_DIR}/lib/Win32/npps.lib")
+    elseif(WIN64)
+        set(CUDA_npp_LIBRARY "${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/nppc.lib;${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/nppi.lib;${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/npps.lib")
     else()
-        set(CUDA_npp_LIBRARY "${CUDA_TOOLKIT_ROOT_DIR}/lib64/libnpp.so")
+        set(CUDA_npp_LIBRARY "${CUDA_TOOLKIT_ROOT_DIR}/lib64/libnpps.so;${CUDA_TOOLKIT_ROOT_DIR}/lib64/libnppi.so;${CUDA_TOOLKIT_ROOT_DIR}/lib64/libnpps.so")
     endif()
 endif()
 list(APPEND LINK_LIBS ${CUDA_npp_LIBRARY} )
@@ -105,10 +107,14 @@ if(ASSIMP_FOUND)
     set(HAVE_ASSIMP 1)
     list(APPEND INTERNAL_INC ${ASSIMP_INCLUDE_DIR})
     list(APPEND LINK_LIBS ${ASSIMP_LIBRARIES} )
-    list(APPEND SRC_CU MarchingCubes.cpp)
 
     if(GRID_SDF_SUPPORT)
         list(APPEND SRC_CU GridSDF/MarchingCubesGrid.cpp)
+#        list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
+#        list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
+#        list(APPEND SRC_H GridSDF/SavePPMGrid.h)
+        list(APPEND SRC_CU GridSDF/MarchingCubes.cpp)
+#        list(APPEND SRC_H GridSDF/MarchingCubes.h)
     endif()
 
 endif()
@@ -138,6 +144,18 @@ include_directories( ${LIB_INC_DIR} )
 include_directories( ${INTERNAL_INC} )
 cuda_add_library( ${LIBRARY_NAME} ${SRC_H} ${SRC_CU} )
 target_link_libraries(${LIBRARY_NAME} ${LINK_LIBS})
+
+## Generate symbol export helper header on MSVC
+if(MSVC)
+    string(TOUPPER ${LIBRARY_NAME} LIBRARY_NAME_CAPS)
+    include(GenerateExportHeader)
+    generate_export_header( ${LIBRARY_NAME}
+        BASE_NAME ${LIBRARY_NAME_CAPS}
+        EXPORT_MACRO_NAME ${LIBRARY_NAME_CAPS}_EXPORT
+        EXPORT_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/${LIBRARY_NAME}_export.h"
+        STATIC_DEFINE ${LIBRARY_NAME_CAPS}_BUILT_AS_STATIC
+    )
+endif()
 
 #######################################################
 

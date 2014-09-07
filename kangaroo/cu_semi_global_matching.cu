@@ -5,7 +5,7 @@
 #include "disparity.h"
 #include "InvalidValue.h"
 #include "ImageApron.h"
-#include "CostVolElem.h"
+#include <kangaroo/CostVolElem.h>
 
 namespace roo
 {
@@ -41,7 +41,7 @@ __global__ void KernSemiGlobalMatching(Volume<TH> volH, Volume<TC> volC, Image<T
     {
         const Timg c = left(x,y);
         const float diff = last_c-c;
-        const float _P2 = P2 / (1.0f+abs(diff) );
+        const float _P2 = P2 / (1.0f+fabs(diff) );
         TH bestCr = MAX_ERROR;
         const int maxDisp = min(maxDispVal,x+1);
 #pragma unroll 128
@@ -85,7 +85,7 @@ void SemiGlobalMatching(Volume<TH> volH, Volume<TC> volC, Image<Timg> left, int 
     }
 }
 
-template void SemiGlobalMatching(Volume<float> volH, Volume<CostVolElem> volC, Image<unsigned char> left, int maxDisp, float P1, float P2, bool dohoriz, bool dovert, bool doreverse);
-template void SemiGlobalMatching(Volume<float> volH, Volume<float> volC, Image<float> left, int maxDisp, float P1, float P2, bool dohoriz, bool dovert, bool doreverse);
+template KANGAROO_EXPORT void SemiGlobalMatching(Volume<float> volH, Volume<CostVolElem> volC, Image<unsigned char> left, int maxDisp, float P1, float P2, bool dohoriz, bool dovert, bool doreverse);
+template KANGAROO_EXPORT void SemiGlobalMatching(Volume<float> volH, Volume<float> volC, Image<float> left, int maxDisp, float P1, float P2, bool dohoriz, bool dovert, bool doreverse);
 
 }

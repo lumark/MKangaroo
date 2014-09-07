@@ -1,5 +1,7 @@
 #include "cu_dense_stereo.h"
 
+#include <stdexcept>
+
 #include "launch_utils.h"
 #include "MatUtils.h"
 #include "patch_score.h"
@@ -652,7 +654,13 @@ void CostVolumeZero(Volume<CostVolElem> costvol )
     CostVolElem initial;
     initial.sum = 0;
     initial.n = 0;
+
+#ifndef _MSC_VER
     costvol.Fill(initial);
+#else
+    // Cannot use thrust::fill on windows with aligned structure.
+    throw std::runtime_error("Not implemented on MSVC.");
+#endif
 }
 
 //////////////////////////////////////////////////////
@@ -768,7 +776,7 @@ __global__ void KernCostVolumeCrossSection(
         const float score = (elem.sum / elem.n) / 255.0f;
         dScore(x,d) = score;
     }else{
-        dScore(x,d) = 0.0f / 0.0f;
+        dScore(x,d) = InvalidValue<float>::Value();
     }
 }
 
@@ -818,10 +826,13 @@ __global__ void KernCostVolumeFromStereoTruncatedAbsAndGrad(
     const int v = blockIdx.y*blockDim.y + threadIdx.y;
     const int d = blockIdx.z*blockDim.z + threadIdx.z;
 
+    alpha = 0;
+    r1 = 1e37;
+
     const int r = u + sd*d;
     if( 0 <= r && r < dimgr.w ) {
-        const float absI = abs( (float)dimgr(r,v) - (float)dimgl(u,v));
-        const float absGrad = abs( dimgr.template GetCentralDiffDx<float>(r,v) - dimgl.template GetCentralDiffDx<float>(u,v) );
+        const float absI = fabs( (float)dimgr(r,v) - (float)dimgl(u,v));
+        const float absGrad = fabs( dimgr.template GetCentralDiffDx<float>(r,v) - dimgl.template GetCentralDiffDx<float>(u,v) );
         const Tout cost = (1.0f-alpha)*min(absI,r1) + alpha*min(absGrad,r2);
         dvol(u,v,d) = cost;
     }else{

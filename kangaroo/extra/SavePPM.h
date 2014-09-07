@@ -3,10 +3,10 @@
 #include <kangaroo/Image.h>
 #include <kangaroo/Volume.h>
 #include <kangaroo/BoundedVolume.h>
-#include <kangaroo/extra/GetAvailableMemory.h>
-
 #include <iostream>
-#include <fstream>      // std::ifstream
+#include <iostream>
+#include <string>
+#include <fstream>
 
 // P1	Portable bitmap	ASCII
 // P2	Portable graymap	ASCII
@@ -50,8 +50,8 @@ void SavePXM(std::ofstream& bFile, const roo::Volume<T,roo::TargetHost,Manage>& 
     bFile << ppm_type << std::endl;
     bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
     bFile << num_colors << '\n';
-    for(unsigned int d=0; d<vol.d; ++d) {
-        for(unsigned int r=0; r<vol.h; ++r) {
+    for(int d=0; d<vol.d; ++d) {
+        for(int r=0; r<vol.h; ++r) {
             bFile.write( (const char*)vol.RowPtr(r,d), vol.w * sizeof(T) );
         }
     }

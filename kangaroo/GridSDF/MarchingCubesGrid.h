@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BoundedVolumeGrid.h"
+#include "MarchingCubes.h"
 
 namespace roo {
 

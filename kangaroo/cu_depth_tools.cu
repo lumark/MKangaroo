@@ -3,6 +3,7 @@
 #include "launch_utils.h"
 #include "patch_score.h"
 #include "MatUtils.h"
+#include "InvalidValue.h"
 
 namespace roo
 {
@@ -17,7 +18,7 @@ void KernDisp2Depth(const Image<float> dIn, Image<float> dOut, float fu, float f
     const int x = blockIdx.x*blockDim.x + threadIdx.x;
     const int y = blockIdx.y*blockDim.y + threadIdx.y;
     if( dOut.InBounds(x,y) ) {
-        dOut(x,y) = dIn(x,y) >= fMinDisp ? fu * fBaseline / dIn(x,y) : 0.0f/0.0f;
+        dOut(x,y) = dIn(x,y) >= fMinDisp ? fu * fBaseline / dIn(x,y) : InvalidValue<float>::Value();
     }
 }
 
@@ -34,7 +35,7 @@ __global__ void KernFilterBadKinectData(Image<Tout> dFiltered, Image<Tin> dKinec
     const int u = blockIdx.x*blockDim.x + threadIdx.x;
     const int v = blockIdx.y*blockDim.y + threadIdx.y;
     const float z_mm = dKinectDepth(u,v);
-    dFiltered(u,v) = z_mm >= 200 ? z_mm : NAN;
+    dFiltered(u,v) = z_mm >= 200 ? z_mm : InvalidValue<float>::Value();
 }
 
 void FilterBadKinectData(Image<float> dFiltered, Image<unsigned short> dKinectDepth)
@@ -68,18 +69,12 @@ __global__ void KernDepthToVbo(
     dVbo(u,v) = make_float4(P.x,P.y,P.z,1);
 }
 
-void DepthToVbo(Image<float4> dVbo, const Image<unsigned short> dDepth, ImageIntrinsics K, float depthscale)
+template<typename T>
+void DepthToVbo(Image<float4> dVbo, const Image<T> dDepth, ImageIntrinsics K, float depthscale)
 {
     dim3 blockDim, gridDim;
     InitDimFromOutputImage(blockDim,gridDim, dVbo);
-    KernDepthToVbo<unsigned short><<<gridDim,blockDim>>>(dVbo, dDepth, K, depthscale);
-}
-
-void DepthToVbo(Image<float4> dVbo, const Image<float> dDepth, ImageIntrinsics K, float depthscale)
-{
-    dim3 blockDim, gridDim;
-    InitDimFromOutputImage(blockDim,gridDim, dVbo);
-    KernDepthToVbo<float><<<gridDim,blockDim>>>(dVbo, dDepth, K, depthscale);
+    KernDepthToVbo<T><<<gridDim,blockDim>>>(dVbo, dDepth, K, depthscale);
 }
 
 //////////////////////////////////////////////////////
@@ -216,6 +211,9 @@ void TextureDepth(Image<Tout> img, const Mat<ImageKeyframe<Tin>,N> kfs, const Im
     KernTextureDepth<Tout,Tin,N><<<gridDim,blockDim>>>(img,kfs,depth,norm,phong,T_wd,Kdepth);
 }
 
-template void TextureDepth<float4,uchar3,10>(Image<float4> img, const Mat<ImageKeyframe<uchar3>,10> kfs, const Image<float> depth, const Image<float4> norm, const Image<float> phong, const Mat<float,3,4> T_wd, ImageIntrinsics Kdepth);
+template KANGAROO_EXPORT void TextureDepth<float4,uchar3,10>(Image<float4> img, const Mat<ImageKeyframe<uchar3>,10> kfs, const Image<float> depth, const Image<float4> norm, const Image<float> phong, const Mat<float,3,4> T_wd, ImageIntrinsics Kdepth);
+
+template KANGAROO_EXPORT void DepthToVbo<float>( Image<float4> dVbo, const Image<float> dKinectDepth, ImageIntrinsics K, float scale);
+template KANGAROO_EXPORT void DepthToVbo<unsigned short>( Image<float4> dVbo, const Image<unsigned short> dKinectDepth, ImageIntrinsics K, float scale);
 
 }

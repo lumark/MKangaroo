@@ -22,7 +22,6 @@
 namespace roo
 {
 
-
 void SaveMesh(std::string filename, aiMesh* mesh)
 {
     // Create root node which indexes first mesh

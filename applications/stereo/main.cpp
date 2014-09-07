@@ -3,32 +3,25 @@
 #include <sophus/se3.hpp>
 
 #include <pangolin/pangolin.h>
+#include <pangolin/compat/function.h>
 #include <pangolin/glcuda.h>
 #include <pangolin/glsl.h>
-//#include <npp.h>
 
 #include <SceneGraph/SceneGraph.h>
 #include <SceneGraph/GLVbo.h>
 
 #include <calibu/Calibu.h>
 
-//#include <kangaroo/extra/GLCameraHistory.h>
 #include <kangaroo/extra/RpgCameraOpen.h>
-//#include <kangaroo/extra/DisplayUtils.h>
-//#include <kangaroo/extra/ScanlineRectify.h>
 #include <kangaroo/extra/ImageSelect.h>
 #include <kangaroo/extra/BaseDisplayCuda.h>
 #include <kangaroo/extra/BaselineFromCamModel.h>
-//#include <kangaroo/extra/HeightmapFusion.h>
-//#include <kangaroo/extra/CameraModelPyramid.h>
-//#include <kangaroo/extra/LoadPosesFromFile.h>
-//#include <kangaroo/extra/SavePPM.h>
 
 #include <kangaroo/kangaroo.h>
 #include <kangaroo/variational.h>
 
 
-const int MAXD = 60;
+const int MAXD = 128;
 
 
 int main( int argc, char* argv[] )
@@ -43,11 +36,11 @@ int main( int argc, char* argv[] )
     hal::Camera video = OpenRpgCamera(argc,argv);
 
     // Capture first image
-    pb::ImageArray images;
+    std::shared_ptr<pb::ImageArray> images = pb::ImageArray::Create();
 
     // N cameras, each w*h in dimension, greyscale
     const size_t N = video.NumChannels();
-    if( N != 2 ) {
+    if( N < 2 ) {
         std::cerr << "Two images are required to run this program!" << std::endl;
         exit(1);
     }
@@ -55,7 +48,7 @@ int main( int argc, char* argv[] )
     const size_t nh = video.Height();
 
     // Capture first image
-    video.Capture(images);
+    video.Capture(*images);
 
     // Downsample this image to process less pixels
     const int max_levels = 6;
@@ -80,8 +73,8 @@ int main( int argc, char* argv[] )
         exit(1);
     }
 
-    Eigen::Matrix3d CamModel0 = rig.cameras[0].camera.K();
-    Eigen::Matrix3d CamModel1 = rig.cameras[1].camera.K();
+    Eigen::Matrix3f CamModel0 = rig.cameras[0].camera.K().cast<float>();
+    Eigen::Matrix3f CamModel1 = rig.cameras[1].camera.K().cast<float>();
 
     roo::ImageIntrinsics camMod[] = {
         {CamModel0(0,0),CamModel0(1,1),CamModel0(0,2),CamModel0(1,2)},
@@ -145,7 +138,7 @@ int main( int argc, char* argv[] )
     }
 
     // Check we received at least two images
-    if(images.Size() < 2) {
+    if(images->Size() < 2) {
         std::cerr << "Failed to capture first stereo pair from camera" << std::endl;
         return -1;
     }
@@ -264,25 +257,27 @@ int main( int argc, char* argv[] )
     graph.AddChild(&glvbo);
 
     SetupContainer(container, 6, (float)w/h);
-    container[0].SetDrawFunction(boost::ref(adleft)).SetHandler(&handler2d);
-    container[1].SetDrawFunction(boost::ref(adright)).SetHandler(&handler2d);
-    container[2].SetDrawFunction(boost::ref(adisp)).SetHandler(&handler2d);
-    container[3].SetDrawFunction(boost::ref(adVol)).SetHandler(&handler2d);
+    container[0].SetDrawFunction(boostd::ref(adleft)).SetHandler(&handler2d);
+    container[1].SetDrawFunction(boostd::ref(adright)).SetHandler(&handler2d);
+    container[2].SetDrawFunction(boostd::ref(adisp)).SetHandler(&handler2d);
+    container[3].SetDrawFunction(boostd::ref(adVol)).SetHandler(&handler2d);
     container[4].SetDrawFunction(SceneGraph::ActivateDrawFunctor(graph, s_cam))
                 .SetHandler( new pangolin::Handler3D(s_cam, pangolin::AxisNone) );
-    container[5].SetDrawFunction(boost::ref(adw)).SetHandler(&handler2d);
+    container[5].SetDrawFunction(boostd::ref(adw)).SetHandler(&handler2d);
+
+    bool bFirstTime = true;
 
     for(unsigned long frame=0; !pangolin::ShouldQuit();)
     {
         bool go = frame==0 || jump_frames > 0 || run || Pushed(step);
 
         for(; jump_frames > 0; jump_frames--) {
-            video.Capture(images);
+            video.Capture(*images);
         }
 
         if(go) {
             if(frame>0) {
-                if( video.Capture(images) == false) {
+                if( video.Capture(*images) == false) {
                     exit(1);
                 }
             }
@@ -292,7 +287,7 @@ int main( int argc, char* argv[] )
             /////////////////////////////////////////////////////////////
             // Upload images to device (Warp / Decimate if necessery)
             for(int i=0; i<2; ++i ) {
-                hCamImg[i].ptr = images[i].data();
+                hCamImg[i].ptr = (unsigned char*) images->at(i).data();
 
                 if(rectify) {
                     upload.CopyFrom(hCamImg[i].SubImage(roi));
@@ -367,18 +362,19 @@ int main( int argc, char* argv[] )
             imgq.Memset(0);
         }
 
-        const double min_theta = 1E-0;
+        const double min_theta = 1E-4;
         if(do_dtam && theta > min_theta)
         {
             for(int i=0; i<5; ++i ) {
-                // Auxillary exhaustive search
-                CostVolMinimumSquarePenaltySubpix(imga, vol[0], imgd, maxdisp, -1, lambda, (theta) );
 
                 // Dual Ascent
                 roo::WeightedHuberGradU_DualAscentP(imgq, imgd, imgw, sigma_q, huber_alpha);
 
                 // Primal Descent
                 roo::WeightedL2_u_minus_g_PrimalDescent(imgd, imgq, imga, imgw, sigma_d, 1.0f / (theta) );
+
+                // Auxillary exhaustive search
+                CostVolMinimumSquarePenaltySubpix(imga, vol[0], imgd, maxdisp, -1, lambda, (theta) );
 
                 theta= theta * (1-beta*n);
                 ++n;
@@ -417,7 +413,25 @@ int main( int argc, char* argv[] )
                 step = true;
                 dtam_reset = true;
             }
+
+            if (bFirstTime) {
+                float* temp;
+                std::cout<<"n = "<<n<<std::endl;
+                temp = (float *) malloc(2*sizeof(float)*imgq.h*imgq.w);
+                imgq.MemcpyToHost(temp);
+                for(int jj = 0; jj < 5; jj++) {
+                    for(int ii = 0; ii < 5; ii++){
+                        int index = 2*(ii + jj*imgq.w);
+                        std::cout<<"("<< temp[index] <<","<< temp[index + 1] <<")\t";
+                    }
+                    std::cout<<std::endl;
+                }
+                free(temp);
+                bFirstTime = false;
+            }
+
         }
+
 
         go |= pangolin::GuiVarHasChanged();
 //        if(go) {

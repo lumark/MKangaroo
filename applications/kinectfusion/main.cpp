@@ -16,43 +16,61 @@
 #include <kangaroo/extra/Handler3dGpuDepth.h>
 #include <kangaroo/extra/SavePPM.h>
 #include <kangaroo/extra/SaveMeshlab.h>
+
+#ifdef HAVE_CVARS
 #include <kangaroo/extra/CVarHelpers.h>
+#endif // HAVE_CVARS
 
 using namespace std;
 using namespace pangolin;
 
+template<typename T>
+bool isFinite(const T& x)
+{
+  return x==x;
+}
+
 int main( int argc, char* argv[] )
 {
     // Initialise window
-    View& container = SetupPangoGLWithCuda(1024, 768);//------------------------------------------------------------------------------------
+    View& container = SetupPangoGLWithCuda(1024, 768);
     SceneGraph::GLSceneGraph::ApplyPreferredGlSettings();
 
     // Open video device
-    pangolin::VideoInput video(argc >= 2 ? argv[1] : "openni:[img1=rgb,img2=depth]//" );
-    if(video.Streams().size() != 2)
-        throw pangolin::VideoException("Requires RGB and Depth streams.");    
+    pangolin::VideoInput video(argc >= 2 ? argv[1] : "openni:[img1=depth]//" );
+    const bool use_colour = video.Streams().size() == 2;
     
-    unsigned char vid_buffer[video.SizeBytes()];
+    std::unique_ptr<unsigned char> vid_buffer( new unsigned char[video.SizeBytes()] );
+
     std::vector<pangolin::Image<unsigned char> > imgs;    
     const int w = video.Width();
     const int h = video.Height();
+
     const int MaxLevels = 4;
+    const int its[] = {1,0,2,3};
 
-    const double baseline_m =  0.043; //camera.GetDeviceProperty(<double>("Depth0Baseline", 0) / 100;
-    const double depth_focal = 570.342; //camera.GetProperty<double>("Depth0FocalLength", 570.342);
-    const roo::ImageIntrinsics K(571.9333835951757,568.3545927620321, 319.9079596007039 , 238.8796217668794 );
-    
-    const double knear = 0.4;// --------------------------------------------------------------------------------------------------------------
+    // Xtrion
+    const double baseline_m = 0.08; //camera.GetDeviceProperty(<double>("Depth0Baseline", 0) / 100;
+    const double depth_focal = w * 570.342/640.0; //camera.GetProperty<double>("Depth0FocalLength", 570.342);
+    const roo::ImageIntrinsics K(depth_focal,depth_focal, w/2.0 - 0.5, h/2.0 - 0.5 );  
+    const double knear = 0.4;
     const double kfar = 4;
-    const int volres = 256;// ----------------------------------------------------------------------------------------------------------------
-    const float volrad = 0.6;// --------------------------------------------------------------------------------------------------------------
 
-    roo::BoundingBox reset_bb(make_float3(-volrad,-volrad,0.5), make_float3(volrad,volrad,0.5+2*volrad)); //----------------------------------
+//    // DepthSense
+//    const double baseline_m = 0.02;
+//    const roo::ImageIntrinsics K(224.501999, 230.494003, w/2.0 - 0.5, h/2.0 - 0.5 );
+//    const double knear = 0.15;
+//    const double kfar = 2.0;
+
+    const float volrad = 2.0;
+    const int volres = 256;
+
+    roo::BoundingBox reset_bb(make_float3(-volrad,-volrad,knear), make_float3(volrad,volrad,knear+2*volrad));
 //    roo::BoundingBox reset_bb(make_float3(-volrad,-volrad,-volrad), make_float3(volrad,volrad,volrad));
 
+#ifdef HAVE_CVARS
     CVarUtils::AttachCVar<roo::BoundingBox>("BoundingBox", &reset_bb);
-
-    const Eigen::Vector4d its(1,0,2,3);
+#endif // HAVE_CVARS
 
     // Camera (rgb) to depth
     Eigen::Vector3d c_d(baseline_m,0,0);
@@ -64,24 +82,24 @@ int main( int argc, char* argv[] )
     roo::Pyramid<float, MaxLevels, roo::TargetDevice, roo::Manage> kin_d(w,h);
     roo::Pyramid<float4, MaxLevels, roo::TargetDevice, roo::Manage> kin_v(w,h);
     roo::Pyramid<float4, MaxLevels, roo::TargetDevice, roo::Manage> kin_n(w,h);
-    roo::Image<float4, roo::TargetDevice, roo::Manage>  dDebug(w,h); // holds an image which visualizes the residuals of the minimization
+    roo::Image<float4, roo::TargetDevice, roo::Manage>  dDebug(w,h);
     roo::Image<unsigned char, roo::TargetDevice, roo::Manage> dScratch(w*sizeof(roo::LeastSquaresSystem<float,12>),h);
 
-    roo::Pyramid<float, MaxLevels, roo::TargetDevice, roo::Manage> ray_i(w,h);// ------------------------------------------------------------
+    roo::Pyramid<float, MaxLevels, roo::TargetDevice, roo::Manage> ray_i(w,h);
     roo::Pyramid<float, MaxLevels, roo::TargetDevice, roo::Manage> ray_d(w,h);
     roo::Pyramid<float4, MaxLevels, roo::TargetDevice, roo::Manage> ray_n(w,h);
     roo::Pyramid<float4, MaxLevels, roo::TargetDevice, roo::Manage> ray_v(w,h);
     roo::Pyramid<float4, MaxLevels, roo::TargetDevice, roo::Manage> ray_c(w,h);
-    roo::BoundedVolume<roo::SDF_t, roo::TargetDevice, roo::Manage> vol(volres,volres,volres,reset_bb);// -------------------------------------
+    roo::BoundedVolume<roo::SDF_t, roo::TargetDevice, roo::Manage> vol(volres,volres,volres,reset_bb);
     roo::BoundedVolume<float, roo::TargetDevice, roo::Manage> colorVol(volres,volres,volres,reset_bb);
 
-    boost::ptr_vector<KinectKeyframe> keyframes;
+    std::vector<std::unique_ptr<KinectKeyframe> > keyframes;
     roo::Mat<roo::ImageKeyframe<uchar3>,10> kfs;
 
     SceneGraph::GLSceneGraph glgraph;
     SceneGraph::GLAxis glcamera(0.1);
-    SceneGraph::GLAxisAlignedBox glboxfrustum;// ---------------------------------------------------------------------------------------------
-    SceneGraph::GLAxisAlignedBox glboxvol;// -------------------------------------------------------------------------------------------------
+    SceneGraph::GLAxisAlignedBox glboxfrustum;
+    SceneGraph::GLAxisAlignedBox glboxvol;
 
     glboxvol.SetBounds(roo::ToEigen(vol.bbox.Min()), roo::ToEigen(vol.bbox.Max()) );
     glgraph.AddChild(&glcamera);
@@ -94,6 +112,7 @@ int main( int argc, char* argv[] )
     );
 
     Var<bool> run("ui.run", true, true);
+
     Var<bool> showcolor("ui.show color", false, true);
     Var<bool> viewonly("ui.view only", false, true);
     Var<bool> fuse("ui.fuse", true, true);
@@ -118,24 +137,22 @@ int main( int argc, char* argv[] )
     Var<float> max_rmse("ui.Max RMSE",0.10,0,0.5);
     Var<float> rmse("ui.RMSE",0);
 
-    ActivateDrawPyramid<float,MaxLevels> adrayimg(ray_i, GL_LUMINANCE32F_ARB, true, true);// --------------------------------------------------
-    ActivateDrawPyramid<float4,MaxLevels> adraycolor(ray_c, GL_RGBA32F, true, true);// --------------------------------------------------------
-    ActivateDrawPyramid<float4,MaxLevels> adraynorm(ray_n, GL_RGBA32F, true, true);// ---------------------------------------------------------
+    ActivateDrawPyramid<float,MaxLevels> adrayimg(ray_i, GL_LUMINANCE32F_ARB, true, true);
+    ActivateDrawPyramid<float4,MaxLevels> adraycolor(ray_c, GL_RGBA32F, true, true);
+    ActivateDrawPyramid<float4,MaxLevels> adraynorm(ray_n, GL_RGBA32F, true, true);
 //    ActivateDrawPyramid<float,MaxLevels> addepth( kin_d, GL_LUMINANCE32F_ARB, false, true);
-    ActivateDrawPyramid<float4,MaxLevels> adnormals( kin_n, GL_RGBA32F_ARB, false, true);// ---------------------------------------------------
-    ActivateDrawImage<float4> addebug( dDebug, GL_RGBA32F_ARB, false, true);// ----------------------------------------------------------------
+    ActivateDrawPyramid<float4,MaxLevels> adnormals( kin_n, GL_RGBA32F_ARB, false, true);
+    ActivateDrawImage<float4> addebug( dDebug, GL_RGBA32F_ARB, false, true);
 
-    Handler3DGpuDepth rayhandler(ray_d[0], s_cam, AxisNone);
+    Handler3DDepth<float,roo::TargetDevice> rayhandler(ray_d[0], s_cam, AxisNone);
     SetupContainer(container, 4, (float)w/h);
-    container[0].SetDrawFunction(boost::ref(adrayimg))
+    container[0].SetDrawFunction(std::ref(adrayimg))
                 .SetHandler(&rayhandler);
     container[1].SetDrawFunction(SceneGraph::ActivateDrawFunctor(glgraph, s_cam))
                 .SetHandler( new Handler3D(s_cam, AxisNone) );
-    container[2].SetDrawFunction(boost::ref(adraycolor))
+    container[2].SetDrawFunction(std::ref(use_colour?adraycolor:adraynorm))
                 .SetHandler(&rayhandler);
-//    container[3].SetDrawFunction(boost::ref(addebug));
-    container[3].SetDrawFunction(boost::ref(adnormals));
-//    container[5].SetDrawFunction(boost::ref(adraynorm));
+    container[3].SetDrawFunction(std::ref(adnormals));
 
     Sophus::SE3d T_wl;
 
@@ -149,24 +166,25 @@ int main( int argc, char* argv[] )
     {
         const bool go = !viewonly && (frame==-1 || run);
 
-        // if push save kinectfusion button ----------------------------------------------------------------------------------------------------
         if(Pushed(save_kf)) {
             KinectKeyframe* kf = new KinectKeyframe(w,h,T_cd * T_wl.inverse());
             kf->img.CopyFrom(roo::Image<uchar3, roo::TargetHost>((uchar3*)imgs[0].ptr,imgs[0].w,imgs[0].h,imgs[0].pitch));
-            keyframes.push_back(kf);
+            keyframes.push_back( std::unique_ptr<KinectKeyframe>(kf) );
         }
 
-        // grab buffer for each frame
         if(go) {
-            if(video.Grab(vid_buffer, imgs,true,false)) {
-                dKinect.CopyFrom(roo::Image<unsigned short, roo::TargetHost>((unsigned short*)imgs[1].ptr, imgs[1].w, imgs[1].h, imgs[1].pitch ));
-                drgb.CopyFrom(roo::Image<uchar3, roo::TargetHost>((uchar3*)imgs[0].ptr, imgs[0].w, imgs[0].h, imgs[0].pitch ));
+            if(video.Grab(vid_buffer.get(), imgs,true,false))
+            {
+                dKinect.CopyFrom(roo::Image<unsigned short, roo::TargetHost>((unsigned short*)imgs[0].ptr, imgs[0].w, imgs[0].h, imgs[0].pitch ));
+                if(use_colour) {
+                    drgb.CopyFrom(roo::Image<uchar3, roo::TargetHost>((uchar3*)imgs[1].ptr, imgs[1].w, imgs[1].h, imgs[1].pitch ));
+                }
                 roo::ElementwiseScaleBias<float,unsigned short,float>(dKinectMeters, dKinect, 1.0f/1000.0f);
                 roo::BilateralFilter<float,float>(kin_d[0],dKinectMeters,bigs,bigr,biwin,0.2);
-    
+
                 roo::BoxReduceIgnoreInvalid<float,MaxLevels,float>(kin_d);
                 for(int l=0; l<MaxLevels; ++l) {
-                    roo::DepthToVbo(kin_v[l], kin_d[l], K[l] );
+                    roo::DepthToVbo<float>(kin_v[l], kin_d[l], K[l] );
                     roo::NormalsFromVbo(kin_n[l], kin_v[l]);
                 }
     
@@ -174,12 +192,14 @@ int main( int argc, char* argv[] )
             }
         }
 
-        // if push reset button
-        if(Pushed(reset)) {
+        const float trunc_dist = trunc_dist_factor*length(vol.VoxelSizeUnits());
+
+        if(Pushed(reset) || !std::isfinite(rmse) ) {
             T_wl = Sophus::SE3d();
 
             vol.bbox = reset_bb;
-            roo::SdfReset(vol);
+//            roo::SdfReset(vol, trunc_dist );
+            roo::SdfReset(vol, std::numeric_limits<float>::quiet_NaN() );
             keyframes.clear();
 
             colorVol.bbox = reset_bb;
@@ -187,18 +207,19 @@ int main( int argc, char* argv[] )
 
             // Fuse first kinect frame in.
             const float trunc_dist = trunc_dist_factor*length(vol.VoxelSizeUnits());
-//            roo::SdfFuse(vol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, trunc_dist, max_w, mincostheta );
-            roo::SdfFuse(vol, colorVol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, drgb, (T_cd * T_wl.inverse()).matrix3x4(), roo::ImageIntrinsics(rgb_fl, drgb), trunc_dist, max_w, mincostheta);
+            if(use_colour) {
+                roo::SdfFuse(vol, colorVol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, drgb, (T_cd * T_wl.inverse()).matrix3x4(), roo::ImageIntrinsics(rgb_fl, drgb), trunc_dist, max_w, mincostheta );
+            }else{
+                roo::SdfFuse(vol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, trunc_dist, max_w, mincostheta );
+            }
         }
 
-        // if push view only button
         if(viewonly) {
-            const float trunc_dist = trunc_dist_factor*length(vol.VoxelSizeUnits());
 
             Sophus::SE3d T_vw(s_cam.GetModelViewMatrix());
-            const roo::BoundingBox roi(T_vw.inverse().matrix3x4(), w, h, K, 0, 50);// ------------------------------------------------------------------------
-            roo::BoundedVolume<roo::SDF_t> work_vol = vol.SubBoundingVolume( roi );// ------------------------------------------------------------------------
-            roo::BoundedVolume<float> work_colorVol = colorVol.SubBoundingVolume( roi );// -------------------------------------------------------------------
+            const roo::BoundingBox roi(T_vw.inverse().matrix3x4(), w, h, K, 0, 50);
+            roo::BoundedVolume<roo::SDF_t> work_vol = vol.SubBoundingVolume( roi );
+            roo::BoundedVolume<float> work_colorVol = colorVol.SubBoundingVolume( roi );
             if(work_vol.IsValid()) {
                 if(showcolor) {
                     roo::RaycastSdf(ray_d[0], ray_n[0], ray_i[0], work_vol, work_colorVol, T_vw.inverse().matrix3x4(), K, 0.1, 50, trunc_dist, true );
@@ -211,14 +232,14 @@ int main( int argc, char* argv[] )
                     for( int k=0; k< kfs.Rows(); k++)
                     {
                         if(k < keyframes.size()) {
-                            kfs[k].img = keyframes[k].img;
-                            kfs[k].T_iw = keyframes[k].T_iw.matrix3x4();
+                            kfs[k].img = keyframes[k]->img;
+                            kfs[k].T_iw = keyframes[k]->T_iw.matrix3x4();
                             kfs[k].K = roo::ImageIntrinsics(rgb_fl, kfs[k].img);
                         }else{
                             kfs[k].img.ptr = 0;
                         }
                     }
-                    roo::TextureDepth<float4,uchar3,10>(ray_c[0], kfs, ray_d[0], ray_n[0], ray_i[0], T_vw.inverse().matrix3x4(), K);// -----------------------
+                    roo::TextureDepth<float4,uchar3,10>(ray_c[0], kfs, ray_d[0], ray_n[0], ray_i[0], T_vw.inverse().matrix3x4(), K);
                 }
             }
         }else{
@@ -233,18 +254,18 @@ int main( int argc, char* argv[] )
                     if(its[l] > 0) {
                         const roo::ImageIntrinsics Kl = K[l];
                         if(showcolor) {
-                            roo::RaycastSdf(ray_d[l], ray_n[l], ray_i[l], work_vol, colorVol, T_wl.matrix3x4(), Kl, knear,kfar, true );
+                            roo::RaycastSdf(ray_d[l], ray_n[l], ray_i[l], work_vol, colorVol, T_wl.matrix3x4(), Kl, knear,kfar, trunc_dist, true );
                         }else{
-                            roo::RaycastSdf(ray_d[l], ray_n[l], ray_i[l], work_vol, T_wl.matrix3x4(), Kl, knear,kfar, true );
+                            roo::RaycastSdf(ray_d[l], ray_n[l], ray_i[l], work_vol, T_wl.matrix3x4(), Kl, knear,kfar, trunc_dist, true );
                         }
-                        roo::DepthToVbo(ray_v[l], ray_d[l], Kl );
+                        roo::DepthToVbo<float>(ray_v[l], ray_d[l], Kl );
     //                    roo::DepthToVbo(ray_v[l], ray_d[l], Kl.fu, Kl.fv, Kl.u0, Kl.v0 );
     //                    roo::NormalsFromVbo(ray_n[l], ray_v[l]);
                     }
                 }
 
                 if(pose_refinement && frame > 0) {
-                    Sophus::SE3d T_lp;// ---------------------------------------------------------------------------------------------------------
+                    Sophus::SE3d T_lp;
 
 //                    const int l = show_level;
 //                    roo::RaycastSdf(ray_d[l], ray_n[l], ray_i[l], work_vol, T_wl.matrix3x4(), fu/(1<<l), fv/(1<<l), w/(2 * 1<<l) - 0.5, h/(2 * 1<<l) - 0.5, knear,kfar, true );
@@ -272,7 +293,7 @@ int main( int argc, char* argv[] )
                             rmse = sqrt(lss.sqErr / lss.obs);
                             tracking_good = rmse < max_rmse;
 
-                            if(l == MaxLevels-1) {
+                            if(l == MaxLevels-1 && MaxLevels > 1) {
                                 // Solve for rotation only
                                 Eigen::FullPivLU<Eigen::Matrix<double,3,3> > lu_JTJ( sysJTJ.block<3,3>(3,3) );
                                 Eigen::Matrix<double,3,1> x = -1.0 * lu_JTJ.solve( sysJTy.segment<3>(3) );
@@ -280,7 +301,9 @@ int main( int argc, char* argv[] )
                             }else{
                                 Eigen::FullPivLU<Eigen::Matrix<double,6,6> > lu_JTJ( sysJTJ );
                                 Eigen::Matrix<double,6,1> x = -1.0 * lu_JTJ.solve( sysJTy );
-                                T_lp = T_lp * Sophus::SE3d::exp(x);
+                                if( isFinite(x) ) {
+                                    T_lp = T_lp * Sophus::SE3d::exp(x);
+                                }
                             }
 
                         }
@@ -299,8 +322,11 @@ int main( int argc, char* argv[] )
                     roo::BoundedVolume<float> work_colorVol = colorVol.SubBoundingVolume( roi );
                     if(work_vol.IsValid()) {
                         const float trunc_dist = trunc_dist_factor*length(vol.VoxelSizeUnits());
-//                        roo::SdfFuse(work_vol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, trunc_dist, max_w, mincostheta );
-                        roo::SdfFuse(work_vol, work_colorVol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, drgb, (T_cd * T_wl.inverse()).matrix3x4(), roo::ImageIntrinsics(rgb_fl, drgb), trunc_dist, max_w, mincostheta );
+                        if(use_colour) {
+                            roo::SdfFuse(work_vol, work_colorVol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, drgb, (T_cd * T_wl.inverse()).matrix3x4(), roo::ImageIntrinsics(rgb_fl, drgb), trunc_dist, max_w, mincostheta );
+                        }else{
+                            roo::SdfFuse(work_vol, kin_d[0], kin_n[0], T_wl.inverse().matrix3x4(), K, trunc_dist, max_w, mincostheta );
+                        }
                     }
                 }
             }
@@ -308,9 +334,9 @@ int main( int argc, char* argv[] )
 
         glcamera.SetPose(T_wl.matrix());
 
-        roo::BoundingBox bbox_work(T_wl.matrix3x4(), w, h, K.fu, K.fv, K.u0, K.v0, knear,kfar);// ------------------------------------------------------------
+        roo::BoundingBox bbox_work(T_wl.matrix3x4(), w, h, K.fu, K.fv, K.u0, K.v0, knear,kfar);
         bbox_work.Intersect(vol.bbox);
-        glboxfrustum.SetBounds(roo::ToEigen(bbox_work.Min()), roo::ToEigen(bbox_work.Max()) );//--------------------------------------------------------------
+        glboxfrustum.SetBounds(roo::ToEigen(bbox_work.Min()), roo::ToEigen(bbox_work.Max()) );
 
 //        {
 //            CudaScopedMappedPtr var(cbo);
@@ -326,7 +352,7 @@ int main( int argc, char* argv[] )
 
         /////////////////////////////////////////////////////////////
         // Draw
-        addebug.SetImage(dDebug.SubImage(0,0,w>>show_level,h>>show_level)); // --------------------------------------------------------------------------------
+        addebug.SetImage(dDebug.SubImage(0,0,w>>show_level,h>>show_level));
 //        addepth.SetImageScale(scale);
 //        addepth.SetLevel(show_level);
         adnormals.SetLevel(show_level);

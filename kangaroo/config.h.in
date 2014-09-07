@@ -7,11 +7,27 @@
 #cmakedefine _OSX_
 #cmakedefine _LINUX_
 
+/// Compiler
+#cmakedefine _GCC_
+#cmakedefine _CLANG_
+#cmakedefine _MSVC_
+
 /// Configured libraries
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_ASSIMP
 #cmakedefine HAVE_THRUST
 #cmakedefine HAVE_NPP
 #cmakedefine HAVE_OPENCV
+
+/// CUDA Toolkit Version
+#define CUDA_VERSION_MAJOR @CUDA_VERSION_MAJOR@
+#define CUDA_VERSION_MINOR @CUDA_VERSION_MINOR@
+
+/// Defines generated when calling into Kangaroo API. Not to be
+/// used in compiled library code, only inlined header code.
+#if (__cplusplus > 199711L) || (_MSC_VER >= 1700)
+#define CALLEE_HAS_CPP11
+#define CALLEE_HAS_RVALREF
+#endif
 
 #endif // KANGAROO_CONFIG_H

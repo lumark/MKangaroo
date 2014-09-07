@@ -7,7 +7,7 @@
 
 #include <cuda_runtime.h>
 #include "CUDA_SDK/cutil_math.h"
-#include "Mat.h"
+#include <kangaroo/Mat.h>
 
 namespace roo {
 
@@ -320,15 +320,15 @@ float length3(float4 r)
 //////////////////////////////////////////////////////
 
 __host__ __device__ inline
-Mat<float,3> SE3gen0mul(const Mat<float,3>& p) {
+Mat<float,3> SE3gen0mul(const Mat<float,3>& /*p*/) {
     return make_mat(1,0,0);
 }
 __host__ __device__ inline
-Mat<float,3> SE3gen1mul(const Mat<float,3>& p) {
+Mat<float,3> SE3gen1mul(const Mat<float,3>& /*p*/) {
     return make_mat(0,1,0);
 }
 __host__ __device__ inline
-Mat<float,3> SE3gen2mul(const Mat<float,3>& p) {
+Mat<float,3> SE3gen2mul(const Mat<float,3>& /*p*/) {
     return make_mat(0,0,1);
 }
 __host__ __device__ inline
@@ -350,15 +350,15 @@ Mat<float,3> SE3gen5mul(const Mat<float,3>& p) {
 //////////////////////////////////////////////////////
 
 __host__ __device__ inline
-float3 SE3gen0mul(const float3& p) {
+float3 SE3gen0mul(const float3& /*p*/) {
     return make_float3(1,0,0);
 }
 __host__ __device__ inline
-float3 SE3gen1mul(const float3& p) {
+float3 SE3gen1mul(const float3& /*p*/) {
     return make_float3(0,1,0);
 }
 __host__ __device__ inline
-float3 SE3gen2mul(const float3& p) {
+float3 SE3gen2mul(const float3& /*p*/) {
     return make_float3(0,0,1);
 }
 __host__ __device__ inline
@@ -377,15 +377,15 @@ float3 SE3gen5mul(const float3& p) {
 //////////////////////////////////////////////////////
 
 __host__ __device__ inline
-float3 SE3gen0mul(const float4& p) {
+float3 SE3gen0mul(const float4& /*p*/) {
     return make_float3(1,0,0);
 }
 __host__ __device__ inline
-float3 SE3gen1mul(const float4& p) {
+float3 SE3gen1mul(const float4& /*p*/) {
     return make_float3(0,1,0);
 }
 __host__ __device__ inline
-float3 SE3gen2mul(const float4& p) {
+float3 SE3gen2mul(const float4& /*p*/) {
     return make_float3(0,0,1);
 }
 __host__ __device__ inline
@@ -494,25 +494,25 @@ float3 Plane_b_from_a(const Mat<float,3,4> T_ab, const float3 n_a)
 inline __device__ __host__
 float L1(float val)
 {
-    return abs(val);
+    return fabs(val);
 }
 
 inline __device__ __host__
 float L1(float2 val)
 {
-    return abs(val.x) + abs(val.y);
+    return fabs(val.x) + fabs(val.y);
 }
 
 inline __device__ __host__
 float L1(float3 val)
 {
-    return abs(val.x) + abs(val.y) + abs(val.z);
+    return fabs(val.x) + fabs(val.y) + fabs(val.z);
 }
 
 inline __device__ __host__
 float L1(float4 val)
 {
-    return abs(val.x) + abs(val.y) + abs(val.z) + abs(val.w);
+    return fabs(val.x) + fabs(val.y) + fabs(val.z) + fabs(val.w);
 }
 
 #ifdef USE_EIGEN

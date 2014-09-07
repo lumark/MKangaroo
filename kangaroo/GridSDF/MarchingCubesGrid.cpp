@@ -22,8 +22,6 @@
 #include "Kangaroo/Sdf.h"
 #include "MarchingCubesGrid.h"
 #include "Kangaroo/MarchingCubesTables.h"
-#include "Kangaroo/MarchingCubes.h"
-
 #include <assimp/cexport.h>
 #include <assimp/scene.h>
 

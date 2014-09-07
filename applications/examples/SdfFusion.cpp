@@ -60,13 +60,13 @@ int main( int argc, char* argv[] )
         ModelViewLookAtRDF(0,0,-4,0,0,1,0,-1,0)
     );
 
-    Handler3DGpuDepth handler(depth,stacks_view, AxisNone);
+    Handler3DDepth<float,roo::TargetDevice> handler(depth,stacks_view, AxisNone);
     SceneGraph::HandlerSceneGraph handlerView(graph, stacks_view, AxisNone);
     SceneGraph::HandlerSceneGraph handlerCapture(graph, stacks_capture, AxisNone);
     SetupContainer(container, 5, (float)w/h);
-    container[0].SetDrawFunction(boost::ref(adg)).SetHandler(&handler);
-    container[1].SetDrawFunction(boost::ref(adn)).SetHandler(&handler);
-    container[2].SetDrawFunction(boost::ref(adin)).SetHandler(&handler);
+    container[0].SetDrawFunction(std::ref(adg)).SetHandler(&handler);
+    container[1].SetDrawFunction(std::ref(adn)).SetHandler(&handler);
+    container[2].SetDrawFunction(std::ref(adin)).SetHandler(&handler);
     container[3].SetDrawFunction(SceneGraph::ActivateDrawFunctor(graph, stacks_view)).SetHandler( &handlerView  );
     container[4].SetDrawFunction(SceneGraph::ActivateDrawFunctor(graph, stacks_capture)).SetHandler( &handlerCapture  );
 
@@ -112,11 +112,12 @@ int main( int argc, char* argv[] )
             if(shape == 0) {
                 roo::RaycastBox(gtd, T_cw.inverse().matrix3x4(), K, roo::BoundingBox(make_float3(-0.9,-0.9,-0.9), make_float3(0.9,0.9,0.9)) );
             }else if(shape ==1) {
+                roo::Fill<float>(gtd, std::numeric_limits<float>::quiet_NaN() );
                 roo::RaycastSphere(gtd, roo::Image<float>(), T_cw.inverse().matrix3x4(), K, make_float3(0,0,0), 0.9);
             }
             CudaScopedMappedPtr dvbo(vbo);
             roo::Image<float4> vboimg((float4*)*dvbo,w,h);
-            roo::DepthToVbo(vboimg, gtd, K, 1.0f);
+            roo::DepthToVbo<float>(vboimg, gtd, K, 1.0f);
             roo::NormalsFromVbo(gtn,vboimg);
             glvbo.SetPose(T_cw.inverse().matrix());
         }
