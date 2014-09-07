@@ -101,8 +101,6 @@ void BuildPoseRefinementFromDepthmapSystemESM(
     LeastSquaresSystem<float,6>& lss, Image<float4> dDebug,
     const float c, const bool bDiscardMaxMin, const float fMinDepth, const float fMaxDepth
     ) {
-  // normalize pixel rgb value (for help when we need to combine ESM with ICP)
-  float NormalRate = 0.0001;
 
   // 3d point from reference depth camera
   Mat<float,4> Pr_d;
@@ -138,8 +136,8 @@ void BuildPoseRefinementFromDepthmapSystemESM(
   if(isfinite(depth) && depth > fMinDepth && depth < fMaxDepth) {
     if( dImgr.InBounds(pr(0), pr(1), 2) &&  dImgl.InBounds(pl(0), pl(1), 2) ) {
 
-      float Il = NormalRate * dImgl.template GetBilinear<float>(pl(0), pl(1));
-      float Ir = NormalRate * dImgr.template GetBilinear<float>(pr(0), pr(1));
+      float Il = dImgl.template GetBilinear<float>(pl(0), pl(1));
+      float Ir = dImgr.template GetBilinear<float>(pr(0), pr(1));
 
       if( bDiscardMaxMin && ( Il == 0 || Il == 255 || Ir == 0 || Ir == 255 ) ) {
         dDebug(u, v) = make_float4(1, 1, 0, 1);
@@ -151,7 +149,7 @@ void BuildPoseRefinementFromDepthmapSystemESM(
         //----- Forward Compositional Approach
 
         // calculate image derivative
-        const Mat<float,1,2> dIl =NormalRate *  dImgl.template GetCentralDiff<float>(pl(0), pl(1));
+        const Mat<float,1,2> dIl = dImgl.template GetCentralDiff<float>(pl(0), pl(1));
 
         // derivative of projection (L) and dehomogenization
         const Mat<float,2,3> dPl_by_dpl = {{
@@ -208,7 +206,7 @@ void BuildPoseRefinementFromDepthmapSystemESM(
                 };
                 */
 
-        const float w = LSReweightTukey(y, NormalRate *c);
+        const float w = LSReweightTukey(y, c);
         lss.JTJ = OuterProduct(Jl, w);
         lss.JTy = mul_aTb(Jl, y*w);
         lss.obs = 1;

@@ -53,6 +53,7 @@ list(APPEND SRC_H
     GridSDF/cu_rolling_sdf.h
     GridSDF/BoundedVolumeGrid.h
     GridSDF/RollingGridSDF.h
+    GridSDF/cu_model_refinement_extra.h
 )
 
 list(APPEND SRC_CU
@@ -60,6 +61,7 @@ list(APPEND SRC_CU
     GridSDF/cu_sdffusion_extra.cu
     GridSDF/cu_raycast_grid.cu
     GridSDF/cu_rolling_sdf.cu
+    GridSDF/cu_model_refinement_extra.cu
 )
 
 endif()
