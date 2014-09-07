@@ -3,7 +3,6 @@
 #include "Mat.h"
 #include "Image.h"
 #include "BoundedVolume.h"
-#include "BoundedVolumeGrid.h"
 #include "ImageIntrinsics.h"
 #include "Sdf.h"
 #include "extra/Timer.h"

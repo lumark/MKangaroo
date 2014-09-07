@@ -1,7 +1,7 @@
-#include "BoundedVolume.h"
+#include "cu_rolling_sdf.h"
 #include "BoundedVolumeGrid.h"
-#include "MatUtils.h"
-#include "launch_utils.h"
+#include "Kangaroo/MatUtils.h"
+#include "Kangaroo/launch_utils.h"
 
 namespace roo
 {

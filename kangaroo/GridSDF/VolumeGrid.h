@@ -11,10 +11,10 @@
 #include <npp.h>
 #endif // HAVE_NPP
 
-#include "Image.h"
-#include "Mat.h"
-#include "sampling.h"
-#include "Sdf.h"
+#include "Kangaroo/Image.h"
+#include "Kangaroo/Mat.h"
+#include "Kangaroo/sampling.h"
+#include "Kangaroo/Sdf.h"
 
 namespace roo
 {
@@ -61,12 +61,14 @@ struct VolumeGrid
   inline __host__
   void CopyFrom(const VolumeGrid<T,TargetFrom,ManagementFrom>& img)
   {
-    // If these VolumeGrids don't have the same height, or have an image pitch different from their height,
+    // If these VolumeGrids don't have the same height,
+    // or have an image pitch different from their height,
     // we need to do a copy for each depth layer.
-//    assert(w == img.w);
-//    assert(h == img.h);
-//    assert(img_pitch == img.img_pitch);
-    cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T), h*std::min(img.d,d), TargetCopyKind<Target,TargetFrom>() );
+    //    assert(w == img.w);
+    //    assert(h == img.h);
+    //    assert(img_pitch == img.img_pitch);
+    cudaMemcpy2D(ptr,pitch,img.ptr,img.pitch, std::min(img.w,w)*sizeof(T),
+                 h*std::min(img.d,d), TargetCopyKind<Target,TargetFrom>() );
   }
 
 

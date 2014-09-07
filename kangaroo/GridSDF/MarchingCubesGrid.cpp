@@ -19,10 +19,10 @@
 #include "stdio.h"
 #include "math.h"
 
-#include "Sdf.h"
+#include "Kangaroo/Sdf.h"
 #include "MarchingCubesGrid.h"
-#include "MarchingCubesTables.h"
-#include "MarchingCubes.h"
+#include "Kangaroo/MarchingCubesTables.h"
+#include "Kangaroo/MarchingCubes.h"
 
 #include <assimp/cexport.h>
 #include <assimp/scene.h>

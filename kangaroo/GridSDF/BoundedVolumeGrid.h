@@ -1,9 +1,9 @@
 #pragma once
 
 #include "VolumeGrid.h"
-#include "BoundingBox.h"
-#include "Sdf.h"
-#include "launch_utils.h"
+#include "Kangaroo/BoundingBox.h"
+#include "Kangaroo/Sdf.h"
+#include "Kangaroo/launch_utils.h"
 
 namespace roo
 {
@@ -210,7 +210,7 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
+      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
              m_shift.x,
              m_shift.y,
              m_shift.z,

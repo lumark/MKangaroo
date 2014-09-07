@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Mat.h"
-#include "Image.h"
-#include "ImageIntrinsics.h"
+#include "Kangaroo/Mat.h"
+#include "Kangaroo/Image.h"
+#include "Kangaroo/ImageIntrinsics.h"
 #include "BoundedVolumeGrid.h"
-#include "Sdf.h"
+#include "Kangaroo/Sdf.h"
 
 namespace roo
 {

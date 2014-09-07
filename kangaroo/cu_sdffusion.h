@@ -5,7 +5,6 @@
 #include "ImageIntrinsics.h"
 #include "BoundedVolume.h"
 #include "Sdf.h"
-#include "SDFPointCloud.h"
 
 namespace roo
 {

@@ -1,6 +1,6 @@
 #include "cu_sdffusion_grid.h"
-#include "MatUtils.h"
-#include "launch_utils.h"
+#include "Kangaroo/MatUtils.h"
+#include "Kangaroo/launch_utils.h"
 
 namespace roo
 {
