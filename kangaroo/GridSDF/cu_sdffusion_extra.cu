@@ -71,10 +71,13 @@ __global__ void KernSdfFuseDirectGray(
           /// here 0.5 is for kinect sensor
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
           {
-            //            printf("md %f,", md);
+            // get current voxel sdf value
             const SDF_t curvol = vol(x,y,z);
+
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
-            SDF_t sdf( clamp(sd,-trunc_dist,trunc_dist) , w);
+            SDF_t sdf( clamp(sd, -trunc_dist, trunc_dist) , w);
+
+            // upatedate SDF
             sdf += curvol;
             sdf.LimitWeight(max_w);
             vol(x,y,z) = sdf;

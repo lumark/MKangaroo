@@ -5,6 +5,7 @@
 #include "Kangaroo/ImageIntrinsics.h"
 #include "BoundedVolumeGrid.h"
 #include "Kangaroo/Sdf.h"
+#include "kangaroo/GridSDF/SdfSmart.h"
 
 namespace roo
 {

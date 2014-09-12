@@ -6,6 +6,7 @@
 #include "BoundedVolumeGrid.h"
 #include "Kangaroo/BoundedVolume.h"
 #include "Kangaroo/Sdf.h"
+#include "kangaroo/GridSDF/SdfSmart.h"
 
 namespace roo
 {

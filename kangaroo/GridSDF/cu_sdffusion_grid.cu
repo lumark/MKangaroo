@@ -12,7 +12,7 @@ __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
 __device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_grayVol;
 
 // have a large size of array to save index of grid sdf that need to init
-__device__ int                                                       g_NextInitSDFs[MAX_SUPPORT_GRID_NUM];
+__device__ int                            g_NextInitSDFs[MAX_SUPPORT_GRID_NUM];
 
 // -----------------------------------------------------------------------------
 //--the following add by luma---------------------------------------------------
@@ -107,8 +107,8 @@ void SDFInitGrayGrid( int* pNextInitSDFs,
     exit(-1);
   }
 
-  // load grid sdf to golbal memory. We do this because there is a size limit of
-  // the parameters that we can send the the kernel function.
+  // load grid sdf to global memory. We do this instead of pass it via function
+  // param because there is a size limit of the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   cudaMemcpyToSymbol(g_grayVol, &grayVol, sizeof(grayVol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();

@@ -15,6 +15,7 @@
 #include "Kangaroo/Mat.h"
 #include "Kangaroo/sampling.h"
 #include "Kangaroo/Sdf.h"
+#include "kangaroo/GridSDF/SdfSmart.h"
 
 namespace roo
 {

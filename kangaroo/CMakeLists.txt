@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8 )
+cmake_minimum_required( VERSION 3.0 )
 project( Kangaroo )
 
 set(VERSION_MAJOR 0)
@@ -40,11 +40,16 @@ list(APPEND SRC_CU
 )
 
 
+
+
 ################################################################################
 # Dont propogate host flags into CUDA environment.
-option(GRID_SDF_SUPPORT "Support Grid SDF" ON)
+option(GRID_SDF_SUPPORT "Grid SDF and color SDF Support" ON)
 
 if(GRID_SDF_SUPPORT)
+
+message("GridSDF Support On, Kangaroo will build Grid SDF")
+
 list(APPEND SRC_H
     GridSDF/VolumeGrid.h
     GridSDF/cu_raycast_grid.h
@@ -54,6 +59,7 @@ list(APPEND SRC_H
     GridSDF/BoundedVolumeGrid.h
     GridSDF/RollingGridSDF.h
     GridSDF/cu_model_refinement_extra.h
+    GridSDF/SDFSmart.h
 )
 
 list(APPEND SRC_CU
@@ -64,8 +70,19 @@ list(APPEND SRC_CU
     GridSDF/cu_model_refinement_extra.cu
 )
 
+
+find_package( ASSIMP QUIET )
+if(ASSIMP_FOUND)
+
+        list(APPEND SRC_CU GridSDF/MarchingCubesGrid.cpp)
+#        list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
+#        list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
+#        list(APPEND SRC_H GridSDF/SavePPMGrid.h)
+        list(APPEND SRC_CU GridSDF/MarchingCubes.cpp)
+#        list(APPEND SRC_H GridSDF/MarchingCubes.h)
 endif()
 
+endif()
 
 
 ################################################################################
@@ -109,16 +126,6 @@ if(ASSIMP_FOUND)
     set(HAVE_ASSIMP 1)
     list(APPEND INTERNAL_INC ${ASSIMP_INCLUDE_DIR})
     list(APPEND LINK_LIBS ${ASSIMP_LIBRARIES} )
-
-    if(GRID_SDF_SUPPORT)
-        list(APPEND SRC_CU GridSDF/MarchingCubesGrid.cpp)
-#        list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
-#        list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
-#        list(APPEND SRC_H GridSDF/SavePPMGrid.h)
-        list(APPEND SRC_CU GridSDF/MarchingCubes.cpp)
-#        list(APPEND SRC_H GridSDF/MarchingCubes.h)
-    endif()
-
 endif()
 
 find_package( OpenCV2 QUIET )
