@@ -10,7 +10,12 @@ namespace roo
 
 struct __align__(8) SDF_t_Smart {
   inline __host__ __device__ SDF_t_Smart() {}
-  inline __host__ __device__ SDF_t_Smart(float v) : val(v), w(1), total_fuse_num(0), val_total(v) {}
+  inline __host__ __device__ SDF_t_Smart(float v) :
+    val(v), w(1), total_fuse_num(0), val_total(v) {}
+
+  inline __host__ __device__ SDF_t_Smart(float v, float w) :
+    val(v), w(w), total_fuse_num(0), val_total(0) {}
+
   inline __host__ __device__ SDF_t_Smart(float v, float w, float num, float v_total) :
     val(v), w(w), total_fuse_num(num), val_total(v_total) {}
 
