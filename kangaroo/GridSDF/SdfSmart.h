@@ -31,30 +31,25 @@ struct __align__(8) SDF_t_Smart {
   {
     if(rhs.w > 0)
     {
-      if(total_fuse_num == 0)
-      {
-        val = (w * val + rhs.w * rhs.val);
-        w += rhs.w;
-        val /= w;
-        val_total = val_total + rhs.val;
-        total_fuse_num ++;
-      }
-      else if( rhs.val >= 1.3 * (val_total/total_fuse_num) ||
-               rhs.val <= 0.7 * (val_total/total_fuse_num)
-        )
-      {
-        // skip this value
-      }
-      else
-      {
-        val = (w * val + rhs.w * rhs.val);
-        w += rhs.w;
-        val /= w;
-        val_total = val_total + rhs.val;
-        total_fuse_num ++;
-      }
-      // compute mean val
+      bool bFlag = true;
 
+      if(total_fuse_num != 0)
+      {
+        if( rhs.val >= 1.3 * (val_total/total_fuse_num) ||
+            rhs.val <= 0.7 * (val_total/total_fuse_num) )
+        {
+          bFlag = false;
+        }
+      }
+
+      if(bFlag == true)
+      {
+        val = (w * val + rhs.w * rhs.val);
+        w += rhs.w;
+        val /= w;
+        val_total = val_total + rhs.val;
+        total_fuse_num ++;
+      }
     }
   }
 
@@ -63,6 +58,9 @@ struct __align__(8) SDF_t_Smart {
   float w;
   float total_fuse_num;
   float val_total; // mean SDF value
+
+  // TODO: should also add :cur pixel distant to camera.
+  // If this distant is small, we should trust it more
 };
 
 //struct __align__(8) SDF_t_Smart {
