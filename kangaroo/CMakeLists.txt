@@ -60,6 +60,7 @@ list(APPEND SRC_H
     GridSDF/RollingGridSDF.h
     GridSDF/cu_model_refinement_extra.h
     GridSDF/SDFSmart.h
+    GridSDF/cu_sdf_reset.h
 )
 
 list(APPEND SRC_CU
@@ -68,6 +69,7 @@ list(APPEND SRC_CU
     GridSDF/cu_raycast_grid.cu
     GridSDF/cu_rolling_sdf.cu
     GridSDF/cu_model_refinement_extra.cu
+    GridSDF/cu_sdf_reset.cu
 )
 
 

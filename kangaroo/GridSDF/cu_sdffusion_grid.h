@@ -6,6 +6,7 @@
 #include "BoundedVolumeGrid.h"
 #include "Kangaroo/Sdf.h"
 #include "kangaroo/GridSDF/SdfSmart.h"
+#include "kangaroo/GridSDF/cu_sdf_reset.h"
 
 namespace roo
 {
@@ -47,13 +48,4 @@ void SdfFuseDirectGrayGridDesireIndex(int* pNextInitSDFs,
                                       Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
                                       Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
                                       float trunc_dist, float max_w, float mincostheta, bool bWeight);
-
-void SdfReset(VolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol);
-void SdfReset(VolumeGrid<SDF_t_Smart,roo::TargetDevice, roo::Manage> vol);
-void SdfReset(VolumeGrid<float, roo::TargetDevice, roo::Manage> vol);
-
-void SdfReset(BoundedVolumeGrid<roo::SDF_t,roo::TargetDevice, roo::Manage> vol);
-void SdfReset(BoundedVolumeGrid<roo::SDF_t_Smart,roo::TargetDevice, roo::Manage> vol);
-void SdfReset(BoundedVolumeGrid<float,roo::TargetDevice, roo::Manage> vol);
-
 }
