@@ -6,7 +6,7 @@
 namespace roo
 {
 //////////////////////////////////////////////////////
-/// Rolling SDF
+/// Rolling SDF by partial reset
 //////////////////////////////////////////////////////
 
 // Boxmin and boxmax define the box that is to be kept intact, rest will be cleared.
@@ -29,7 +29,6 @@ __global__ void KernSdfResetPartial(BoundedVolume<SDF_t> vol, float3 boxmin, flo
     vol(x,y,z) = SDF_t(0.0/0.0,0.0);
   }
 }
-
 
 // TODO: Name the function better.
 void SdfResetPartial(BoundedVolume<SDF_t> vol, float3 shift)
@@ -64,12 +63,12 @@ void SdfResetPartial(BoundedVolume<SDF_t> vol, float3 shift)
 }
 
 
-
 //////////////////////////////////////////////////////
 /// Rolling GRID SDF
 //////////////////////////////////////////////////////
 
 __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
+__device__ BoundedVolumeGrid<SDF_t_Smart, roo::TargetDevice, roo::Manage>  g_vol_smart;
 __device__ int                                                       g_NextResetSDFs[512];
 
 // =============================================================================
@@ -183,7 +182,69 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
   }
 }
 
+void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t_Smart> vol, int3 shift)
+{
+  cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
+  GpuCheckErrors();
 
+  // 1, Compute the latest bounding box
+  float3 bb_min = vol.m_bbox.boxmin, bb_max = vol.m_bbox.boxmax;
+
+  if(shift.x!=0)
+  {
+    bb_min.x = bb_min.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridRes_w);
+    bb_max.x = bb_max.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridRes_w);
+  }
+
+  if(shift.y!=0)
+  {
+    bb_min.y = bb_min.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridRes_h);
+    bb_max.y = bb_max.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridRes_h);
+  }
+
+  if(shift.z!=0)
+  {
+    bb_min.z = bb_min.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridRes_d);
+    bb_max.z = bb_max.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridRes_d);
+  }
+
+  // save shift params in grid sdf data struct
+  vol.m_shift = shift;
+
+  // 2, Kernel functin. Initialization for GPU parallelization
+  //  dim3 blockDim(16,16);
+  //  dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
+  //  KernRollingGridSdf<<<gridDim,blockDim>>>(bb_min, bb_max, shift);
+  //  GpuCheckErrors();
+
+
+  // 3, copy array back
+  int nNextResetSDFs[vol.GetTotalGridNum()];
+  cudaMemcpyFromSymbol(nNextResetSDFs, g_NextResetSDFs, sizeof(g_NextResetSDFs), 0, cudaMemcpyDeviceToHost);
+  GpuCheckErrors();
+
+  for(int i=0;i!=vol.GetTotalGridNum();i++)
+  {
+    pNextInitSDFs[i] = nNextResetSDFs[i];
+
+    nNextResetSDFs[i] = 0;
+  }
+
+  // reset index
+  cudaMemcpyToSymbol(g_NextResetSDFs,nNextResetSDFs,sizeof(nNextResetSDFs),0,cudaMemcpyHostToDevice);
+
+  // for each grid sdf that need to be reset, free it.
+  g_vol.FreeMemory();
+
+  // reset
+  for(int i=0;i!=vol.GetTotalGridNum();i++)
+  {
+    if(nNextResetSDFs[i]==1)
+    {
+      vol.FreeMemoryByIndex(i);
+    }
+  }
+}
 
 // raycast grid gray SDF
 __device__ float3 g_positive_shift;
@@ -253,6 +314,41 @@ __global__ void KernDetectRollingSdfShift(
 
 void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float> depth,
                      const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
+                     const Mat<float,3,4> T_wc, ImageIntrinsics K)
+{
+
+  // load vol val to golbal memory
+  cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
+  GpuCheckErrors();
+
+  // set shift to 0
+  positive_shift = make_float3(0,0,0);
+  negative_shift = make_float3(0,0,0);
+
+  cudaMemcpyToSymbol(g_positive_shift,&positive_shift,sizeof(positive_shift),0,cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
+  GpuCheckErrors();
+
+  dim3 blockDim, gridDim;
+  InitDimFromOutputImageOver(blockDim, gridDim, depth);
+  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
+  GpuCheckErrors();
+
+  //  cudaMemcpy(&positive_shift,&g_positive_shift,sizeof(positive_shift),cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
+  GpuCheckErrors();
+
+  //  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
+  //         positive_shift.x,positive_shift.y,positive_shift.z,
+  //         negative_shift.x,negative_shift.y,negative_shift.z);
+
+  g_vol.FreeMemory();
+}
+
+
+void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float> depth,
+                     const BoundedVolumeGrid<SDF_t_Smart,roo::TargetDevice, roo::Manage> vol,
                      const Mat<float,3,4> T_wc, ImageIntrinsics K)
 {
 
