@@ -7,6 +7,7 @@
 namespace roo
 {
 
+// a normalize version for ESM method
 KANGAROO_EXPORT
 LeastSquaresSystem<float,6> PoseRefinementFromDepthESMNormal(
     const Image<unsigned char> dImgl,

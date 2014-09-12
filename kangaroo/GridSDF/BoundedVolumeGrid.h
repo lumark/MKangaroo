@@ -211,7 +211,7 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
+      printf("[Kangaroo/BoundedVolumeGrid] Error!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
              m_shift.x,
              m_shift.y,
              m_shift.z,
@@ -538,7 +538,7 @@ public:
   {
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[BoundedVolumeGrid] fatal error! Single GridSDF being free must be allocate first!!\n");
+      printf("[BoundedVolumeGrid] Error! Single GridSDF being free must be alloc first!!\n");
       exit(-1);
     }
 
