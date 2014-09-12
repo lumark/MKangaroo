@@ -217,7 +217,6 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t_Smart> vol, 
   //  KernRollingGridSdf<<<gridDim,blockDim>>>(bb_min, bb_max, shift);
   //  GpuCheckErrors();
 
-
   // 3, copy array back
   int nNextResetSDFs[vol.GetTotalGridNum()];
   cudaMemcpyFromSymbol(nNextResetSDFs, g_NextResetSDFs, sizeof(g_NextResetSDFs), 0, cudaMemcpyDeviceToHost);
