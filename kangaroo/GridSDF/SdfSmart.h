@@ -43,15 +43,20 @@ struct __align__(8) SDF_t_Smart {
         if( rhs.val >= 1.3 * (val_total/total_fuse_num) ||
             rhs.val <= 0.7 * (val_total/total_fuse_num) )
         {
+          total_fuse_num ++;
+          val_total = val_total + rhs.val;
           bFlag = false;
+          printf("[SmartSDF] skip;");
         }
       }
 
       if(bFlag == true)
       {
+        //compute value
         val = (w * val + rhs.w * rhs.val);
         w += rhs.w;
         val /= w;
+
         val_total = val_total + rhs.val;
         total_fuse_num ++;
       }
