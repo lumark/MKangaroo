@@ -12,7 +12,7 @@ __global__ void KernSdfFuseDirectGray(
     BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -69,7 +69,7 @@ __global__ void KernSdfFuseDirectGray(
           //        }else if(sd < 5*trunc_dist) {
 
           /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
             // get current voxel sdf value
             const SDF_t curvol = vol(x,y,z);
@@ -93,11 +93,11 @@ void SdfFuseDirectGray(
     BoundedVolume<SDF_t> vol, BoundedVolume<float> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     ) {
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
-  KernSdfFuseDirectGray<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGray<<<gridDim,blockDim>>>(vol, colorVol, depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, min_depth);
   GpuCheckErrors();
 }
 
@@ -109,7 +109,7 @@ __global__ void KernSdfFuseColor(
     BoundedVolume<SDF_t> vol, BoundedVolume<uchar3> colorVol,
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics K,
     Image<float> img, Image<uchar3> Imgrgb, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -149,7 +149,7 @@ __global__ void KernSdfFuseColor(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
             const SDF_t curvol = vol(x,y,z);
             // return min of 'sd' and 'trunc_dist' as 'x', then rerurn max of 'x' and 'w'
@@ -178,13 +178,13 @@ void SdfFuseColor(
     BoundedVolume<SDF_t> vol, BoundedVolume<uchar3> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics K,
     Image<float> img, Image<uchar3> Imgrgb, Mat<float,3,4> T_iw, ImageIntrinsics Kimg,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta,float min_depth
     ) {
   dim3 blockDim(16,16);
   dim3 gridDim(vol.w / blockDim.x, vol.h / blockDim.y);
   KernSdfFuseColor<<<gridDim,blockDim>>>(vol, colorVol, depth, norm,
                                          T_cw, K, img, Imgrgb, T_iw, Kimg,
-                                         trunc_dist, max_w, mincostheta);
+                                         trunc_dist, max_w, mincostheta, min_depth);
   GpuCheckErrors();
 }
 

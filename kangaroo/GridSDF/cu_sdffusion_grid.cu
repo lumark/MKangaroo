@@ -20,7 +20,7 @@ __device__ int                            g_NextInitSDFs[MAX_SUPPORT_GRID_NUM];
 __global__ void KernSdfInitGrayGrid(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -60,7 +60,7 @@ __global__ void KernSdfInitGrayGrid(
         // depth value at image coordinate
         const float md   = depth.GetBilinear<float>(p_c);
 
-        if(md>0.5)
+        if(md>min_depth)
         {
           // normal value at image coordinate
           const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
@@ -77,7 +77,6 @@ __global__ void KernSdfInitGrayGrid(
           else
           {
             //        }else if(sd < 5*trunc_dist) {
-            /// here 0.5 is for kinect sensor
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
               int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
@@ -99,7 +98,7 @@ void SDFInitGrayGrid(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> grayVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
@@ -117,7 +116,7 @@ void SDFInitGrayGrid(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfInitGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfInitGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, min_depth);
   GpuCheckErrors();
 
   //  printf("[SDFInitgrayGrid.cu] Finished kernel.\n");
@@ -156,7 +155,7 @@ void SDFInitGrayGrid(
 __global__ void KernSdfFuseDirectGrayGrid(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -213,8 +212,7 @@ __global__ void KernSdfFuseDirectGrayGrid(
         {
           //        }else if(sd < 5*trunc_dist) {
 
-          /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
             const SDF_t curvol = g_vol(x,y,z);
 
@@ -239,7 +237,7 @@ void SdfFuseDirectGrayGrid(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   /// load grid sdf to golbal memory. We do this because there is a size limit of
@@ -251,7 +249,9 @@ void SdfFuseDirectGrayGrid(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth,
+                                                  gray, T_iw, Krgb, trunc_dist,
+                                                  max_w, mincostheta, min_depth);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -274,7 +274,7 @@ void SdfFuseDirectGrayGrid(
 __global__ void KernSdfFuseDirectGrayGridSafe(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -330,13 +330,11 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-
-          /// here 0.5 is for kinect sensor
           int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                       int(floorf(y/g_vol.m_nVolumeGridRes)),
                                       int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
           {
             if(g_vol.CheckIfBasicSDFActive(nIndex)==true )
             {
@@ -373,7 +371,7 @@ void SdfFuseDirectGrayGridSafe(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   /// load grid sdf to golbal memory. We do this because there is a size limit of
@@ -385,7 +383,9 @@ void SdfFuseDirectGrayGridSafe(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGrayGridSafe<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrayGridSafe<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth,
+                                                      gray, T_iw, Krgb, trunc_dist,
+                                                      max_w, mincostheta, min_depth);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -410,7 +410,7 @@ void SdfFuseDirectGrayGridSafe(
 __global__ void KernSdfFuseDirectgrayGridDesireIndex(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -473,8 +473,7 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndex(
           {
             //        }else if(sd < 5*trunc_dist) {
 
-            /// here 0.5 is for kinect sensor
-            if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+            if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
             {
               const SDF_t curvol = g_vol(x,y,z);
 
@@ -517,7 +516,7 @@ void SdfFuseDirectGrayGridDesireIndex(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
@@ -546,7 +545,11 @@ void SdfFuseDirectGrayGridDesireIndex(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectgrayGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectgrayGridDesireIndex<<<gridDim,blockDim>>>(depth, norm, T_cw,
+                                                             Kdepth, gray, T_iw,
+                                                             Krgb, trunc_dist,
+                                                             max_w, mincostheta,
+                                                             min_depth, bWeight);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -571,7 +574,7 @@ void SdfFuseDirectGrayGridDesireIndex(
 __global__ void KernSdfFuseDirectGrayGridAutoInit(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -628,8 +631,7 @@ __global__ void KernSdfFuseDirectGrayGridAutoInit(
         {
           //        }else if(sd < 5*trunc_dist) {
 
-          /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
           {
             int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                         int(floorf(y/g_vol.m_nVolumeGridRes)),
@@ -679,7 +681,7 @@ void SdfFuseDirectGrayGridAutoInit(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
@@ -697,9 +699,12 @@ void SdfFuseDirectGrayGridAutoInit(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGrayGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectGrayGridAutoInit<<<gridDim,blockDim>>>(depth, norm, T_cw,
+                                                          Kdepth, gray, T_iw,
+                                                          Krgb, trunc_dist,
+                                                          max_w, mincostheta,
+                                                          min_depth, bWeight);
   GpuCheckErrors();
-
   // check if need to init new grid sdf
   int nNextInitSDFs[MAX_SUPPORT_GRID_NUM];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
@@ -864,7 +869,7 @@ __device__ BoundedVolumeGrid<SDF_t_Smart, roo::TargetDevice, roo::Manage>  g_vol
 __global__ void KernSdfInitGrayGridSmart(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -904,7 +909,7 @@ __global__ void KernSdfInitGrayGridSmart(
         // depth value at image coordinate
         const float md   = depth.GetBilinear<float>(p_c);
 
-        if(md>0.5)
+        if(md>min_depth)
         {
           // normal value at image coordinate
           const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
@@ -921,12 +926,11 @@ __global__ void KernSdfInitGrayGridSmart(
           else
           {
             //        }else if(sd < 5*trunc_dist) {
-            /// here 0.5 is for kinect sensor
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
               int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                          int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                          int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+                                                int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                                                int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
               g_NextInitSDFs[nIndex] = 1;
             }
           }
@@ -943,7 +947,7 @@ void SDFInitGrayGrid(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> grayVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
@@ -961,7 +965,9 @@ void SDFInitGrayGrid(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfInitGrayGridSmart<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfInitGrayGridSmart<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray,
+                                                 T_iw, Krgb, trunc_dist, max_w,
+                                                 mincostheta, min_depth);
   GpuCheckErrors();
 
   //  printf("[SDFInitgrayGrid.cu] Finished kernel.\n");
@@ -998,7 +1004,7 @@ void SDFInitGrayGrid(
 __global__ void KernSdfFuseDirectGrayGridSmart(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float min_depth, float mincostheta
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1055,8 +1061,7 @@ __global__ void KernSdfFuseDirectGrayGridSmart(
         {
           //        }else if(sd < 5*trunc_dist) {
 
-          /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
             const SDF_t_Smart curvol = g_vol_smart(x,y,z);
 
@@ -1081,7 +1086,7 @@ void SdfFuseDirectGrayGrid(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   /// load grid sdf to golbal memory. We do this because there is a size limit of
@@ -1093,7 +1098,9 @@ void SdfFuseDirectGrayGrid(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGrayGridSmart<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrayGridSmart<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth,
+                                                       gray, T_iw, Krgb, trunc_dist,
+                                                       max_w, mincostheta, min_depth);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -1116,7 +1123,7 @@ void SdfFuseDirectGrayGrid(
 __global__ void KernSdfFuseDirectGrayGridSafeSmart(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1172,13 +1179,11 @@ __global__ void KernSdfFuseDirectGrayGridSafeSmart(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-
-          /// here 0.5 is for kinect sensor
           int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                      int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                      int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+                                            int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                                            int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
             if(g_vol_smart.CheckIfBasicSDFActive(nIndex)==true )
             {
@@ -1215,7 +1220,7 @@ void SdfFuseDirectGrayGridSafe(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta
+    float trunc_dist, float max_w, float mincostheta, float min_depth
     )
 {
   /// load grid sdf to golbal memory. We do this because there is a size limit of
@@ -1227,7 +1232,11 @@ void SdfFuseDirectGrayGridSafe(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGrayGridSafeSmart<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta);
+  KernSdfFuseDirectGrayGridSafeSmart<<<gridDim,blockDim>>>(depth, norm, T_cw,
+                                                           Kdepth, gray, T_iw,
+                                                           Krgb, trunc_dist,
+                                                           max_w, mincostheta,
+                                                           min_depth);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -1252,7 +1261,7 @@ void SdfFuseDirectGrayGridSafe(
 __global__ void KernSdfFuseDirectgrayGridDesireIndexSmart(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1264,8 +1273,8 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndexSmart(
   for(int z=0; z < g_vol_smart.m_d; ++z)
   {
     int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+                                      int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                                      int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
     if(g_NextInitSDFs[nIndex] == 1)
     {
@@ -1315,8 +1324,7 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndexSmart(
           {
             //        }else if(sd < 5*trunc_dist) {
 
-            /// here 0.5 is for kinect sensor
-            if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+            if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
             {
               const SDF_t_Smart curvol = g_vol_smart(x,y,z);
 
@@ -1359,7 +1367,7 @@ void SdfFuseDirectGrayGridDesireIndex(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
@@ -1388,7 +1396,11 @@ void SdfFuseDirectGrayGridDesireIndex(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectgrayGridDesireIndexSmart<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectgrayGridDesireIndexSmart<<<gridDim,blockDim>>>(depth, norm, T_cw,
+                                                                  Kdepth, gray, T_iw,
+                                                                  Krgb, trunc_dist,
+                                                                  max_w, mincostheta,
+                                                                  min_depth, bWeight);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
@@ -1413,7 +1425,7 @@ void SdfFuseDirectGrayGridDesireIndex(
 __global__ void KernSdfFuseDirectGrayGridAutoInitSmart(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1470,12 +1482,11 @@ __global__ void KernSdfFuseDirectGrayGridAutoInitSmart(
         {
           //        }else if(sd < 5*trunc_dist) {
 
-          /// here 0.5 is for kinect sensor
-          if(/*sd < 5*trunc_dist && */isfinite(md) && md>0.5 && costheta > mincostheta )
+          if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
             int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                        int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                        int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+                                              int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                                              int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
             if(g_vol_smart.CheckIfBasicSDFActive(nIndex) == true)
             {
@@ -1521,7 +1532,7 @@ void SdfFuseDirectGrayGridAutoInit(
     BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage> colorVol,
     Image<float> depth, Image<float4> norm, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
     Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
-    float trunc_dist, float max_w, float mincostheta, bool bWeight
+    float trunc_dist, float max_w, float mincostheta, float min_depth, bool bWeight
     )
 {
   if(vol.GetTotalGridNum()>MAX_SUPPORT_GRID_NUM)
@@ -1539,7 +1550,11 @@ void SdfFuseDirectGrayGridAutoInit(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfFuseDirectGrayGridAutoInitSmart<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, bWeight);
+  KernSdfFuseDirectGrayGridAutoInitSmart<<<gridDim,blockDim>>>(depth, norm, T_cw,
+                                                               Kdepth, gray, T_iw,
+                                                               Krgb, trunc_dist,
+                                                               max_w, mincostheta,
+                                                               min_depth, bWeight);
   GpuCheckErrors();
 
   // check if need to init new grid sdf
