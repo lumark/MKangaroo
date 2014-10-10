@@ -11,7 +11,7 @@ link_libraries(${Kangaroo_LIBRARIES})
 
 # git clone git://github.com/stevenlovegrove/Pangolin.git
 find_package(Pangolin 0.1 QUIET)
-find_package(OpenCV2 QUIET)
+find_package(OpenCV QUIET)
 
 # git clone git://github.com/stevenlovegrove/Sophus.git
 find_package(Sophus QUIET)
@@ -20,8 +20,8 @@ find_package(Sophus QUIET)
 find_package(SceneGraph 0.1 QUIET)
 
 if(Pangolin_FOUND AND Sophus_FOUND AND SceneGraph_FOUND )
-    include_directories(${Pangolin_INCLUDE_DIRS} ${OpenCV2_INCLUDE_DIRS})
-    link_libraries(${Pangolin_LIBRARIES} ${OpenCV2_LIBRARIES})
+    include_directories(${Pangolin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+    link_libraries(${Pangolin_LIBRARIES} ${OpenCV_LIBRARIES})
     
     include_directories(${Sophus_INCLUDE_DIR})
     link_libraries(${Sophus_LIBRARIES})

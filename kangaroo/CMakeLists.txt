@@ -130,11 +130,11 @@ if(ASSIMP_FOUND)
     list(APPEND LINK_LIBS ${ASSIMP_LIBRARIES} )
 endif()
 
-find_package( OpenCV2 QUIET )
-if(OpenCV2_FOUND)
+find_package( OpenCV QUIET )
+if(OpenCV_FOUND)
     set(HAVE_OPENCV 1)
-    list(APPEND USER_INC ${OpenCV2_INCLUDE_DIRS} )
-    list(APPEND LINK_LIBS ${OpenCV2_LIBRARIES} )
+    list(APPEND USER_INC ${OpenCV_INCLUDE_DIRS} )
+    list(APPEND LINK_LIBS ${OpenCV_LIBRARIES} )
 endif()
 
 # So that we can find config.h
