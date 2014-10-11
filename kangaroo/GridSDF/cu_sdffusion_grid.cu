@@ -187,7 +187,7 @@ __global__ void KernSdfFuseDirectGrayGrid(
       const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
-      if(c!=0)
+      if(c>0)
       {
         // depth value at camera coorniate
         const float vd   = P_c.z;
@@ -306,7 +306,7 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
       const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
-      if(c!=0)
+      if(c>0)
       {
         // depth value at camera coorniate
         const float vd   = P_c.z;
@@ -448,7 +448,7 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndex(
         const float c =  gray.GetBilinear<float>(p_i);
 
         // discard pixel value equals 0
-        if(c!=0)
+        if(c>0)
         {
           // depth value at camera coorniate
           const float vd   = P_c.z;
@@ -606,7 +606,7 @@ __global__ void KernSdfFuseDirectGrayGridAutoInit(
       const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
-      if(c!=0)
+      if(c>0)
       {
         // depth value at camera coorniate
         const float vd   = P_c.z;
@@ -1036,7 +1036,7 @@ __global__ void KernSdfFuseDirectGrayGridSmart(
       const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
-      if(c!=0)
+      if(c>0)
       {
         // depth value at camera coorniate
         const float vd   = P_c.z;
@@ -1155,7 +1155,7 @@ __global__ void KernSdfFuseDirectGrayGridSafeSmart(
       const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
-      if(c!=0)
+      if(c>0)
       {
         // depth value at camera coorniate
         const float vd   = P_c.z;
@@ -1299,7 +1299,7 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndexSmart(
         const float c =  gray.GetBilinear<float>(p_i);
 
         // discard pixel value equals 0
-        if(c!=0)
+        if(c>0)
         {
           // depth value at camera coorniate
           const float vd   = P_c.z;
@@ -1457,7 +1457,7 @@ __global__ void KernSdfFuseDirectGrayGridAutoInitSmart(
       const float c =  gray.GetBilinear<float>(p_i);
 
       // discard pixel value equals 0
-      if(c!=0)
+      if(c>0)
       {
         // depth value at camera coorniate
         const float vd   = P_c.z;
@@ -1506,12 +1506,11 @@ __global__ void KernSdfFuseDirectGrayGridAutoInitSmart(
               }
               else
               {
-                if(g_grayVol(x,y,z)==0.5)
+                if(g_grayVol(x,y,z) == 0.5)
                 {
                   g_grayVol(x,y,z) = (w*c + g_grayVol(x,y,z) * curvol.w) / (w + curvol.w);
                 }
               }
-
             }
             else
             {
