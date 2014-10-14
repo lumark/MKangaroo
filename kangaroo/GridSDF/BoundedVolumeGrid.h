@@ -249,13 +249,32 @@ public:
     /// get pose of voxel in whole sdf, in %
     float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-    if(pos_v.x>=1) { pos_v.x =0.99999; }
-    if(pos_v.y>=1) { pos_v.y =0.99999; }
-    if(pos_v.z>=1) { pos_v.z =0.99999; }
+    if(pos_v.x>=1)
+    {
+      pos_v.x =0.99999;
+    }
+    else if(pos_v.x<0)
+    {
+      pos_v.x =0;
+    }
 
-    if(pos_v.x<0) { pos_v.x =0; }
-    if(pos_v.y<0) { pos_v.y =0; }
-    if(pos_v.z<0) { pos_v.z =0; }
+    if(pos_v.y>=1)
+    {
+      pos_v.y =0.99999;
+    }
+    else if(pos_v.y<0)
+    {
+      pos_v.y =0;
+    }
+
+    if(pos_v.z>=1)
+    {
+      pos_v.z =0.99999;
+    }
+    else if(pos_v.z<0)
+    {
+      pos_v.z =0;
+    }
 
     const float fFactor = float(m_nVolumeGridRes)/float(m_w);
 
@@ -287,13 +306,32 @@ public:
     /// get pose of voxel in whole sdf, in %
     float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-    if(pos_v.x>=1) { pos_v.x =0.99999; }
-    if(pos_v.y>=1) { pos_v.y =0.99999; }
-    if(pos_v.z>=1) { pos_v.z =0.99999; }
+    if(pos_v.x>=1)
+    {
+      pos_v.x =0.99999;
+    }
+    else if(pos_v.x<0)
+    {
+      pos_v.x =0;
+    }
 
-    if(pos_v.x<0) { pos_v.x =0; }
-    if(pos_v.y<0) { pos_v.y =0; }
-    if(pos_v.z<0) { pos_v.z =0; }
+    if(pos_v.y>=1)
+    {
+      pos_v.y =0.99999;
+    }
+    else if(pos_v.y<0)
+    {
+      pos_v.y =0;
+    }
+
+    if(pos_v.z>=1)
+    {
+      pos_v.z =0.99999;
+    }
+    else if(pos_v.z<0)
+    {
+      pos_v.z =0;
+    }
 
     const float fFactor = float(m_nVolumeGridRes)/float(m_w);
 
@@ -333,8 +371,7 @@ public:
   {
     if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
     {
-      const unsigned int nIndex =x + m_nGridRes_w* (y+ m_nGridRes_h* z);
-      return  nIndex;
+      return  x + m_nGridRes_w* (y+ m_nGridRes_h* z);
     }
 
     // for x
@@ -412,8 +449,7 @@ public:
 
 
     // compute actual index
-    const unsigned int nIndex =x + m_nGridRes_w* (y+ m_nGridRes_h* z);
-    return  nIndex;
+    return x + m_nGridRes_w* (y+ m_nGridRes_h* z);
   }
 
 
