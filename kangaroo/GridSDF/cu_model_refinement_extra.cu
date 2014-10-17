@@ -1,9 +1,9 @@
 #include "cu_model_refinement_extra.h"
-#include "Kangaroo/MatUtils.h"
-#include "Kangaroo/launch_utils.h"
-#include "Kangaroo/reweighting.h"
-#include "Kangaroo/disparity.h"
-#include "Kangaroo/LeastSquareSum.h"
+#include "kangaroo/MatUtils.h"
+#include "kangaroo/launch_utils.h"
+#include "kangaroo/reweighting.h"
+#include "kangaroo/disparity.h"
+#include "kangaroo/LeastSquareSum.h"
 
 namespace roo {
 

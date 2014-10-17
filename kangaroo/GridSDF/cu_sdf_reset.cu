@@ -1,6 +1,6 @@
 #include "cu_sdf_reset.h"
-#include "Kangaroo/MatUtils.h"
-#include "Kangaroo/launch_utils.h"
+#include "kangaroo/MatUtils.h"
+#include "kangaroo/launch_utils.h"
 
 namespace roo
 {

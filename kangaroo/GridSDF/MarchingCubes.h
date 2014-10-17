@@ -4,14 +4,14 @@
 #include "stdio.h"
 #include "math.h"
 
-#include "Kangaroo/Sdf.h"
-#include "Kangaroo/MarchingCubesTables.h"
+#include "kangaroo/Sdf.h"
+#include "kangaroo/MarchingCubesTables.h"
 
 #include <assimp/cexport.h>
 #include <assimp/scene.h>
-#include "Kangaroo/extra/AssimpMissing.h"
+#include "kangaroo/extra/AssimpMissing.h"
 
-#include "Kangaroo/BoundedVolume.h"
+#include "kangaroo/BoundedVolume.h"
 
 namespace roo {
 

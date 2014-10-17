@@ -19,9 +19,9 @@
 #include "stdio.h"
 #include "math.h"
 
-#include "Kangaroo/Sdf.h"
+#include "kangaroo/Sdf.h"
 #include "MarchingCubesGrid.h"
-#include "Kangaroo/MarchingCubesTables.h"
+#include "kangaroo/MarchingCubesTables.h"
 #include <assimp/cexport.h>
 #include <assimp/scene.h>
 

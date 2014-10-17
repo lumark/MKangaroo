@@ -11,10 +11,10 @@
 #include <npp.h>
 #endif // HAVE_NPP
 
-#include "Kangaroo/Image.h"
-#include "Kangaroo/Mat.h"
-#include "Kangaroo/sampling.h"
-#include "Kangaroo/Sdf.h"
+#include "kangaroo/Image.h"
+#include "kangaroo/Mat.h"
+#include "kangaroo/sampling.h"
+#include "kangaroo/Sdf.h"
 #include "kangaroo/GridSDF/SdfSmart.h"
 
 namespace roo

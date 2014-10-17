@@ -1,11 +1,11 @@
 #pragma once
 
 #include "kangaroo/platform.h"
-#include "Kangaroo/Mat.h"
-#include "Kangaroo/Image.h"
-#include "Kangaroo/ImageIntrinsics.h"
+#include "kangaroo/Mat.h"
+#include "kangaroo/Image.h"
+#include "kangaroo/ImageIntrinsics.h"
 #include "BoundedVolumeGrid.h"
-#include "Kangaroo/Sdf.h"
+#include "kangaroo/Sdf.h"
 #include "kangaroo/GridSDF/SdfSmart.h"
 #include "kangaroo/GridSDF/cu_sdf_reset.h"
 

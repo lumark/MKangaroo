@@ -1,7 +1,7 @@
-#include "Kangaroo/GridSDF/cu_sdffusion_extra.h"
+#include "kangaroo/GridSDF/cu_sdffusion_extra.h"
 
-#include "Kangaroo/MatUtils.h"
-#include "Kangaroo/launch_utils.h"
+#include "kangaroo/MatUtils.h"
+#include "kangaroo/launch_utils.h"
 
 namespace roo
 {

@@ -2,7 +2,7 @@
 
 #include "kangaroo/platform.h"
 #include "BoundedVolumeGrid.h"
-#include "Kangaroo/Sdf.h"
+#include "kangaroo/Sdf.h"
 #include "kangaroo/GridSDF/SdfSmart.h"
 
 namespace roo

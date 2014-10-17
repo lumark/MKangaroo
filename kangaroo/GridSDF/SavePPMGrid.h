@@ -1,7 +1,7 @@
 #ifndef SAVEPPMGRID_H
 #define SAVEPPMGRID_H
 
-#include "Kangaroo/extra/SavePPM.h"
+#include "kangaroo/extra/SavePPM.h"
 #include "BoundedVolumeGrid.h"
 
 // P1	Portable bitmap	ASCII

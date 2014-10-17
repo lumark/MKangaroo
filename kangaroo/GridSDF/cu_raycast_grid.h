@@ -1,11 +1,11 @@
 #pragma once
 
 #include "kangaroo/platform.h"
-#include "Kangaroo/Mat.h"
-#include "Kangaroo/Image.h"
+#include "kangaroo/Mat.h"
+#include "kangaroo/Image.h"
 #include "BoundedVolumeGrid.h"
-#include "Kangaroo/ImageIntrinsics.h"
-#include "Kangaroo/Sdf.h"
+#include "kangaroo/ImageIntrinsics.h"
+#include "kangaroo/Sdf.h"
 #include "kangaroo/GridSDF/SdfSmart.h"
 
 namespace roo

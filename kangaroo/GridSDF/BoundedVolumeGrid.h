@@ -1,10 +1,10 @@
 #pragma once
 
 #include "VolumeGrid.h"
-#include "Kangaroo/BoundingBox.h"
-#include "Kangaroo/Sdf.h"
+#include "kangaroo/BoundingBox.h"
+#include "kangaroo/Sdf.h"
 #include "kangaroo/GridSDF/SdfSmart.h"
-#include "Kangaroo/launch_utils.h"
+#include "kangaroo/launch_utils.h"
 
 namespace roo
 {

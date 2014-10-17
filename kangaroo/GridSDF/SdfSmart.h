@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cuda_runtime.h>
-#include <Kangaroo/CUDA_SDK/cutil_math.h>
+#include <kangaroo/CUDA_SDK/cutil_math.h>
 
 namespace roo
 {
@@ -46,7 +46,7 @@ struct __align__(8) SDF_t_Smart {
           total_fuse_num ++;
           val_total = val_total + rhs.val;
           bFlag = false;
-          printf("[SmartSDF] skip;");
+          //printf("[SmartSDF] skip;");
         }
       }
 

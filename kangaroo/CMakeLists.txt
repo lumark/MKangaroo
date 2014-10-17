@@ -59,7 +59,7 @@ list(APPEND SRC_H
     GridSDF/BoundedVolumeGrid.h
     GridSDF/RollingGridSDF.h
     GridSDF/cu_model_refinement_extra.h
-    GridSDF/SDFSmart.h
+    GridSDF/SdfSmart.h
     GridSDF/cu_sdf_reset.h
 )
 
