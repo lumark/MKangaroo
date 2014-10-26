@@ -21,7 +21,6 @@ list(APPEND SRC_H
     InvalidValue.h    cu_census.h           cu_model_refinement.h cu_tgv.h
     LeastSquareSum.h  cu_convert.h          cu_normals.h          disparity.h
     cu_convolution.h      cu_operations.h       hamming_distance.h
-#    MarchingCubes.h
 )
 
 list(APPEND SRC_CU
@@ -36,7 +35,6 @@ list(APPEND SRC_CU
     cu_segment_test.cu
     cu_painting.cu cu_remap.cu
     cu_raycast.cu cu_sdffusion.cu
-#    MarchingCubes.cu
 )
 
 
@@ -73,15 +71,15 @@ list(APPEND SRC_CU
 )
 
 
-find_package( ASSIMP QUIET )
+find_package( ASSIMP REQUIRED )
 if(ASSIMP_FOUND)
+        list(APPEND SRC_H MarchingCubes.h)
+#        list(APPEND SRC_CU MarchingCubes.cpp)
 
+        list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
+        list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
+        list(APPEND SRC_H GridSDF/SavePPMGrid.h)
         list(APPEND SRC_CU GridSDF/MarchingCubesGrid.cpp)
-#        list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
-#        list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
-#        list(APPEND SRC_H GridSDF/SavePPMGrid.h)
-        list(APPEND SRC_CU GridSDF/MarchingCubes.cpp)
-#        list(APPEND SRC_H GridSDF/MarchingCubes.h)
 endif()
 
 endif()
