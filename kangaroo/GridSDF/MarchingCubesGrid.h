@@ -192,13 +192,18 @@ void vMarchCubeGrid(
           int(y+a2fVertexOffset[iVertex][1]),
           int(z+a2fVertexOffset[iVertex][2]));
     }
+    else
+    {
+      return;
+    }
 
     if(!std::isfinite(afCubeValue[iVertex])) return;
   }
 
   //Find which vertices are inside of the surface and which are outside
   int iFlagIndex = 0;
-  for(int iVertexTest = 0; iVertexTest < 8; iVertexTest++) {
+  for(int iVertexTest = 0; iVertexTest < 8; iVertexTest++)
+  {
     if(afCubeValue[iVertexTest] <= fTargetValue)
       iFlagIndex |= 1<<iVertexTest;
   }
@@ -377,8 +382,8 @@ void SaveMeshGridSepreate(
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SaveMeshGridSepreate(
-    std::string                                      filename,
-    BoundedVolumeGrid<T,TargetDevice,Manage>&        vol )
+    std::string                                       filename,
+    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
@@ -394,9 +399,9 @@ void SaveMeshGridSepreate(
 KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMeshGridSepreate(
-    std::string                                     filename,
-    BoundedVolumeGrid<T,TargetDevice,Manage>&       vol,
-    BoundedVolumeGrid<TColor,TargetDevice,Manage>&  volColor )
+    std::string                                      filename,
+    BoundedVolumeGrid<T,TargetDevice,Manage>&        vol,
+    BoundedVolumeGrid<TColor,TargetDevice,Manage>&   volColor )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);

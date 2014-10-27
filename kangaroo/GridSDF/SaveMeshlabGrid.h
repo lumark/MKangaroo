@@ -25,7 +25,6 @@ inline void SaveMeshlabGrid(
   of << "<!DOCTYPE MeshLabDocument>" << std::endl;
   of << "<MeshLabProject>" << std::endl;
 
-
   of << " <MeshGroup>" << std::endl;
 
   roo::SaveMeshGrid(mesh_filename, vol);

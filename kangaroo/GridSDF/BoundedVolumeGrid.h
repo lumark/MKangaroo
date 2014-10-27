@@ -103,9 +103,9 @@ public:
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
-    int nIndex =GetIndex( int(floorf(x/m_nVolumeGridRes)),
-                          int(floorf(y/m_nVolumeGridRes)),
-                          int(floorf(z/m_nVolumeGridRes)) );
+    int nIndex =GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
+                          static_cast<int>(floorf(y/m_nVolumeGridRes)),
+                          static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if(m_GridVolumes[nIndex].d !=m_nVolumeGridRes &&
        m_GridVolumes[nIndex].h !=m_nVolumeGridRes &&
@@ -189,9 +189,9 @@ public:
   inline __host__ __device__
   bool CheckIfVoxelExist(int x, int y, int z)
   {
-    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
-                           int(floorf(y/m_nVolumeGridRes)),
-                           int(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
+                           static_cast<int>(floorf(y/m_nVolumeGridRes)),
+                           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if( CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -204,9 +204,9 @@ public:
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
-                           int(floorf(y/m_nVolumeGridRes)),
-                           int(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
+                           static_cast<int>(floorf(y/m_nVolumeGridRes)),
+                           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
@@ -229,9 +229,9 @@ public:
   inline  __device__  __host__
   T& Get(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = GetIndex( int(floorf(x/m_nVolumeGridRes)),
-                           int(floorf(y/m_nVolumeGridRes)),
-                           int(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
+                           static_cast<int>(floorf(y/m_nVolumeGridRes)),
+                           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
@@ -250,32 +250,32 @@ public:
 
     if(pos_v.x>=1)
     {
-      pos_v.x =0.99999;
+      pos_v.x =0.99999f;
     }
     else if(pos_v.x<0)
     {
-      pos_v.x =0;
+      pos_v.x =0.f;
     }
 
     if(pos_v.y>=1)
     {
-      pos_v.y =0.99999;
+      pos_v.y =0.99999f;
     }
     else if(pos_v.y<0)
     {
-      pos_v.y =0;
+      pos_v.y =0.f;
     }
 
     if(pos_v.z>=1)
     {
-      pos_v.z =0.99999;
+      pos_v.z =0.99999f;
     }
     else if(pos_v.z<0)
     {
-      pos_v.z =0;
+      pos_v.z =0.f;
     }
 
-    const float fFactor = float(m_nVolumeGridRes)/float(m_w);
+    const float fFactor = static_cast<float>(m_nVolumeGridRes)/static_cast<float>(m_w);
 
     // Get the index of voxel in basic sdf
     const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
@@ -307,37 +307,37 @@ public:
 
     if(pos_v.x>=1)
     {
-      pos_v.x =0.99999;
+      pos_v.x =0.99999f;
     }
     else if(pos_v.x<0)
     {
-      pos_v.x =0;
+      pos_v.x =0.f;
     }
 
     if(pos_v.y>=1)
     {
-      pos_v.y =0.99999;
+      pos_v.y =0.99999f;
     }
     else if(pos_v.y<0)
     {
-      pos_v.y =0;
+      pos_v.y =0.f;
     }
 
     if(pos_v.z>=1)
     {
-      pos_v.z =0.99999;
+      pos_v.z =0.99999f;
     }
     else if(pos_v.z<0)
     {
-      pos_v.z =0;
+      pos_v.z =0.f;
     }
 
-    const float fFactor = float(m_nVolumeGridRes)/float(m_w);
+    const float fFactor = static_cast<float>(m_nVolumeGridRes)/static_cast<float>(m_w);
 
     // Get the index of voxel in basic sdf
     const uint3 Index = make_uint3( floorf(pos_v.x/fFactor),
                                     floorf(pos_v.y/fFactor),
-                                    floorf(pos_v.z/fFactor)  );
+                                    floorf(pos_v.z/fFactor) );
 
     int nIndex = GetIndex( Index.x, Index.y, Index.z);
 
@@ -465,9 +465,9 @@ public:
     const float3 vol_size = m_bbox.Size();
 
     return make_float3(
-          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
-          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
-          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
+          m_bbox.Min().x + vol_size.x * static_cast<float>(x)/static_cast<float>(m_w-1),
+          m_bbox.Min().y + vol_size.y * static_cast<float>(y)/static_cast<float>(m_h-1),
+          m_bbox.Min().z + vol_size.z * static_cast<float>(z)/static_cast<float>(m_d-1)
           );
   }
 
