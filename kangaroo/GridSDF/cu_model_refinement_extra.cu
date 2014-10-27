@@ -16,7 +16,8 @@ __device__ inline
 void BuildPoseRefinementFromDepthmapSystemESMNormal(
     const unsigned int u,  const unsigned int v, const float depth,
     const Image<Ti>& dImgl, const Image<Ti>& dImgr,
-    const Mat<float,3,3>& Klg, const Mat<float,3,3>& Krg, const Mat<float,3,3>& Krd, const Mat<float,4,4>& Tgd,
+    const Mat<float,3,3>& Klg, const Mat<float,3,3>& Krg,
+    const Mat<float,3,3>& Krd, const Mat<float,4,4>& Tgd,
     const Mat<float,4,4>& Tlr, const Mat<float,3,4>& KlgTlr,
     LeastSquaresSystem<float,6>& lss, Image<float4> dDebug,
     const float c, const bool bDiscardMaxMin, const float fMinDepth, const float fMaxDepth
@@ -149,7 +150,8 @@ void BuildPoseRefinementFromDepthmapSystemESMNormal(
 template<typename Ti>
 __global__ void KernPoseRefinementFromDepthESMNormal(
     const Image<Ti> dImgl, const Image<Ti> dImgr, const Image<float> dDepth,
-    const Mat<float,3,3> Klg, const Mat<float,3,3> Krg, const Mat<float,3,3> Krd, const Mat<float,4,4> Tgd,
+    const Mat<float,3,3> Klg, const Mat<float,3,3> Krg,
+    const Mat<float,3,3> Krd, const Mat<float,4,4> Tgd,
     const Mat<float,4,4> Tlr, const Mat<float,3,4> KlgTlr,
     Image<LeastSquaresSystem<float,6> > dSum, Image<float4> dDebug,
     const float c, const bool bDiscardMaxMin, const float fMinDepth, const float fMaxDepth
@@ -161,7 +163,9 @@ __global__ void KernPoseRefinementFromDepthESMNormal(
 
   float depth = dDepth(u,v);
 
-  BuildPoseRefinementFromDepthmapSystemESMNormal( u, v, depth, dImgl, dImgr, Klg, Krg, Krd, Tgd, Tlr, KlgTlr, lss.ZeroThisObs(), dDebug, c, bDiscardMaxMin, fMinDepth, fMaxDepth );
+  BuildPoseRefinementFromDepthmapSystemESMNormal(
+        u, v, depth, dImgl, dImgr, Klg, Krg, Krd, Tgd, Tlr, KlgTlr,
+        lss.ZeroThisObs(), dDebug, c, bDiscardMaxMin, fMinDepth, fMaxDepth );
 
   lss.ReducePutBlock(dSum);
 }
@@ -170,7 +174,8 @@ LeastSquaresSystem<float,6> PoseRefinementFromDepthESMNormal(
     const Image<unsigned char> dImgl,
     const Image<unsigned char> dImgr,
     const Image<float> dDepth,
-    const Mat<float,3,3> Klg, const Mat<float,3,3> Krg, const Mat<float,3,3> Krd, const Mat<float,4,4> Tgd,
+    const Mat<float,3,3> Klg, const Mat<float,3,3> Krg,
+    const Mat<float,3,3> Krd, const Mat<float,4,4> Tgd,
     const Mat<float,4,4> Tlr, const Mat<float,3,4> KlgTlr,
     Image<unsigned char> dWorkspace, Image<float4> dDebug,
     const float c, const bool bDiscardMaxMin, const float fMinDepth, const float fMaxDepth

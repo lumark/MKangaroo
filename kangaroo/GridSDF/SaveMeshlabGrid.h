@@ -8,6 +8,7 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 
+KANGAROO_EXPORT
 inline void SaveMeshlabGrid(
     roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol)
 {
@@ -52,7 +53,7 @@ inline void SaveMeshlabGrid(
 }
 
 
-
+KANGAROO_EXPORT
 inline void SaveMeshlabGrid(
     roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol,
     roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>& GreyVol)
@@ -96,8 +97,7 @@ inline void SaveMeshlabGrid(
   of.close();
 }
 
-
-
+KANGAROO_EXPORT
 inline void SaveMeshlabGrid(
     roo::BoundedVolumeGrid<roo::SDF_t_Smart, roo::TargetDevice, roo::Manage>& vol,
     roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>& GreyVol)

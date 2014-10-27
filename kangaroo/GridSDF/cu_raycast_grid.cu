@@ -26,9 +26,9 @@ float PhongShade(const float3 p_c, const float3 n_c)
 //////////////////////////////////////////////////////
 // Raycast grid gray SDF
 //////////////////////////////////////////////////////
-__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
+__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>        g_vol;
 __device__ BoundedVolumeGrid<SDF_t_Smart, roo::TargetDevice, roo::Manage>  g_vol_smart;
-__device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_grayVol;
+__device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>        g_grayVol;
 
 
 
@@ -116,8 +116,9 @@ __global__ void KernRaycastSdfGrid(
 
 void RaycastSdf(
     Image<float> depth, Image<float4> norm, Image<float> img,
-    const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol, const Mat<float,3,4> T_wc,
-    ImageIntrinsics K, float near, float far, float trunc_dist, bool subpix )
+    const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
+    const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
+    float trunc_dist, bool subpix )
 {
   // load vol val to golbal memory
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
@@ -126,7 +127,8 @@ void RaycastSdf(
   dim3 blockDim, gridDim;
   //    InitDimFromOutputImageOver(blockDim, gridDim, img, 16, 16);
   InitDimFromOutputImageOver(blockDim, gridDim, img);
-  KernRaycastSdfGrid<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
+  KernRaycastSdfGrid<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far,
+                                           trunc_dist, subpix);
   GpuCheckErrors();
 
   g_vol.FreeMemory();
@@ -226,20 +228,13 @@ void RaycastSdf(
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, img);
-  KernRaycastSdfGridGray<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
+  KernRaycastSdfGridGray<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near,
+                                               far, trunc_dist, subpix);
   GpuCheckErrors();
 
   g_vol.FreeMemory();
   g_grayVol.FreeMemory();
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -337,7 +332,8 @@ void RaycastSdf(
   dim3 blockDim, gridDim;
   //    InitDimFromOutputImageOver(blockDim, gridDim, img, 16, 16);
   InitDimFromOutputImageOver(blockDim, gridDim, img);
-  KernRaycastSdfGridSmart<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
+  KernRaycastSdfGridSmart<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near,
+                                                far, trunc_dist, subpix);
   GpuCheckErrors();
 
   g_vol_smart.FreeMemory();
@@ -437,7 +433,8 @@ void RaycastSdf(
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, img);
-  KernRaycastSdfGridGraySmart<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K, near, far, trunc_dist, subpix);
+  KernRaycastSdfGridGraySmart<<<gridDim,blockDim>>>(depth, norm, img, T_wc, K,
+                                                    near, far, trunc_dist, subpix);
   GpuCheckErrors();
 
   g_vol_smart.FreeMemory();

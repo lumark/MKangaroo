@@ -15,9 +15,13 @@
 // Save Volume types
 /////////////////////////////////////////////////////////////////////////////
 
+KANGAROO_EXPORT
 template<typename T, typename Manage>
-void SavePXM(std::ofstream& bFile,
-             const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(
+    std::ofstream&                                   bFile,
+    const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
+    std::string                                      ppm_type = "P5",
+    int                                              num_colors = 255)
 {
   bFile << ppm_type << std::endl;
   bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
@@ -31,18 +35,25 @@ void SavePXM(std::ofstream& bFile,
   bFile.close();
 }
 
+KANGAROO_EXPORT
 template<typename T, typename Manage>
-void SavePXM(const std::string filename,
-             const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(
+    const std::string                                filename,
+    const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
+    std::string                                      ppm_type = "P5",
+    int                                              num_colors = 255)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   SavePXM<T,Manage>(bFile, vol, ppm_type, num_colors);
 }
 
 
+KANGAROO_EXPORT
 template<typename T, typename Manage>
-void SavePXM(std::ofstream& bFile,
-             const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(
+    std::ofstream& bFile,
+    const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol,
+    std::string ppm_type = "P5", int num_colors = 255)
 {
   roo::VolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.InitVolume(vol.w, vol.h, vol.d);
@@ -51,15 +62,20 @@ void SavePXM(std::ofstream& bFile,
 }
 
 
+KANGAROO_EXPORT
 template<typename T, typename Manage>
-void SavePXM(const std::string filename,
-             const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol, std::string ppm_type = "P5", int num_colors = 255)
+void SavePXM(
+    const std::string                                  filename,
+    const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol,
+    std::string                                        ppm_type = "P5",
+    int                                                num_colors = 255)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   SavePXM<T,Manage>(bFile,vol,ppm_type,num_colors);
 }
 
 
+KANGAROO_EXPORT
 inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
@@ -71,11 +87,13 @@ inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox
 }
 
 
+KANGAROO_EXPORT
 template<typename T, typename Manage>
-void SavePXM(const std::string                                      filename,
-             roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   vol,
-             std::string                                            ppm_type = "P5",
-             int                                                    num_colors = 255)
+void SavePXM(
+    const std::string                                      filename,
+    roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   vol,
+    std::string                                            ppm_type = "P5",
+    int                                                    num_colors = 255)
 {
   // load data from device to host
   roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
@@ -100,14 +118,14 @@ void SavePXM(const std::string                                      filename,
 }
 
 
-
-
 /////////////////////////////////////////////////////////////////////////////
 // Load Volume types
 /////////////////////////////////////////////////////////////////////////////
+KANGAROO_EXPORT
 template<typename T>
-bool LoadPXMSingleGrid(const std::string filename,
-                       roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
+bool LoadPXMSingleGrid(
+    const std::string                               filename,
+    roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
 
@@ -152,6 +170,8 @@ bool LoadPXMSingleGrid(const std::string filename,
   return true;
 }
 
+
+KANGAROO_EXPORT
 inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
@@ -172,17 +192,19 @@ inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
   bFile >> BBox.boxmax.z;
   bFile.ignore(1,'\n');
 
-  printf("load bounding box success. Min_x:%f,Max_x: %f\n",BBox.boxmin.x,BBox.boxmax.x);
+  printf("load BB success. Min_x:%f,Max_x: %f\n",BBox.boxmin.x,BBox.boxmax.x);
   bFile.close();
   return BBox;
 }
 
 
+KANGAROO_EXPORT
 template<typename T>
-bool LoadPXMGrid(std::string                        sDirName,
-                 const std::vector<std::string>&    vfilename,
-                 std::string                        sBBFileName,
-                 roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
+bool LoadPXMGrid(
+    std::string                        sDirName,
+    const std::vector<std::string>&    vfilename,
+    std::string                        sBBFileName,
+    roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
 {
   // to load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
@@ -210,8 +232,8 @@ bool LoadPXMGrid(std::string                        sDirName,
 
       if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[nIndex]) == false)
       {
-        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<sFileName<<
-                   " with index "<<nIndex<<" from hard disk."<<std::endl;
+        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<
+                   sFileName<< " with index "<<nIndex<<" from hard disk."<<std::endl;
         exit(-1);
       }
       else

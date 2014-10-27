@@ -49,7 +49,7 @@ public:
 
     if(m_nTotalGridRes > MAX_SUPPORT_GRID_NUM)
     {
-      printf("[BoundedVolumeGrid/init] fatal error, overflow! Max allow %d, request %d .\n",
+      printf("[BoundedVolumeGrid/init] Error! overflow! Max allow %d, req %d .\n",
              MAX_SUPPORT_GRID_NUM, m_nTotalGridRes);
       printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
       exit(-1);
@@ -59,9 +59,8 @@ public:
     m_shift = make_int3(0,0,0);
 
     if(n_w != n_h || n_h != n_d || n_w!=n_d)
-
     {
-      std::cerr<<"[BoundedVolumeGrid/init] non cube SDF does not support yet!"<<std::endl;
+      std::cerr<<"[BoundedVolumeGrid/init] only support cube size SDF!"<<std::endl;
     }
   }
 
@@ -732,7 +731,8 @@ public:
   size_t                                      m_h;
   size_t                                      m_d;
 
-  // for rolling sdf. When this value is not zero, we need to recompute index based on the shift
+  // for rolling sdf. When this value is not zero, we need to recompute
+  // index based on the shift
   int3                                        m_shift;
 
   // bounding box of bounded volume grid

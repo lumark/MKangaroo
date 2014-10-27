@@ -10,6 +10,7 @@
 
 namespace roo {
 
+KANGAROO_EXPORT
 inline double _Tic()
 {
   struct timeval tv;
@@ -18,6 +19,7 @@ inline double _Tic()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+KANGAROO_EXPORT
 inline double _Toc( double dSec )
 {
   return _Tic() - dSec;

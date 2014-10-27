@@ -234,8 +234,7 @@ struct VolumeGrid
     return lerp(
           lerp(lerp(v0,vx,fx),  lerp(vy,vxy,fx), fy),
           lerp(lerp(vz,vxz,fx), lerp(vyz,vxyz,fx), fy),
-          fz
-          );
+          fz );
   }
 
   //////////////////////////////////////////////////////
