@@ -7,7 +7,6 @@
 
 namespace roo {
 
-// the folling is a CPU version of rolling grid sdf
 class RollingGridSDF
 {
 public:
@@ -16,10 +15,12 @@ public:
     TotalShift = make_int3(0,0,0);
   }
 
-
+  // ---------------------------------------------------------------------------
   // update shift parameters
   template<typename T> inline
-  void UpdateShift(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol, int3 shift_index)
+  void UpdateShift(
+      roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol,
+      int3                                                       shift_index)
   {
     //////////////////////////////////////////////////////////////////////////////
     /// change bbox min and max value based on shif parameters
@@ -76,8 +77,6 @@ public:
     // update total shift
     TotalShift = pVol->m_shift;
   }
-
-
 
   // ---------------------------------------------------------------------------
   // compute index of grid sdf that need to be freed. for each single that was shift,
@@ -145,6 +144,7 @@ public:
     printf("Num of Grid SDF need to be freed is %d\n", nNum);
   }
 
+  // ---------------------------------------------------------------------------
   template<typename T> inline
   void FreeGird(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
   {
@@ -175,12 +175,13 @@ public:
       }
     }
 
-    printf("[RollingGridSDF/FreeGrid] Free %d grid sdf. Need to free %d grid sdf.\n", nFreeNum, nNeedFreeNum);
+    printf("[RollingGridSDF/FreeGrid] Free %d grid sdf. Need to free %d grid sdf.\n",
+           nFreeNum, nNeedFreeNum);
   }
 
 private:
-  int nNextResetSDFs[1024];
-  int3 TotalShift;
+  int       nNextResetSDFs[1024];
+  int3      TotalShift;
 };
 
 
