@@ -278,9 +278,8 @@ public:
     const float fFactor = static_cast<float>(m_nVolumeGridRes)/static_cast<float>(m_w);
 
     // Get the index of voxel in basic sdf
-    const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
-                                   floorf(pos_v.y/fFactor),
-                                   floorf(pos_v.z/fFactor)  );
+    const uint3 Index =make_uint3(
+          floorf(pos_v.x/fFactor), floorf(pos_v.y/fFactor), floorf(pos_v.z/fFactor) );
 
     int nIndex = GetIndex( Index.x, Index.y, Index.z);
 

@@ -119,7 +119,7 @@ inline aiMesh* MeshFromLists(
 
 // =============================================================================
 KANGAROO_EXPORT
-inline void SaveMeshGrid(std::string filename, aiMesh* mesh)
+inline void SaveMeshGridToFile(std::string filename, aiMesh* mesh, std::string sFormat="ply")
 {
   // Create root node which indexes first mesh
   aiNode* root = new aiNode();
@@ -140,7 +140,7 @@ inline void SaveMeshGrid(std::string filename, aiMesh* mesh)
   scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
   scene.mMaterials[0] = material;
 
-  aiReturn res = aiExportScene(&scene, "ply", (filename + ".ply").c_str(), 0);
+  aiReturn res = aiExportScene(&scene, sFormat.c_str(), (filename + "."+sFormat.c_str()).c_str(), 0);
   std::cout << "Mesh export result: " << res << std::endl;
 }
 
@@ -250,7 +250,8 @@ void vMarchCubeGrid(
     }
   }
 
-  //Draw the triangles that were found.  There can be up to five per cube
+
+  // Draw the triangles that were found.  There can be up to five per cube
   for(int iTriangle = 0; iTriangle < 5; iTriangle++)
   {
     if(a2iTriangleConnectionTable[iFlagIndex][3*iTriangle] < 0)
@@ -278,7 +279,6 @@ void vMarchCubeGrid(
         float3 sColor = roo::ConvertPixel<float3,TColor>(c);
         colors.push_back(aiColor4D(sColor.x, sColor.y, sColor.z, 1.0f));
       }
-
     }
 
     faces.push_back(face);
@@ -290,15 +290,16 @@ void vMarchCubeGrid(
 // now do it for each grid instead of each voxel
 KANGAROO_EXPORT
 template<typename T, typename TColor>
-void SaveMeshGridSingle(
-    BoundedVolumeGrid<T, TargetHost, Manage>&      vol,
-    BoundedVolumeGrid<TColor, TargetHost, Manage>& volColor,
+void GenMeshSingleGrid(
+    BoundedVolumeGrid<T, TargetHost, Manage>&           vol,
+    BoundedVolumeGrid<TColor, TargetHost, Manage>&      volColor,
     int i,int j,int k,
-    std::vector<aiVector3D>&                       verts,
-    std::vector<aiVector3D>&                       norms,
-    std::vector<aiFace>&                           faces,
-    std::vector<aiColor4D>&                        colors)
+    std::vector<aiVector3D>&                            verts,
+    std::vector<aiVector3D>&                            norms,
+    std::vector<aiFace>&                                faces,
+    std::vector<aiColor4D>&                             colors)
 {
+  // for each voxel in the grid
   for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
   {
     for(GLint y=0;y!=vol.m_nVolumeGridRes;y++)
@@ -327,16 +328,16 @@ void SaveMeshGridSingle(
 KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMeshGrid(
-    std::string                                   filename,
-    BoundedVolumeGrid<T, TargetHost, Manage>      vol,
-    BoundedVolumeGrid<TColor, TargetHost, Manage> volColor )
+    std::string                                         filename,
+    BoundedVolumeGrid<T, TargetHost, Manage>            vol,
+    BoundedVolumeGrid<TColor, TargetHost, Manage>       volColor )
 {
   double dTime = _Tic();
 
-  std::vector<aiVector3D> verts;
-  std::vector<aiVector3D> norms;
-  std::vector<aiFace> faces;
-  std::vector<aiColor4D> colors;
+  std::vector<aiVector3D>   verts;
+  std::vector<aiVector3D>   norms;
+  std::vector<aiFace>       faces;
+  std::vector<aiColor4D>    colors;
 
   // scan each grid..
   int nNumSkip =0;
@@ -350,7 +351,7 @@ void SaveMeshGrid(
       {
         if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
         {
-          SaveMeshGridSingle(vol,volColor,i,j,k,verts, norms, faces, colors);
+          GenMeshSingleGrid(vol,volColor,i,j,k,verts, norms, faces, colors);
           nNumSave++;
         }
         else
@@ -366,7 +367,7 @@ void SaveMeshGrid(
   printf("Finish march cube grid sdf. Save %d grids. Skip %d grids. Use time %f; \n",
          nNumSave, nNumSkip, _Toc(dTime));
 
-  SaveMeshGrid(filename, mesh);
+  SaveMeshGridToFile(filename, mesh, "obj");
 }
 
 
@@ -413,7 +414,6 @@ void SaveMeshGridSepreate(
 
   hvolcolor.CopyAndInitFrom(volColor);
 
-  // save
   SaveMeshGridSepreate<T,TColor>(filename, hvol, hvolcolor);
 }
 

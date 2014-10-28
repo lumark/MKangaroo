@@ -35,5 +35,4 @@ void SaveMesh(std::string filename, BoundedVolume<T,TargetDevice,Manage>& vol, B
     SaveMesh<T,TColor>(filename, hvol, hvolcolor);
 }
 
-
 }
