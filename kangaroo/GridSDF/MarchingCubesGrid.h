@@ -70,9 +70,9 @@ inline aiMesh* MeshFromLists(
 // =============================================================================
 KANGAROO_EXPORT
 inline void SaveMeshGridToFile(
-    std::string   filename,
-    aiMesh*       mesh,
-    std::string   sFormat ="ply")
+    std::string         sFilename,
+    aiMesh*             pMesh,
+    std::string         sFormat ="ply")
 {
   // Create root node which indexes first mesh
   aiNode* root = new aiNode();
@@ -88,13 +88,21 @@ inline void SaveMeshGridToFile(
   scene.mRootNode = root;
   scene.mNumMeshes = 1;
   scene.mMeshes = new aiMesh*[scene.mNumMeshes];
-  scene.mMeshes[0] = mesh;
+  scene.mMeshes[0] = pMesh;
   scene.mNumMaterials = 1;
   scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
   scene.mMaterials[0] = material;
 
-  aiReturn res = aiExportScene(&scene, sFormat.c_str(), (filename + "."+sFormat.c_str()).c_str(), 0);
-  std::cout << "Mesh export result: " << res << std::endl;
+  aiReturn res = aiExportScene(&scene, sFormat.c_str(),
+                               (sFilename + "."+sFormat.c_str()).c_str(), 0);
+  if(res == 0)
+  {
+    std::cout << "Mesh export success: " << res << std::endl;
+  }
+  else
+  {
+    std::cerr << "Mesh export fail: " << res << std::endl;
+  }
 }
 
 
