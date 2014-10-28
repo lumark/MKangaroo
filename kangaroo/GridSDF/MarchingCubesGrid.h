@@ -4,7 +4,6 @@
 #include <kangaroo/platform.h>
 #include "BoundedVolumeGrid.h"
 #include <kangaroo/MarchingCubesTables.h>
-//#include <kangaroo/MarchingCubes.h>
 #include <assimp/cexport.h>
 #include <assimp/scene.h>
 
@@ -25,55 +24,6 @@ inline double _Toc( double dSec )
   return _Tic() - dSec;
 }
 
-//////////////////////////////////////////
-// Save SDF
-//////////////////////////////////////////
-// =============================================================================
-KANGAROO_EXPORT
-template<typename T, typename TColor>
-void SaveMeshGrid(
-    std::string                                       filename,
-    const BoundedVolumeGrid<T,TargetHost,Manage>      vol,
-    const BoundedVolumeGrid<TColor,TargetHost,Manage> volColor );
-
-// =============================================================================
-KANGAROO_EXPORT
-template<typename T, typename Manage>
-void SaveMeshGrid(
-    std::string                                       filename,
-    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol )
-{
-  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
-  hvol.CopyAndInitFrom(vol);
-
-  roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
-
-  SaveMeshGrid<T,float>(filename, hvol, hvolcolor);
-}
-
-// =============================================================================
-KANGAROO_EXPORT
-template<typename T, typename TColor, typename Manage>
-void SaveMeshGrid(
-    std::string                                       filename,
-    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol,
-    BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
-{
-  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
-  hvol.CopyAndInitFrom(vol);
-
-  roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d,
-                 volColor.m_nVolumeGridRes,volColor.m_bbox);
-
-  hvolcolor.CopyAndInitFrom(volColor);
-
-  // save
-  SaveMeshGrid<T,TColor, Manage>(filename, hvol, hvolcolor);
-}
 
 // =============================================================================
 KANGAROO_EXPORT
@@ -119,7 +69,10 @@ inline aiMesh* MeshFromLists(
 
 // =============================================================================
 KANGAROO_EXPORT
-inline void SaveMeshGridToFile(std::string filename, aiMesh* mesh, std::string sFormat="ply")
+inline void SaveMeshGridToFile(
+    std::string   filename,
+    aiMesh*       mesh,
+    std::string   sFormat ="ply")
 {
   // Create root node which indexes first mesh
   aiNode* root = new aiNode();
@@ -286,6 +239,118 @@ void vMarchCubeGrid(
 }
 
 
+//////////////////////////////////////////
+// Save SDF
+//////////////////////////////////////////
+// =============================================================================
+KANGAROO_EXPORT
+template<typename T, typename TColor>
+void SaveMeshGrid(
+    std::string                                       filename,
+    const BoundedVolumeGrid<T,TargetHost,Manage>      vol,
+    const BoundedVolumeGrid<TColor,TargetHost,Manage> volColor );
+
+// =============================================================================
+KANGAROO_EXPORT
+template<typename T, typename Manage>
+void SaveMeshGrid(
+    std::string                                       filename,
+    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol )
+{
+  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
+  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
+  hvol.CopyAndInitFrom(vol);
+
+  roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
+  hvolcolor.init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
+
+  SaveMeshGrid<T,float>(filename, hvol, hvolcolor);
+}
+
+// =============================================================================
+KANGAROO_EXPORT
+template<typename T, typename TColor, typename Manage>
+void SaveMeshGrid(
+    std::string                                       filename,
+    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol,
+    BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
+{
+  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
+  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+  hvol.CopyAndInitFrom(vol);
+
+  roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
+  hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d,
+                 volColor.m_nVolumeGridRes,volColor.m_bbox);
+
+  hvolcolor.CopyAndInitFrom(volColor);
+
+  // save
+  SaveMeshGrid<T,TColor, Manage>(filename, hvol, hvolcolor);
+}
+
+
+// =============================================================================
+// now do it for each grid instead of each voxel
+KANGAROO_EXPORT
+template<typename T, typename TColor, typename Manage>
+aiMesh* GetMeshGrid(
+    BoundedVolumeGrid<T, TargetHost, Manage>            vol,
+    BoundedVolumeGrid<TColor, TargetHost, Manage>       volColor )
+{
+  std::vector<aiVector3D>   verts;
+  std::vector<aiVector3D>   norms;
+  std::vector<aiFace>       faces;
+  std::vector<aiColor4D>    colors;
+
+  // scan each grid..
+  int nNumSkip =0;
+  int nNumSave =0;
+
+  for(int i=0;i!=vol.m_nGridRes_w;i++)
+  {
+    for(int j=0;j!=vol.m_nGridRes_h;j++)
+    {
+      for(int k=0;k!=vol.m_nGridRes_d;k++)
+      {
+        if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
+        {
+          GenMeshSingleGrid(vol,volColor,i,j,k,verts, norms, faces, colors);
+          nNumSave++;
+        }
+        else
+        {
+          nNumSkip++;
+        }
+      }
+    }
+  }
+
+  return MeshFromLists(verts,norms,faces,colors);
+}
+
+// =============================================================================
+KANGAROO_EXPORT
+template<typename T, typename TColor, typename Manage>
+aiMesh* GetMeshGrid(
+    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol,
+    BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
+{
+  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
+  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+  hvol.CopyAndInitFrom(vol);
+
+  roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
+  hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d,
+                 volColor.m_nVolumeGridRes,volColor.m_bbox);
+
+  hvolcolor.CopyAndInitFrom(volColor);
+
+  // save
+  return GetMeshGrid<T,TColor, Manage>(hvol, hvolcolor);
+}
+
+
 // =============================================================================
 // now do it for each grid instead of each voxel
 KANGAROO_EXPORT
@@ -369,6 +434,8 @@ void SaveMeshGrid(
 
   SaveMeshGridToFile(filename, mesh, "obj");
 }
+
+
 
 
 // =============================================================================
