@@ -56,23 +56,26 @@ void BuildPoseRefinementFromDepthmapSystemESMNormal(
   // de-homogenized point in live grey camera
   const Mat<float,2> pl = {{KlPl(0)/KlPl(2), KlPl(1)/KlPl(2)}};
 
-  if(isfinite(depth) && depth > fMinDepth && depth < fMaxDepth) {
-    if( dImgr.InBounds(pr(0), pr(1), 2) &&  dImgl.InBounds(pl(0), pl(1), 2) ) {
-
+  if(isfinite(depth) && depth > fMinDepth && depth < fMaxDepth)
+  {
+    if( dImgr.InBounds(pr(0), pr(1), 2) &&  dImgl.InBounds(pl(0), pl(1), 2) )
+    {
       float Il = NormalRate * dImgl.template GetBilinear<float>(pl(0), pl(1));
       float Ir = NormalRate * dImgr.template GetBilinear<float>(pr(0), pr(1));
 
-      if( bDiscardMaxMin && ( Il == 0 || Il == 255 || Ir == 0 || Ir == 255 ) ) {
+      if( bDiscardMaxMin && ( Il == 0 || Il == 255 || Ir == 0 || Ir == 255 ) )
+      {
         dDebug(u, v) = make_float4(1, 1, 0, 1);
-      } else {
-
-        // image error
+      }
+      else
+      {
+        // image error (residual)
         const float y = Il - Ir;
 
         //----- Forward Compositional Approach
 
         // calculate image derivative
-        const Mat<float,1,2> dIl =NormalRate *  dImgl.template GetCentralDiff<float>(pl(0), pl(1));
+        const Mat<float,1,2> dIl = NormalRate *  dImgl.template GetCentralDiff<float>(pl(0), pl(1));
 
         // derivative of projection (L) and dehomogenization
         const Mat<float,2,3> dPl_by_dpl = {{
@@ -92,50 +95,13 @@ void BuildPoseRefinementFromDepthmapSystemESMNormal(
                                      -dIldPlKlgTlr(0)*Pr_g(1) + dIldPlKlgTlr(1)*Pr_g(0)
                                    }};
 
-
-
-        //----- Inverse Compositional Approach
-
-        /*
-                const Mat<float,1,2> dIr = dImgl.template GetCentralDiff<float>(pr(0), pr(1));
-
-                //derivative of projection (L) and dehomogenization for inverse decompositional
-                const Mat<float,2,3> dPr = {
-                  1.0/KPr(2), 0, -KPr(0)/(KPr(2)*KPr(2)),
-                  0, 1.0/KPr(2), -KPr(1)/(KPr(2)*KPr(2))
-                };
-
-                const Mat<float,1,3> dIrdPrKg = dIr * dPr * Kg;
-
-                // Sparse Jr = dIrdPrK * gen_i * Pr
-                const Mat<float,1,6> Jr = {
-                    dIrdPrKg(0),
-                    dIrdPrKg(1),
-                    dIrdPrKg(2),
-                    -dIrdPrKg(1)*Pr_g(2) + dIrdPrKg(2)*Pr_g(1),
-                    +dIrdPrKg(0)*Pr_g(2) - dIrdPrKg(2)*Pr_g(0),
-                    -dIrdPrKg(0)*Pr_g(1) + dIrdPrKg(1)*Pr_g(0)
-                };
-
-
-                //----- ESM Jacobian
-                const Mat<float,1,6> J = {
-                    (Jr(0) + Jl(0))/2,
-                    (Jr(1) + Jl(1))/2,
-                    (Jr(2) + Jl(2))/2,
-                    (Jr(3) + Jl(3))/2,
-                    (Jr(4) + Jl(4))/2,
-                    (Jr(5) + Jl(5))/2
-                };
-                */
-
         const float w = LSReweightTukey(y, NormalRate *c);
         lss.JTJ = OuterProduct(Jl, w);
         lss.JTy = mul_aTb(Jl, y*w);
         lss.obs = 1;
         lss.sqErr = y * y;
 
-        const float debug = ( fabs(y) + 128 ) / 255.0f;
+        const float debug = ( fabs(y) + 128.0f ) / 255.0f;
         dDebug(u,v) = make_float4(debug, 0, w, 1);
       }
     } else {
