@@ -9,12 +9,10 @@ namespace roo {
 // Save SDF
 //////////////////////////////////////////
 
-
-KANGAROO_EXPORT
 template<typename T, typename TColor>
+KANGAROO_EXPORT
 void SaveMesh(std::string filename, const BoundedVolume<T,TargetHost> vol, const BoundedVolume<TColor,TargetHost> volColor );
 
-KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SaveMesh(std::string filename, BoundedVolume<T,TargetDevice,Manage>& vol )
 {
@@ -24,7 +22,6 @@ void SaveMesh(std::string filename, BoundedVolume<T,TargetDevice,Manage>& vol )
     SaveMesh<T,float>(filename, hvol, hvolcolor);
 }
 
-KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMesh(std::string filename, BoundedVolume<T,TargetDevice,Manage>& vol, BoundedVolume<TColor,TargetDevice,Manage>& volColor )
 {
@@ -34,5 +31,6 @@ void SaveMesh(std::string filename, BoundedVolume<T,TargetDevice,Manage>& vol, B
     hvolcolor.CopyFrom(volColor);
     SaveMesh<T,TColor>(filename, hvol, hvolcolor);
 }
+
 
 }

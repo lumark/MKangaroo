@@ -20,7 +20,6 @@
 #include <kangaroo/kangaroo.h>
 #include <kangaroo/variational.h>
 
-
 const int MAXD = 128;
 
 
@@ -238,7 +237,7 @@ int main( int argc, char* argv[] )
 
     pangolin::RegisterKeyPressCallback(' ', [&run](){run = !run;} );
     pangolin::RegisterKeyPressCallback('l', [&lockToCam](){lockToCam = !lockToCam;} );
-    pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + GLUT_KEY_RIGHT, [&step](){step=true;} );
+    pangolin::RegisterKeyPressCallback(pangolin::PANGO_SPECIAL + pangolin::PANGO_KEY_RIGHT, [&step](){step=true;} );
     pangolin::RegisterKeyPressCallback(']', [&jump_frames](){jump_frames=100;} );
     pangolin::RegisterKeyPressCallback('}', [&jump_frames](){jump_frames=1000;} );
 
@@ -287,7 +286,7 @@ int main( int argc, char* argv[] )
             /////////////////////////////////////////////////////////////
             // Upload images to device (Warp / Decimate if necessery)
             for(int i=0; i<2; ++i ) {
-                hCamImg[i].ptr = (unsigned char*) images->at(i).data();
+                hCamImg[i].ptr = (unsigned char*) images->at(i)->data();
 
                 if(rectify) {
                     upload.CopyFrom(hCamImg[i].SubImage(roi));

@@ -74,7 +74,7 @@ list(APPEND SRC_CU
 find_package( ASSIMP REQUIRED )
 if(ASSIMP_FOUND)
         list(APPEND SRC_H MarchingCubes.h)
-#        list(APPEND SRC_CU MarchingCubes.cpp)
+        list(APPEND SRC_CU MarchingCubes.cu)
 
         list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
         list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)

@@ -3,9 +3,9 @@
 #include <kangaroo/Image.h>
 #include <kangaroo/Volume.h>
 #include <kangaroo/BoundedVolume.h>
+
 #include <iostream>
-#include <iostream>
-#include <string>
+#include <iomanip>
 #include <fstream>
 
 // P1	Portable bitmap	ASCII
