@@ -627,7 +627,6 @@ public:
     }
   }
 
-
   inline __host__
   void UpdateShift(int3 shift_index)
   {
@@ -654,7 +653,6 @@ public:
     printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift x=%d,y=%d,z=%d \n",
            m_shift.x,m_shift.y,m_shift.z, m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
   }
-
 
 
   //////////////////////////////////////////////////////

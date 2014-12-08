@@ -47,7 +47,6 @@ void SavePXM(
   SavePXM<T,Manage>(bFile, vol, ppm_type, num_colors);
 }
 
-
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXM(
@@ -61,7 +60,6 @@ void SavePXM(
   SavePXM(bFile, hvol, ppm_type, num_colors);
 }
 
-
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXM(
@@ -74,7 +72,6 @@ void SavePXM(
   SavePXM<T,Manage>(bFile,vol,ppm_type,num_colors);
 }
 
-
 KANGAROO_EXPORT
 inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox)
 {
@@ -85,7 +82,6 @@ inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox
   printf("save bb success.\n");
   bFile.close();
 }
-
 
 KANGAROO_EXPORT
 template<typename T, typename Manage>
@@ -117,6 +113,137 @@ void SavePXM(
   }
 }
 
+///============================= Save Grid SDFs ================================
+KANGAROO_EXPORT
+inline bool CheckIfBBfileExist(std::string filename)
+{
+  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
+  if(bFile.fail()==true)
+  {
+    return false;
+  }
+
+  bFile.close();
+  return true;
+}
+
+KANGAROO_EXPORT
+template<typename T, typename Manage>
+void CheckifSaveBB(
+    const std::string                                      sFilename,
+    int3                                                   GlobalIndex,
+    roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol)
+{
+  std::string sBBFileName = sFilename +"-BB-"+ std::to_string(GlobalIndex.x) + "-"+
+      std::to_string(GlobalIndex.y) + "-"+ std::to_string(GlobalIndex.z);
+
+  if( CheckIfBBfileExist(sBBFileName) == false)
+  {
+    SavePXMBoundingBox(sBBFileName, rDVol.GetDesireBB(GlobalIndex));
+  }
+}
+
+// -----------------------------------------------------------------------------
+// only save desire grids
+KANGAROO_EXPORT
+template<typename T, typename Manage>
+void SavePXMGridDesire(
+    const std::string                                      sPathName,
+    int                                                    pGridNeedSave[],
+    int                                                    pFlagX[],
+    int                                                    pFlagY[],
+    int                                                    pFlagZ[],
+    roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
+    bool                                                   bSaveGlobalPose = false,
+    bool                                                   bSaveBBox = false,
+    std::string                                            ppm_type = "P5",
+    int                                                    num_colors = 255)
+{
+  if(rDVol.GetActiveGridVolNum()==0)
+  {
+    std::cerr<<"[Kangaroo/SavePXMGrid] Cannot save model for void volume. Empty vol."<<std::endl;
+  }
+  else
+  {
+    // load data from device to host
+    roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
+    hvol.init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
+    hvol.CopyAndInitFrom(rDVol);
+    hvol.m_global_shift = rDVol.m_global_shift;
+
+    // save each active volume in BoundedVolumeGrid to HardDisk
+    int nSaveGridNum =0;
+
+    for(int i=0;i!=int(rDVol.m_nWholeGridRes_w);i++)
+    {
+      for(int j=0;j!=int(rDVol.m_nWholeGridRes_h);j++)
+      {
+        for(int k=0;k!=int(rDVol.m_nWholeGridRes_d);k++)
+        {
+          int nGridIndex =i + rDVol.m_nWholeGridRes_w* (j+ rDVol.m_nWholeGridRes_h* k);
+
+          // --- save vol if necessary
+          if(pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex)==true)
+          {
+            std::string sGridFileName;
+
+            // there are two situation for global index
+            // 1, The global index does not change for grid before shift
+            int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
+
+            if (pFlagX[nGridIndex] ==1)
+            {
+              GlobalIndex.x = rDVol.m_global_shift.x;
+            }
+
+            if (pFlagY[nGridIndex] ==1)
+            {
+              GlobalIndex.y = rDVol.m_global_shift.y;
+            }
+
+            if (pFlagZ[nGridIndex] ==1)
+            {
+              GlobalIndex.z = rDVol.m_global_shift.z;
+            }
+
+            // local index does not change under global index
+            int3 LocalIndex  = make_int3(i,j,k);
+
+            // save without rolling
+            if(bSaveGlobalPose==false)
+            {
+              // only save local grid
+              sGridFileName = sPathName+"-"+std::to_string(LocalIndex.x)+"-"+
+                  std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
+            }
+            else
+            {
+              // save grid in global index (with rolling)
+              sGridFileName = sPathName+"-"+
+                  std::to_string(GlobalIndex.x)+"-"+std::to_string(GlobalIndex.y)+"-"+
+                  std::to_string(GlobalIndex.z)+"-"+std::to_string(LocalIndex.x)+"-"+
+                  std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
+            }
+
+            std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
+            SavePXM<T,Manage>(bFile, hvol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
+            nSaveGridNum++;
+
+            // --- save bounding box if necessary ------------------------------
+            // scan the disk and see if we need to save bb
+            if(bSaveBBox == true)
+            {
+              CheckifSaveBB(sPathName, GlobalIndex, rDVol);
+            }
+          }
+        }
+      }
+    }
+    printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf.\n", nSaveGridNum);
+
+  }
+
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // Load Volume types
@@ -170,7 +297,6 @@ bool LoadPXMSingleGrid(
   return true;
 }
 
-
 KANGAROO_EXPORT
 inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
 {
@@ -196,7 +322,6 @@ inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
   bFile.close();
   return BBox;
 }
-
 
 KANGAROO_EXPORT
 template<typename T>
