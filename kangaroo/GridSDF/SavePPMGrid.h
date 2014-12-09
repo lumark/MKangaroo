@@ -174,13 +174,13 @@ void SavePXMGridDesire(
     // save each active volume in BoundedVolumeGrid to HardDisk
     int nSaveGridNum =0;
 
-    for(int i=0;i!=int(rDVol.m_nWholeGridRes_w);i++)
+    for(int i=0;i!=int(rDVol.m_nGridRes_w);i++)
     {
-      for(int j=0;j!=int(rDVol.m_nWholeGridRes_h);j++)
+      for(int j=0;j!=int(rDVol.m_nGridRes_h);j++)
       {
-        for(int k=0;k!=int(rDVol.m_nWholeGridRes_d);k++)
+        for(int k=0;k!=int(rDVol.m_nGridRes_d);k++)
         {
-          int nGridIndex =i + rDVol.m_nWholeGridRes_w* (j+ rDVol.m_nWholeGridRes_h* k);
+          int nGridIndex =i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
 
           // --- save vol if necessary
           if(pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex)==true)

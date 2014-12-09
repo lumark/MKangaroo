@@ -80,7 +80,6 @@ public:
     }
   }
 
-
   // the following code init all basic SDFs directlly.
   // if we don't use this code right after init, we will have to call roo::SDFInitGreyGrid
   // before fusing
@@ -99,7 +98,6 @@ public:
     }
   }
 
-
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
@@ -117,7 +115,6 @@ public:
       GpuCheckErrors();
     }
   }
-
 
   inline __host__
   bool InitSingleBasicSDFWithIndex(int nIndex)
@@ -225,7 +222,6 @@ public:
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
   }
 
-
   inline  __device__  __host__
   T& Get(unsigned int x,unsigned int y, unsigned int z)
   {
@@ -297,7 +293,6 @@ public:
   }
 
 
-
   inline __device__
   float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
   {
@@ -356,6 +351,170 @@ public:
   }
 
 
+  //////////////////////////////////////////////////////
+
+  inline __device__
+  float3 GetUnitsOutwardNormal(float3 pos_w) const
+  {
+    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
+    return deriv / length(deriv);
+  }
+
+  inline __device__ __host__
+  float3 VoxelPositionInUnits(int x, int y, int z) const
+  {
+    const float3 vol_size = m_bbox.Size();
+
+    return make_float3(
+          m_bbox.Min().x + vol_size.x * static_cast<float>(x)/static_cast<float>(m_w-1),
+          m_bbox.Min().y + vol_size.y * static_cast<float>(y)/static_cast<float>(m_h-1),
+          m_bbox.Min().z + vol_size.z * static_cast<float>(z)/static_cast<float>(m_d-1)
+          );
+  }
+
+  inline __device__ __host__
+  float3 VoxelPositionInUnits(int3 p_v) const
+  {
+    return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
+  }
+
+
+  //////////////////////////////////////////////////////
+  // copy and free  Memory
+  //////////////////////////////////////////////////////
+  inline __host__
+  void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
+  {
+    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    {
+      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+    }
+  }
+
+  inline __host__
+  void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
+  {
+    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    {
+      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+    }
+  }
+
+  inline __host__
+  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
+  {
+    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    {
+      // skip void volum grid
+      if(rVol.CheckIfBasicSDFActive(i)== true)
+      {
+        if(CheckIfBasicSDFActive(i)==false)
+        {
+          if(InitSingleBasicSDFWithIndex(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+            exit(-1);
+          }
+        }
+        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+        GpuCheckErrors();
+      }
+    }
+  }
+
+  inline __host__
+  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
+  {
+    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    {
+      // skip void volum grid
+      if(rHVol.CheckIfBasicSDFActive(i)== true)
+      {
+        if(CheckIfBasicSDFActive(i)==false)
+        {
+          if(InitSingleBasicSDFWithIndex(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+            exit(-1);
+          }
+          else
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Init New grid sdf %d\n",i);
+          }
+        }
+
+        m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
+        GpuCheckErrors();
+      }
+    }
+  }
+
+  inline __host__
+  void FreeMemory()
+  {
+    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    {
+      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
+         m_GridVolumes[i].h == m_nVolumeGridRes &&
+         m_GridVolumes[i].w == m_nVolumeGridRes)
+      {
+        m_GridVolumes[i].d=0;
+        m_GridVolumes[i].w=0;
+        m_GridVolumes[i].h=0;
+        cudaFree( m_GridVolumes[i].ptr );
+      }
+
+    }
+  }
+
+  inline __host__
+  void FreeMemoryByIndex(unsigned int nIndex)
+  {
+    if(CheckIfBasicSDFActive(nIndex) == false)
+    {
+      printf("[BoundedVolumeGrid] Error! Single GridSDF being free must be alloc first!!\n");
+      exit(-1);
+    }
+
+    cudaFree( m_GridVolumes[nIndex].ptr );
+  }
+
+  inline __host__ __device__
+  bool CheckIfBasicSDFActive(const int nIndex) const
+  {
+    if(m_GridVolumes[nIndex].d == m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].w == m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].h == m_nVolumeGridRes)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  inline __host__
+  int GetActiveGridVolNum()
+  {
+    int nNum = 0;
+
+    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    {
+      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
+         m_GridVolumes[i].w == m_nVolumeGridRes &&
+         m_GridVolumes[i].h == m_nVolumeGridRes)
+      {
+        nNum ++;
+      }
+    }
+
+    return nNum;
+  }
+
+  //////////////////////////////////////////////////////
+  // for rolling SDF
+  //////////////////////////////////////////////////////
   inline __device__
   float3 GetShiftValue(float3 pos_w) const
   {
@@ -450,170 +609,246 @@ public:
     return x + m_nGridRes_w* (y+ m_nGridRes_h* z);
   }
 
-
-  inline __device__
-  float3 GetUnitsOutwardNormal(float3 pos_w) const
-  {
-    const float3 deriv = GetUnitsBackwardDiffDxDyDz(pos_w);
-    return deriv / length(deriv);
-  }
-
+  // ===========================================================================
+  // For desire grid index (x,y,z), return real index in Volume when shift is applied
+  // ===========================================================================
   inline __device__ __host__
-  float3 VoxelPositionInUnits(int x, int y, int z) const
+  unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
   {
-    const float3 vol_size = m_bbox.Size();
+    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
+    {
+      const unsigned int nIndex =x + m_nGridRes_w* (y+ m_nGridRes_h* z);
+      return nIndex;
+    }
 
-    return make_float3(
-          m_bbox.Min().x + vol_size.x * static_cast<float>(x)/static_cast<float>(m_w-1),
-          m_bbox.Min().y + vol_size.y * static_cast<float>(y)/static_cast<float>(m_h-1),
-          m_bbox.Min().z + vol_size.z * static_cast<float>(z)/static_cast<float>(m_d-1)
-          );
+    // --- for x
+    if(m_shift.x>0 && m_shift.x<=int(m_nGridRes_w))
+    {
+      if( x <= int(m_nGridRes_w) -1- m_shift.x )
+      {
+        x = x + m_shift.x;
+      }
+      else
+      {
+        x = x - ( int(m_nGridRes_w) - m_shift.x );
+      }
+    }
+    else if(m_shift.x<0 && m_shift.x>=-int(m_nGridRes_w))
+    {
+      if( x <= int(m_nGridRes_w) -1 -abs(m_shift.x) )
+      {
+        x = x + abs(m_shift.x);
+      }
+      else
+      {
+        x = x + ( int(m_nGridRes_w) - abs(m_shift.x) );
+      }
+    }
+
+
+    // --- for y
+    if(m_shift.y>0 && m_shift.y<=int(m_nGridRes_h))
+    {
+      if( y<=int(m_nGridRes_h)-1-m_shift.y)
+      {
+        y = y+m_shift.y;
+      }
+      else
+      {
+        y = y- ( int(m_nGridRes_h) - m_shift.y );
+      }
+    }
+    else if(m_shift.y<0 && m_shift.y>=-int(m_nGridRes_h))
+    {
+      if(y <= int(m_nGridRes_h) -1- abs(m_shift.y) )
+      {
+        y = y + abs(m_shift.y);
+      }
+      else
+      {
+        y = y + ( int(m_nGridRes_h) - abs(m_shift.y) );
+      }
+    }
+
+    // --- for z
+    if(m_shift.z>0 && m_shift.z<=int(m_nGridRes_d) )
+    {
+      if(z <= int(m_nGridRes_d) -1 - m_shift.z  )
+      {
+        z = z + m_shift.z;
+      }
+      else
+      {
+        z = z - ( int(m_nGridRes_d) - m_shift.z );
+      }
+    }
+    else if(m_shift.z<0 && m_shift.z>=-int(m_nGridRes_d))
+    {
+      if(z <= int(m_nGridRes_d) -1- abs(m_shift.z) )
+      {
+        z = z + abs(m_shift.z);
+      }
+      else
+      {
+        z = z + ( int(m_nGridRes_d) - abs(m_shift.z) );
+      }
+    }
+
+    // compute actual index
+    const unsigned int nIndex =x + m_nGridRes_w* (y+ m_nGridRes_h* z);
+    return  nIndex;
   }
 
+  // ===========================================================================
+  // input the index of grid sdf that we want to access. return the global index for it.
+  // If the index is shift, its global index will ++. Otherwise, the global index
+  // will be the same as it was. The role of this function is to see if the m_global_shift
+  // does not reset yet but there is a current shift for the grid.
+  // ===========================================================================
   inline __device__ __host__
-  float3 VoxelPositionInUnits(int3 p_v) const
+  int3 GetGlobalIndex(int x, int y, int z) const
   {
-    return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
-  }
-
-
-  //////////////////////////////////////////////////////
-  // Memory copy and free
-  //////////////////////////////////////////////////////
-  inline __host__
-  void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
-  {
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
     {
-      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+      return m_global_shift;
     }
-  }
 
-  inline __host__
-  void CopyFrom(BoundedVolumeGrid<T, TargetHost, Management>& rVol )
-  {
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    // compute global index for single grid
+    int3 GlobalIndex = m_global_shift;
+
+    // for x
+    if(m_shift.x>0 && m_shift.x<=int(m_nGridRes_w))
     {
-      m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
-    }
-  }
-
-
-  inline __host__
-  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetDevice , Management>& rVol )
-  {
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
-    {
-      // skip void volum grid
-      if(rVol.CheckIfBasicSDFActive(i)== true)
+      if(x<m_shift.x)
       {
-        if(CheckIfBasicSDFActive(i)==false)
-        {
-          if(InitSingleBasicSDFWithIndex(i)==false)
-          {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
-            exit(-1);
-          }
-        }
-        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
-        GpuCheckErrors();
+        GlobalIndex.x = m_global_shift.x+1;
       }
     }
-  }
-
-
-  inline __host__
-  void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
-  {
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    else if( m_shift.x<0 && m_shift.x>=-int(m_nGridRes_w) )
     {
-      // skip void volum grid
-      if(rHVol.CheckIfBasicSDFActive(i)== true)
+      if( x<=abs(m_shift.x) )
       {
-        if(CheckIfBasicSDFActive(i)==false)
-        {
-          if(InitSingleBasicSDFWithIndex(i)==false)
-          {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
-            exit(-1);
-          }
-          else
-          {
-            printf("[Kangaroo/BoundedVolumeGrid] Init New grid sdf %d\n",i);
-          }
-        }
-
-        m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
-        GpuCheckErrors();
+        GlobalIndex.x = m_global_shift.x-1;
       }
     }
-  }
 
-  inline __host__
-  void FreeMemory()
-  {
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    // for y
+    if(m_shift.y>0 && m_shift.y<= int(m_nGridRes_h))
     {
-      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
-         m_GridVolumes[i].h == m_nVolumeGridRes &&
-         m_GridVolumes[i].w == m_nVolumeGridRes)
+      if(y<m_shift.y)
       {
-        m_GridVolumes[i].d=0;
-        m_GridVolumes[i].w=0;
-        m_GridVolumes[i].h=0;
-        cudaFree( m_GridVolumes[i].ptr );
+        GlobalIndex.y = m_global_shift.y+1;
       }
-
     }
+    else if(m_shift.y<0 && m_shift.y>=-int(m_nGridRes_h))
+    {
+      if( y<=abs(m_shift.y) )
+      {
+        GlobalIndex.y = m_global_shift.y-1;
+      }
+    }
+
+    // for z
+    if(m_shift.z>0 && m_shift.z<=int(m_nGridRes_d) )
+    {
+      if(z<m_shift.z)
+      {
+        GlobalIndex.z = m_global_shift.z+1;
+      }
+    }
+    else if(m_shift.z<0 && m_shift.z>=-int(m_nGridRes_d))
+    {
+      if( z<=abs(m_shift.z) )
+      {
+        GlobalIndex.z = m_global_shift.z-1;
+      }
+    }
+
+    // compute actual index
+    return  GlobalIndex;
   }
 
+  // ===========================================================================
+  // check if need to reset local shift and set global shift
+  // ===========================================================================
   inline __host__
-  void FreeMemoryByIndex(unsigned int nIndex)
+  void UpdateGlobalShift(int3 cur_local_shift)
   {
-    if(CheckIfBasicSDFActive(nIndex) == false)
+    // in case of huge local shift
+    m_shift.x = m_shift.x + cur_local_shift.x % int(m_nGridRes_w);
+    m_shift.y = m_shift.y + cur_local_shift.y % int(m_nGridRes_h);
+    m_shift.z = m_shift.z + cur_local_shift.z % int(m_nGridRes_d);
+
+    m_global_shift.x = m_global_shift.x + cur_local_shift.x/int(m_nGridRes_w);
+    m_global_shift.y = m_global_shift.y + cur_local_shift.y/int(m_nGridRes_h);
+    m_global_shift.z = m_global_shift.z + cur_local_shift.z/int(m_nGridRes_d);
+
+    // --- for x
+    if(m_shift.x >= int(m_nGridRes_w)+1)
     {
-      printf("[BoundedVolumeGrid] Error! Single GridSDF being free must be alloc first!!\n");
+      m_shift.x = m_shift.x-int(m_nGridRes_w);
+      m_global_shift.x++;
+      printf("[BoundedVolumeGrid] update global shift x\n");
+    }
+
+    if(m_shift.x <= -int(m_nGridRes_w+1))
+    {
+      m_shift.x = m_shift.x-(-int(m_nGridRes_w));
+      m_global_shift.x--;
+      printf("[BoundedVolumeGrid] update global shift x\n");
+    }
+
+    // --- for y
+    if(m_shift.y >= int(m_nGridRes_h)+1)
+    {
+      m_shift.y = m_shift.y - int(m_nGridRes_h);
+      m_global_shift.y++;
+      printf("[BoundedVolumeGrid] update global shift y\n");
+    }
+
+    if(m_shift.y <= -int(m_nGridRes_h+1))
+    {
+      m_shift.y = m_shift.y-(-int(m_nGridRes_h));
+      m_global_shift.y--;
+      printf("[BoundedVolumeGrid] update global shift y\n");
+    }
+
+
+
+    // --- for z
+    if(m_shift.z >= int(m_nGridRes_d)+1)
+    {
+      m_shift.z = m_shift.z-int(m_nGridRes_d);
+      m_global_shift.z++;
+      printf("[BoundedVolumeGrid] update global shift z\n");
+    }
+
+    if(m_shift.z <= -int(m_nGridRes_d+1))
+    {
+      m_shift.z = m_shift.z-(-int(m_nGridRes_d));
+      m_global_shift.z--;
+      printf("[BoundedVolumeGrid] update global shift z\n");
+    }
+
+    printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d;"
+           "Global shift: x=%d,y=%d,z=%d; Max shift (%d,%d,%d) \n",
+           m_shift.x,m_shift.y,m_shift.z,
+           m_global_shift.x,m_global_shift.y,m_global_shift.z,
+           m_nGridRes_w, m_nGridRes_h,m_nGridRes_d);
+
+    // check for error
+    if(abs(m_global_shift.x)>99999 || abs(m_global_shift.y)>99999 || abs(m_global_shift.z)>99999 )
+    {
+      printf("[BoundedVolumeGrid] fatal error! global shift overflow!\n");
       exit(-1);
     }
 
-    cudaFree( m_GridVolumes[nIndex].ptr );
-  }
-
-
-  inline __host__ __device__
-  bool CheckIfBasicSDFActive(const int nIndex) const
-  {
-    if(m_GridVolumes[nIndex].d == m_nVolumeGridRes &&
-       m_GridVolumes[nIndex].w == m_nVolumeGridRes &&
-       m_GridVolumes[nIndex].h == m_nVolumeGridRes)
+    if(abs(m_shift.x)>99999 || abs(m_shift.y)>99999 || abs(m_shift.z)>99999 )
     {
-      return true;
-    }
-    else
-    {
-      return false;
+      printf("[BoundedVolumeGrid] fatal error! local shift overflow!\n");
+      exit(-1);
     }
   }
-
-
-  inline __host__
-  int GetActiveGridVolNum()
-  {
-    int nNum = 0;
-
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
-    {
-      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
-         m_GridVolumes[i].w == m_nVolumeGridRes &&
-         m_GridVolumes[i].h == m_nVolumeGridRes)
-      {
-        nNum ++;
-      }
-    }
-
-    return nNum;
-  }
-
 
   // set next sdf that we want to init
   inline __device__
@@ -658,7 +893,6 @@ public:
   //////////////////////////////////////////////////////
   // Access sub-regions
   //////////////////////////////////////////////////////
-
   inline __device__ __host__
   void SubBoundingVolume( const BoundingBox& region)
   {
@@ -689,7 +923,7 @@ public:
     // now get subvol for rVol
     //    BoundedVolumeGrid<T, Target, Management> rVol;
     //    rVol.init();
-    //    for(int i=0;i!= m_nWholeGridRes_w * m_nWholeGridRes_h * m_nWholeGridRes_d;i++)
+    //    for(int i=0;i!= m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     //    {
     //      // skip void volum grid
     //      if(rVol.CheckIfBasicSDFActive(i)== true)
@@ -723,6 +957,31 @@ public:
     return m_nTotalGridRes;
   }
 
+  // ===========================================================================
+  // get bb of current global index without any shift parameters
+  // ===========================================================================
+  inline __host__
+  BoundingBox GetDesireBB(int3 GlobalIndex)
+  {
+    BoundingBox mBBox = m_bbox;
+
+    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_shift.x)/
+        float(m_nGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_shift.y)/
+        float(m_nGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_shift.z)/
+        float(m_nGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
+
+    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_shift.x)/
+        float(m_nGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_shift.y)/
+        float(m_nGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_shift.z)/
+        float(m_nGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
+
+    return mBBox;
+  }
+
 public:
   size_t                                      m_w;
   size_t                                      m_h;
@@ -731,6 +990,9 @@ public:
   // for rolling sdf. When this value is not zero, we need to recompute
   // index based on the shift
   int3                                        m_shift;
+
+  int3                                        m_global_shift;  // when m_shift set to 0, global will ++
+  int3                                        m_subVol_shift;  // shift for sub bounded volume.
 
   // bounding box of bounded volume grid
   BoundingBox                                 m_bbox;
