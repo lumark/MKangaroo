@@ -71,9 +71,9 @@ inline aiMesh* MeshFromLists(
 // here also support .obj file.
 KANGAROO_EXPORT
 inline void SaveMeshGridToFile(
-    std::string         sFilename,
-    aiMesh*             pMesh,
-    std::string         sFormat ="ply")
+    std::string                                       sFilename,
+    aiMesh*                                           pMesh,
+    std::string                                       sFormat ="ply")
 {
   // Create root node which indexes first mesh
   aiNode* root = new aiNode();
@@ -107,10 +107,13 @@ inline void SaveMeshGridToFile(
 }
 
 // =============================================================================
-//fGetOffset finds the approximate point of intersection of the surface
+// fGetOffset finds the approximate point of intersection of the surface
 // between two points with the values fValue1 and fValue2
 KANGAROO_EXPORT
-inline float fGetOffset(float fValue1, float fValue2, float fValueDesired)
+inline float fGetOffset(
+    float                                             fValue1,
+    float                                             fValue2,
+    float                                             fValueDesired)
 {
   const double fDelta = fValue2 - fValue1;
   if(fDelta == 0.0) {
@@ -118,7 +121,6 @@ inline float fGetOffset(float fValue1, float fValue2, float fValueDesired)
   }
   return (fValueDesired - fValue1)/fDelta;
 }
-
 
 //////////////////////////////////////////
 // save grid mesh
@@ -132,7 +134,8 @@ public:
   std::string              sBBoxFileName;
 };
 
-std::vector<SingleVolume> GetFilesNeedSaving(std::vector<std::string>& vfilename);
+std::vector<SingleVolume> GetFilesNeedSaving(
+    std::vector<std::string>&                         vfilename);
 
 // =============================================================================
 //vMarchCube performs the Marching Cubes algorithm on a single cube
@@ -265,11 +268,12 @@ void vMarchCubeGrid(
 //////////////////////////////////////////
 // =============================================================================
 KANGAROO_EXPORT
-template<typename T, typename TColor>
+template<typename T, typename TColor, typename Manage>
 void SaveMeshGrid(
     std::string                                       filename,
     const BoundedVolumeGrid<T,TargetHost,Manage>      vol,
     const BoundedVolumeGrid<TColor,TargetHost,Manage> volColor );
+
 
 // =============================================================================
 KANGAROO_EXPORT
@@ -289,7 +293,6 @@ void SaveMeshGrid(
 }
 
 // =============================================================================
-KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMeshGrid(
     std::string                                       filename,
@@ -310,14 +313,13 @@ void SaveMeshGrid(
   SaveMeshGrid<T,TColor, Manage>(filename, hvol, hvolcolor);
 }
 
-
 // =============================================================================
 // now do it for each grid instead of each voxel
 KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 aiMesh* GetMeshGrid(
-    BoundedVolumeGrid<T, TargetHost, Manage>            vol,
-    BoundedVolumeGrid<TColor, TargetHost, Manage>       volColor )
+    BoundedVolumeGrid<T, TargetHost, Manage>          vol,
+    BoundedVolumeGrid<TColor, TargetHost, Manage>     volColor )
 {
   std::vector<aiVector3D>   verts;
   std::vector<aiVector3D>   norms;
@@ -371,19 +373,18 @@ aiMesh* GetMeshGrid(
   return GetMeshGrid<T,TColor, Manage>(hvol, hvolcolor);
 }
 
-
 // =============================================================================
 // now do it for each grid instead of each voxel
 KANGAROO_EXPORT
 template<typename T, typename TColor>
 void GenMeshSingleGrid(
-    BoundedVolumeGrid<T, TargetHost, Manage>&           vol,
-    BoundedVolumeGrid<TColor, TargetHost, Manage>&      volColor,
+    BoundedVolumeGrid<T, TargetHost, Manage>&         vol,
+    BoundedVolumeGrid<TColor, TargetHost, Manage>&    volColor,
     int i,int j,int k,
-    std::vector<aiVector3D>&                            verts,
-    std::vector<aiVector3D>&                            norms,
-    std::vector<aiFace>&                                faces,
-    std::vector<aiColor4D>&                             colors)
+    std::vector<aiVector3D>&                          verts,
+    std::vector<aiVector3D>&                          norms,
+    std::vector<aiFace>&                              faces,
+    std::vector<aiColor4D>&                           colors)
 {
   // for each voxel in the grid
   for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
@@ -416,23 +417,23 @@ public:
   std::vector<aiColor4D>    colors;
 };
 
-
+// =============================================================================
+KANGAROO_EXPORT
 bool GenMeshFromPPM(
-    std::string               sDirName,
-    std::string               sBBFileName,
-    int3                      nVolRes,
-    int                       nGridRes,
-    std::vector<std::string>  vfilename,
-    std::string               sMeshFileName);
+    std::string                                       sDirName,
+    std::string                                       sBBFileName,
+    int3                                              nVolRes,
+    int                                               nGridRes,
+    std::vector<std::string>                          vfilename,
+    std::string                                       sMeshFileName);
 
 // =============================================================================
 // now do it for each grid instead of each voxel
-KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMeshGrid(
-    std::string                                         filename,
-    BoundedVolumeGrid<T, TargetHost, Manage>            vol,
-    BoundedVolumeGrid<TColor, TargetHost, Manage>       volColor )
+    std::string                                       filename,
+    BoundedVolumeGrid<T, TargetHost, Manage>          vol,
+    BoundedVolumeGrid<TColor, TargetHost, Manage>     volColor )
 {
   double dTime = _Tic();
 
@@ -470,15 +471,13 @@ void SaveMeshGrid(
   SaveMeshGridToFile(filename, mesh, "obj");
 }
 
-
 // =============================================================================
 KANGAROO_EXPORT
-template<typename T, typename TColor>
+template<typename T, typename TColor, typename Manage>
 void SaveMeshGridSepreate(
     std::string                                       filename,
     const BoundedVolumeGrid<T,TargetHost,Manage>      vol,
     const BoundedVolumeGrid<TColor,TargetHost,Manage> volColor );
-
 
 // =============================================================================
 KANGAROO_EXPORT
@@ -501,9 +500,9 @@ void SaveMeshGridSepreate(
 KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMeshGridSepreate(
-    std::string                                      filename,
-    BoundedVolumeGrid<T,TargetDevice,Manage>&        vol,
-    BoundedVolumeGrid<TColor,TargetDevice,Manage>&   volColor )
+    std::string                                       filename,
+    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol,
+    BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);

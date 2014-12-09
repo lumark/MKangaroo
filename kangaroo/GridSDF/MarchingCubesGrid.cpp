@@ -250,7 +250,7 @@ bool GenMeshFromPPM(
             //                                     verts, norms, faces, colors);
 
             GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex.x, CurLocalIndex.y, CurLocalIndex.z,
-                               verts, norms, faces, colors);
+                              verts, norms, faces, colors);
             nNum++;
           }
           else
@@ -280,8 +280,18 @@ bool GenMeshFromPPM(
   return true;
 }
 
-template void SaveMeshGrid<roo::SDF_t_Smart,float, Manage>(std::string,
-BoundedVolumeGrid<SDF_t_Smart,TargetHost, Manage> vol,
-BoundedVolumeGrid<float,TargetHost, Manage> volColor);
+// Instantiate templates
+//template void SaveMeshGrid<roo::SDF_t_Smart, Manage>
+//(
+//std::string,
+//const BoundedVolume<SDF_t,TargetHost,DontManage> vol
+//);
+
+template void SaveMeshGrid<roo::SDF_t_Smart, float, Manage>
+(
+std::string,
+BoundedVolumeGrid<SDF_t_Smart, TargetHost, Manage> vol,
+BoundedVolumeGrid<float,TargetHost, Manage> volColor
+);
 
 }

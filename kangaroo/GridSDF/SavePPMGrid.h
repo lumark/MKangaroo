@@ -18,10 +18,10 @@
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXM(
-    std::ofstream&                                   bFile,
-    const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
-    std::string                                      ppm_type = "P5",
-    int                                              num_colors = 255)
+    std::ofstream&                                         bFile,
+    const roo::VolumeGrid<T,roo::TargetHost,Manage>&       vol,
+    std::string                                            ppm_type = "P5",
+    int                                                    num_colors = 255)
 {
   bFile << ppm_type << std::endl;
   bFile << vol.w << " " << vol.h << " " << vol.d << '\n';
@@ -38,10 +38,10 @@ void SavePXM(
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXM(
-    const std::string                                filename,
-    const roo::VolumeGrid<T,roo::TargetHost,Manage>& vol,
-    std::string                                      ppm_type = "P5",
-    int                                              num_colors = 255)
+    const std::string                                      filename,
+    const roo::VolumeGrid<T,roo::TargetHost,Manage>&       vol,
+    std::string                                            ppm_type = "P5",
+    int                                                    num_colors = 255)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   SavePXM<T,Manage>(bFile, vol, ppm_type, num_colors);
@@ -51,8 +51,9 @@ KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXM(
     std::ofstream& bFile,
-    const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol,
-    std::string ppm_type = "P5", int num_colors = 255)
+    const roo::VolumeGrid<T,roo::TargetDevice,Manage>&     vol,
+    std::string                                            ppm_type = "P5",
+    int                                                    num_colors = 255)
 {
   roo::VolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.InitVolume(vol.w, vol.h, vol.d);
@@ -63,17 +64,19 @@ void SavePXM(
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXM(
-    const std::string                                  filename,
-    const roo::VolumeGrid<T,roo::TargetDevice,Manage>& vol,
-    std::string                                        ppm_type = "P5",
-    int                                                num_colors = 255)
+    const std::string                                      filename,
+    const roo::VolumeGrid<T,roo::TargetDevice,Manage>&     vol,
+    std::string                                            ppm_type = "P5",
+    int                                                    num_colors = 255)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   SavePXM<T,Manage>(bFile,vol,ppm_type,num_colors);
 }
 
 KANGAROO_EXPORT
-inline void SavePXMBoundingBox(const std::string filename, roo::BoundingBox BBox)
+inline void SavePXMBoundingBox(
+    const std::string                                      filename,
+    roo::BoundingBox                                       BBox)
 {
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   bFile << BBox.boxmin.x << " " <<  BBox.boxmin.y << " " << BBox.boxmin.z << std::endl;
@@ -143,8 +146,6 @@ void CheckifSaveBB(
   }
 }
 
-// -----------------------------------------------------------------------------
-// only save desire grids
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXMGridDesire(
@@ -251,8 +252,8 @@ void SavePXMGridDesire(
 KANGAROO_EXPORT
 template<typename T>
 bool LoadPXMSingleGrid(
-    const std::string                               filename,
-    roo::VolumeGrid<T,roo::TargetHost,roo::Manage>& vol)
+    const std::string                                      filename,
+    roo::VolumeGrid<T,roo::TargetHost,roo::Manage>&        vol)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
 
@@ -298,7 +299,7 @@ bool LoadPXMSingleGrid(
 }
 
 KANGAROO_EXPORT
-inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
+inline roo::BoundingBox LoadPXMBoundingBox(std::string     filename)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
   if(bFile.fail()==true)
@@ -326,10 +327,10 @@ inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
 KANGAROO_EXPORT
 template<typename T>
 bool LoadPXMGrid(
-    std::string                        sDirName,
-    const std::vector<std::string>&    vfilename,
-    std::string                        sBBFileName,
-    roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>& vol)
+    std::string                                               sDirName,
+    const std::vector<std::string>&                           vfilename,
+    std::string                                               sBBFileName,
+    roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>&  vol)
 {
   // to load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;

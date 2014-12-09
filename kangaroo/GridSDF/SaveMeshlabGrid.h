@@ -2,10 +2,9 @@
 
 #include <sophus/se3.hpp>
 #include <kangaroo/Sdf.h>
-
 #include <kangaroo/extra/SaveGIL.h>
-#include "MarchingCubesGrid.h"
-#include "SavePPMGrid.h"
+#include <kangaroo/GridSDF/MarchingCubesGrid.h>
+#include <kangaroo/GridSDF/SavePPMGrid.h>
 #include <boost/ptr_container/ptr_vector.hpp>
 
 KANGAROO_EXPORT
@@ -187,12 +186,12 @@ inline void SaveMeshlabGrid(
 KANGAROO_EXPORT
 // generate a single mesh from several PPMs
 inline void GenMeshlabFromPPM(
-    std::string              sDirName,
-    std::string              sBBFileName,
-    int3                     VolRes,
-    int                      nGridRes,
-    std::vector<std::string> vfilename,
-    std::string              sMeshFileName)
+    std::string                 sDirName,
+    std::string                 sBBFileName,
+    int3                        VolRes,
+    int                         nGridRes,
+    std::vector<std::string>    vfilename,
+    std::string                 sMeshFileName)
 {
   Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
   Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
@@ -209,7 +208,7 @@ inline void GenMeshlabFromPPM(
 
   of << " <MeshGroup>" << std::endl;
 
-  GenMeshFromPPM(sDirName, sBBFileName, VolRes, nGridRes, vfilename, sMeshFileName);
+  roo::GenMeshFromPPM(sDirName, sBBFileName, VolRes, nGridRes, vfilename, sMeshFileName);
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
   of << "   <MLMatrix44>" << std::endl;
@@ -230,4 +229,3 @@ inline void GenMeshlabFromPPM(
 
   of.close();
 }
-
