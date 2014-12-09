@@ -5,7 +5,7 @@
 
 #include <kangaroo/extra/SaveGIL.h>
 #include "MarchingCubesGrid.h"
-
+#include "SavePPMGrid.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 
 KANGAROO_EXPORT
@@ -209,7 +209,7 @@ inline void GenMeshlabFromPPM(
 
   of << " <MeshGroup>" << std::endl;
 
-  roo::GenMeshFromPPM(sDirName, sBBFileName, VolRes, nGridRes, vfilename, sMeshFileName);
+  GenMeshFromPPM(sDirName, sBBFileName, VolRes, nGridRes, vfilename, sMeshFileName);
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
   of << "   <MLMatrix44>" << std::endl;

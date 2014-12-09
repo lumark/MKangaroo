@@ -24,7 +24,6 @@ inline double _Toc( double dSec )
   return _Tic() - dSec;
 }
 
-
 // =============================================================================
 KANGAROO_EXPORT
 inline aiMesh* MeshFromLists(
@@ -107,7 +106,6 @@ inline void SaveMeshGridToFile(
   }
 }
 
-
 // =============================================================================
 //fGetOffset finds the approximate point of intersection of the surface
 // between two points with the values fValue1 and fValue2
@@ -121,6 +119,20 @@ inline float fGetOffset(float fValue1, float fValue2, float fValueDesired)
   return (fValueDesired - fValue1)/fDelta;
 }
 
+
+//////////////////////////////////////////
+// save grid mesh
+//////////////////////////////////////////
+class SingleVolume
+{
+public:
+  int3                     GlobalIndex;
+  std::vector<int3>        vLocalIndex;
+  std::vector<std::string> vFileName;
+  std::string              sBBoxFileName;
+};
+
+std::vector<SingleVolume> GetFilesNeedSaving(std::vector<std::string>& vfilename);
 
 // =============================================================================
 //vMarchCube performs the Marching Cubes algorithm on a single cube
@@ -248,10 +260,8 @@ void vMarchCubeGrid(
   }
 }
 
-
-
 //////////////////////////////////////////
-/// Save SDF
+/// Save Mesh
 //////////////////////////////////////////
 // =============================================================================
 KANGAROO_EXPORT
@@ -406,6 +416,14 @@ public:
   std::vector<aiColor4D>    colors;
 };
 
+
+bool GenMeshFromPPM(
+    std::string               sDirName,
+    std::string               sBBFileName,
+    int3                      nVolRes,
+    int                       nGridRes,
+    std::vector<std::string>  vfilename,
+    std::string               sMeshFileName);
 
 // =============================================================================
 // now do it for each grid instead of each voxel

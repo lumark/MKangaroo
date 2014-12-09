@@ -20,7 +20,9 @@
 #include "math.h"
 
 #include <kangaroo/Sdf.h>
+#include <kangaroo/GridSDF/cu_sdffusion_grid.h>
 #include <kangaroo/GridSDF/SdfSmart.h>
+#include <kangaroo/GridSDF/SavePPMGrid.h>
 #include <kangaroo/GridSDF/MarchingCubesGrid.h>
 
 namespace roo
@@ -34,7 +36,10 @@ namespace roo
 ///////////////////////////////////////////////////////////////////////////////
 
 // get global index and local index from file name
-bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalIndex )
+bool GetIndexFromFileName(
+    std::string                sFileName,
+    int3&                      GlobalIndex,
+    int3&                      LocalIndex )
 {
   std::vector<int> vIndex;
   std::string sTempStr = sFileName;
@@ -65,10 +70,10 @@ bool GetIndexFromFileName(std::string sFileName, int3& GlobalIndex, int3& LocalI
   }
 }
 
-
 // ================================================================================
 // get files need saving into mesh
-std::vector<SingleVolume> GetFilesNeedSaving(std::vector<std::string>& vfilename)
+std::vector<SingleVolume> GetFilesNeedSaving(
+    std::vector<std::string>&  vfilename)
 {
   std::vector<SingleVolume>  vVolumes;
 
@@ -109,11 +114,12 @@ std::vector<SingleVolume> GetFilesNeedSaving(std::vector<std::string>& vfilename
 
 // ================================================================================
 // get max and min global index that we works with
-void GetMaxMinGlobalIndex(std::string                sDirName,
-                          std::string                sBBFileName,
-                          std::vector<SingleVolume>& rvVolumes,
-                          int3&                      rMaxGlobal,
-                          int3&                      rMinGlobal)
+void GetMaxMinGlobalIndex(
+    std::string                sDirName,
+    std::string                sBBFileName,
+    std::vector<SingleVolume>& rvVolumes,
+    int3&                      rMaxGlobal,
+    int3&                      rMinGlobal)
 {
   for(unsigned int i=0;i!=rvVolumes.size();i++)
   {
@@ -166,12 +172,13 @@ void GetMaxMinGlobalIndex(std::string                sDirName,
 
 // ================================================================================
 // Generate one single mesh from several ppm files.
-bool GenMeshFromPPM(std::string               sDirName,
-                    std::string               sBBFileName,
-                    int3                      nVolRes,
-                    int                       nGridRes,
-                    std::vector<std::string>  vfilename,
-                    std::string               sMeshFileName)
+bool GenMeshFromPPM(
+    std::string                sDirName,
+    std::string                sBBFileName,
+    int3                       nVolRes,
+    int                        nGridRes,
+    std::vector<std::string>   vfilename,
+    std::string                sMeshFileName)
 {
   printf("[Kangaroo/GenMeshFromPPM] Start.\n");
 
@@ -242,7 +249,7 @@ bool GenMeshFromPPM(std::string               sDirName,
             //                                     CurGlobalIndex,MaxGlobalIndex,MinGlobalIndex,
             //                                     verts, norms, faces, colors);
 
-            SaveMeshSingleGrid(hvol, hvolcolor, CurLocalIndex.x, CurLocalIndex.y, CurLocalIndex.z,
+            GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex.x, CurLocalIndex.y, CurLocalIndex.z,
                                verts, norms, faces, colors);
             nNum++;
           }
@@ -268,11 +275,10 @@ bool GenMeshFromPPM(std::string               sDirName,
   printf("[Kangaroo/GenMeshFromPPM] finish march cube for %d Grids. Skip %d\n",nNum, nNumSkip);
 
   aiMesh* mesh = MeshFromLists(verts,norms,faces,colors);
-  SaveMeshGrid(sMeshFileName, mesh);
+  SaveMeshGridToFile(sMeshFileName, mesh);
 
   return true;
 }
-
 
 template void SaveMeshGrid<roo::SDF_t_Smart,float, Manage>(std::string,
 BoundedVolumeGrid<SDF_t_Smart,TargetHost, Manage> vol,
