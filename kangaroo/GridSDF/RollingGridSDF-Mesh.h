@@ -84,6 +84,9 @@ public:
     }
   }
 
+
+
+
   class NextResetSDF
   {
   public:
@@ -93,6 +96,10 @@ public:
     int  m_z[MAX_SUPPORT_GRID_NUM];
   };
 
+
+
+
+
   // ---------------------------------------------------------------------------
   // compute index of grid sdf that need to be reset and freed.
   // only free that part that we just "shift"
@@ -101,6 +108,8 @@ public:
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
       int3                                                        CurLocalShift)
   {
+    std::cout<<"[GetGridSDFIndexNeedFree] Computing Grids index need to be freed"<<std::endl;
+
     // for each grid sdf in the volume
     if (CurLocalShift.x!=0 || CurLocalShift.y!=0 || CurLocalShift.z!=0)
     {
@@ -213,6 +222,8 @@ public:
         }
       }
     }
+
+    std::cout<<"[GetGridSDFIndexNeedFree] Finished"<<std::endl;
   }
 
 
