@@ -42,9 +42,11 @@ public:
 
     m_bbox           = r_bbox;
     m_nVolumeGridRes = n_res;
+
     m_nGridRes_w     = m_w/m_nVolumeGridRes;
     m_nGridRes_h     = m_h/m_nVolumeGridRes;
     m_nGridRes_d     = m_d/m_nVolumeGridRes;
+
     m_nTotalGridRes = m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;
 
     if(m_nTotalGridRes > MAX_SUPPORT_GRID_NUM)
@@ -56,11 +58,12 @@ public:
     }
 
     ResetAllGridVol();
-    m_shift = make_int3(0,0,0);
+    m_local_shift = make_int3(0,0,0);
+    m_global_shift = make_int3(0,0,0);
 
     if(n_w != n_h || n_h != n_d || n_w!=n_d)
     {
-      std::cerr<<"[BoundedVolumeGrid/init] only support cube size SDF!"<<std::endl;
+      std::cerr<<"[BoundedVolumeGrid/init] suggest to use cube size SDF!"<<std::endl;
     }
   }
 
@@ -101,9 +104,10 @@ public:
   inline __host__
   void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
   {
-    int nIndex =GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
-                          static_cast<int>(floorf(y/m_nVolumeGridRes)),
-                          static_cast<int>(floorf(z/m_nVolumeGridRes)) );
+    int nIndex =ConvertLocalIndexToRealIndex(
+          static_cast<int>(floorf(x/m_nVolumeGridRes)),
+          static_cast<int>(floorf(y/m_nVolumeGridRes)),
+          static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if(m_GridVolumes[nIndex].d !=m_nVolumeGridRes &&
        m_GridVolumes[nIndex].h !=m_nVolumeGridRes &&
@@ -149,6 +153,14 @@ public:
     return m_bbox.Size() / make_float3( m_w-1, m_h-1, m_d-1 );
   }
 
+  inline __device__ __host__
+  float3 VoxelSizeUnitsGlobal(int3 max_global, int3 min_global) const
+  {
+    return m_bbox.Size() / make_float3( (max_global.x-min_global.x)*(m_w-1),
+                                        (max_global.y-min_global.y)*(m_h-1),
+                                        (max_global.z-min_global.z)*(m_d-1) );
+  }
+
   //////////////////////////////////////////////////////
   // Return true if this BoundedVolumeGrid represents a positive
   // amount of space.
@@ -186,9 +198,9 @@ public:
   inline __host__ __device__
   bool CheckIfVoxelExist(int x, int y, int z)
   {
-    int nIndex = GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
-                           static_cast<int>(floorf(y/m_nVolumeGridRes)),
-                           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = ConvertLocalIndexToRealIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
+                                               static_cast<int>(floorf(y/m_nVolumeGridRes)),
+                                               static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if( CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -201,16 +213,18 @@ public:
   inline  __device__
   T& operator()(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
-                           static_cast<int>(floorf(y/m_nVolumeGridRes)),
-                           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = ConvertLocalIndexToRealIndex(
+          static_cast<int>(floorf(x/m_nVolumeGridRes)),
+          static_cast<int>(floorf(y/m_nVolumeGridRes)),
+          static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[Kangaroo/BoundedVolumeGrid] Error!!! basic sdf does not exist. shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
-             m_shift.x,
-             m_shift.y,
-             m_shift.z,
+      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basicSDF doesn't exist."
+             "shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
+             m_local_shift.x,
+             m_local_shift.y,
+             m_local_shift.z,
              int(floorf(x/m_nVolumeGridRes)),
              int(floorf(y/m_nVolumeGridRes)),
              int(floorf(z/m_nVolumeGridRes)),
@@ -225,9 +239,9 @@ public:
   inline  __device__  __host__
   T& Get(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = GetIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
-                           static_cast<int>(floorf(y/m_nVolumeGridRes)),
-                           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = ConvertLocalIndexToRealIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
+                                               static_cast<int>(floorf(y/m_nVolumeGridRes)),
+                                               static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
@@ -244,40 +258,23 @@ public:
     /// get pose of voxel in whole sdf, in %
     float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-    if(pos_v.x>=1)
-    {
-      pos_v.x =0.99999f;
-    }
-    else if(pos_v.x<0)
-    {
-      pos_v.x =0.f;
-    }
+    if(pos_v.x>=1) { pos_v.x =0.99999f; }
+    else if(pos_v.x<0) { pos_v.x =0.f; }
 
-    if(pos_v.y>=1)
-    {
-      pos_v.y =0.99999f;
-    }
-    else if(pos_v.y<0)
-    {
-      pos_v.y =0.f;
-    }
+    if(pos_v.y>=1) { pos_v.y =0.99999f; }
+    else if(pos_v.y<0) { pos_v.y =0.f; }
 
-    if(pos_v.z>=1)
-    {
-      pos_v.z =0.99999f;
-    }
-    else if(pos_v.z<0)
-    {
-      pos_v.z =0.f;
-    }
+    if(pos_v.z>=1) { pos_v.z =0.99999f; }
+    else if(pos_v.z<0) { pos_v.z =0.f; }
 
     const float fFactor = static_cast<float>(m_nVolumeGridRes)/static_cast<float>(m_w);
 
     // Get the index of voxel in basic sdf
-    const uint3 Index =make_uint3(
-          floorf(pos_v.x/fFactor), floorf(pos_v.y/fFactor), floorf(pos_v.z/fFactor) );
+    const uint3 Index =make_uint3( floorf(pos_v.x/fFactor),
+                                   floorf(pos_v.y/fFactor),
+                                   floorf(pos_v.z/fFactor) );
 
-    int nIndex = GetIndex( Index.x, Index.y, Index.z);
+    int nIndex = ConvertLocalIndexToRealIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -299,32 +296,14 @@ public:
     /// get pose of voxel in whole sdf, in %
     float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-    if(pos_v.x>=1)
-    {
-      pos_v.x =0.99999f;
-    }
-    else if(pos_v.x<0)
-    {
-      pos_v.x =0.f;
-    }
+    if(pos_v.x>=1){ pos_v.x =0.99999f;}
+    else if(pos_v.x<0) { pos_v.x =0.f;}
 
-    if(pos_v.y>=1)
-    {
-      pos_v.y =0.99999f;
-    }
-    else if(pos_v.y<0)
-    {
-      pos_v.y =0.f;
-    }
+    if(pos_v.y>=1){pos_v.y =0.99999f;}
+    else if(pos_v.y<0){pos_v.y =0.f;}
 
-    if(pos_v.z>=1)
-    {
-      pos_v.z =0.99999f;
-    }
-    else if(pos_v.z<0)
-    {
-      pos_v.z =0.f;
-    }
+    if(pos_v.z>=1){pos_v.z =0.99999f;}
+    else if(pos_v.z<0){pos_v.z =0.f;}
 
     const float fFactor = static_cast<float>(m_nVolumeGridRes)/static_cast<float>(m_w);
 
@@ -333,7 +312,7 @@ public:
                                     floorf(pos_v.y/fFactor),
                                     floorf(pos_v.z/fFactor) );
 
-    int nIndex = GetIndex( Index.x, Index.y, Index.z);
+    int nIndex = ConvertLocalIndexToRealIndex( Index.x, Index.y, Index.z);
 
     if(CheckIfBasicSDFActive(nIndex)==false)
     {
@@ -378,6 +357,37 @@ public:
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
+  inline __device__ __host__
+  float3 VoxelPositionInUnitsGlobal(int x, int y, int z,
+                                    int3 cur_global, int3 max_global, int3 min_global) const
+  {
+    if(x>=m_w || y>= m_h || z>=m_d)
+    {
+      printf("[VoxelPositionInUnitsGlobal] fatal error! index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
+             x,y,z,int(m_w),int(m_h),int(m_d));
+    }
+
+    const float3 vol_size = m_bbox.Size();
+
+    float3 local_pos =  make_float3(
+          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
+          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
+          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
+          );
+
+    float global_pos_x = (float(cur_global.x-min_global.x) + local_pos.x)/float(max_global.x-min_global.x);
+    float global_pos_y = (float(cur_global.y-min_global.y) + local_pos.y)/float(max_global.y-min_global.y);
+    float global_pos_z = (float(cur_global.z-min_global.z) + local_pos.z)/float(max_global.z-min_global.z);
+
+    float3 global_pos = make_float3(global_pos_x, global_pos_y, global_pos_z);
+
+    printf("LocalPos:(%f,%f,%f) GlobalPos(%f,%f,%f)",
+           local_pos.x,local_pos.y,local_pos.z,
+           global_pos.x,global_pos.y,global_pos.z);
+
+    return global_pos;
+  }
+
 
   //////////////////////////////////////////////////////
   // copy and free  Memory
@@ -415,6 +425,12 @@ public:
             printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
             exit(-1);
           }
+
+          if(CheckIfBasicSDFActive(i)==false)
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! Init grid sdf fail!!\n");
+            exit(-1);
+          }
         }
         m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
         GpuCheckErrors();
@@ -437,9 +453,11 @@ public:
             printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
             exit(-1);
           }
-          else
+
+          if(CheckIfBasicSDFActive(i)==false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] Init New grid sdf %d\n",i);
+            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! Init grid sdf fail!!\n");
+            exit(-1);
           }
         }
 
@@ -499,11 +517,9 @@ public:
   {
     int nNum = 0;
 
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    for(int i=0;i!= GetTotalGridNum();i++)
     {
-      if(m_GridVolumes[i].d == m_nVolumeGridRes &&
-         m_GridVolumes[i].w == m_nVolumeGridRes &&
-         m_GridVolumes[i].h == m_nVolumeGridRes)
+      if(CheckIfBasicSDFActive(i)==true)
       {
         nNum ++;
       }
@@ -511,6 +527,7 @@ public:
 
     return nNum;
   }
+
 
   //////////////////////////////////////////////////////
   // for rolling SDF
@@ -522,92 +539,6 @@ public:
     return (pos_w - m_bbox.Min()) / (m_bbox.Size());
   }
 
-  // ============================================================================
-  inline __device__ __host__
-  unsigned int GetIndex(unsigned int x, unsigned int y, unsigned int z) const
-  {
-    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
-    {
-      return  x + m_nGridRes_w* (y+ m_nGridRes_h* z);
-    }
-
-    // for x
-    if(m_shift.x>0 && m_shift.x<=m_nGridRes_w)
-    {
-      if( x<=m_nGridRes_w-1-m_shift.x)
-      {
-        x = x+m_shift.x;
-      }
-      else if(x>=m_nGridRes_w-1-m_shift.x)
-      {
-        x = x-(m_nGridRes_w-1)+(m_shift.x-1);
-      }
-    }
-    else if(m_shift.x<0 && m_shift.x>=-m_nGridRes_w)
-    {
-      if(x>=abs(m_shift.x) && x<=m_nGridRes_w)
-      {
-        x = x+m_shift.x;
-      }
-      else if( x<=abs(m_shift.x) )
-      {
-        x = x+m_nGridRes_w-1-abs(m_shift.x) ;
-      }
-    }
-
-
-    // for y
-    if(m_shift.y>0 && m_shift.y<=m_nGridRes_h)
-    {
-      if( y<=m_nGridRes_h-1-m_shift.y)
-      {
-        y = y+m_shift.y;
-      }
-      else if(y>=m_nGridRes_h-1-m_shift.y)
-      {
-        y = y-(m_nGridRes_h-1)+(m_shift.y-1);
-      }
-    }
-    else if(m_shift.y<0 && m_shift.y>=-m_nGridRes_h)
-    {
-      if(y>=abs(m_shift.y) && y<=m_nGridRes_h)
-      {
-        y = y+m_shift.y;
-      }
-      else if( y<=abs(m_shift.y) )
-      {
-        y = y+m_nGridRes_h-1-abs(m_shift.y) ;
-      }
-    }
-
-    // for z
-    if(m_shift.z>0 && m_shift.z<=m_nGridRes_d)
-    {
-      if( z<=m_nGridRes_d-1-m_shift.z)
-      {
-        z = z+m_shift.z;
-      }
-      else if(z>=m_nGridRes_d-1-m_shift.z)
-      {
-        z = z-(m_nGridRes_d-1)+(m_shift.z-1);
-      }
-    }
-    else if(m_shift.z<0 && m_shift.z>=-m_nGridRes_d)
-    {
-      if(z>=abs(m_shift.z) && z<=m_nGridRes_d)
-      {
-        z = z+m_shift.z;
-      }
-      else if( z<=abs(m_shift.z) )
-      {
-        z = z+m_nGridRes_d-1-abs(m_shift.z) ;
-      }
-    }
-
-
-    // compute actual index
-    return x + m_nGridRes_w* (y+ m_nGridRes_h* z);
-  }
 
   // ===========================================================================
   // For desire grid index (x,y,z), return real index in Volume when shift is applied
@@ -615,82 +546,82 @@ public:
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
   {
-    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
+    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
       const unsigned int nIndex =x + m_nGridRes_w* (y+ m_nGridRes_h* z);
       return nIndex;
     }
 
     // --- for x
-    if(m_shift.x>0 && m_shift.x<=int(m_nGridRes_w))
+    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nGridRes_w))
     {
-      if( x <= int(m_nGridRes_w) -1- m_shift.x )
+      if( x <= int(m_nGridRes_w) -1- m_local_shift.x )
       {
-        x = x + m_shift.x;
+        x = x + m_local_shift.x;
       }
       else
       {
-        x = x - ( int(m_nGridRes_w) - m_shift.x );
+        x = x - ( int(m_nGridRes_w) - m_local_shift.x );
       }
     }
-    else if(m_shift.x<0 && m_shift.x>=-int(m_nGridRes_w))
+    else if(m_local_shift.x<0 && m_local_shift.x>=-int(m_nGridRes_w))
     {
-      if( x <= int(m_nGridRes_w) -1 -abs(m_shift.x) )
+      if( x <= int(m_nGridRes_w) -1 -abs(m_local_shift.x) )
       {
-        x = x + abs(m_shift.x);
+        x = x + abs(m_local_shift.x);
       }
       else
       {
-        x = x + ( int(m_nGridRes_w) - abs(m_shift.x) );
+        x = x + ( int(m_nGridRes_w) - abs(m_local_shift.x) );
       }
     }
 
 
     // --- for y
-    if(m_shift.y>0 && m_shift.y<=int(m_nGridRes_h))
+    if(m_local_shift.y>0 && m_local_shift.y<=int(m_nGridRes_h))
     {
-      if( y<=int(m_nGridRes_h)-1-m_shift.y)
+      if( y<=int(m_nGridRes_h)-1-m_local_shift.y)
       {
-        y = y+m_shift.y;
+        y = y+m_local_shift.y;
       }
       else
       {
-        y = y- ( int(m_nGridRes_h) - m_shift.y );
+        y = y- ( int(m_nGridRes_h) - m_local_shift.y );
       }
     }
-    else if(m_shift.y<0 && m_shift.y>=-int(m_nGridRes_h))
+    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nGridRes_h))
     {
-      if(y <= int(m_nGridRes_h) -1- abs(m_shift.y) )
+      if(y <= int(m_nGridRes_h) -1- abs(m_local_shift.y) )
       {
-        y = y + abs(m_shift.y);
+        y = y + abs(m_local_shift.y);
       }
       else
       {
-        y = y + ( int(m_nGridRes_h) - abs(m_shift.y) );
+        y = y + ( int(m_nGridRes_h) - abs(m_local_shift.y) );
       }
     }
 
     // --- for z
-    if(m_shift.z>0 && m_shift.z<=int(m_nGridRes_d) )
+    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nGridRes_d) )
     {
-      if(z <= int(m_nGridRes_d) -1 - m_shift.z  )
+      if(z <= int(m_nGridRes_d) -1 - m_local_shift.z  )
       {
-        z = z + m_shift.z;
+        z = z + m_local_shift.z;
       }
       else
       {
-        z = z - ( int(m_nGridRes_d) - m_shift.z );
+        z = z - ( int(m_nGridRes_d) - m_local_shift.z );
       }
     }
-    else if(m_shift.z<0 && m_shift.z>=-int(m_nGridRes_d))
+    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nGridRes_d))
     {
-      if(z <= int(m_nGridRes_d) -1- abs(m_shift.z) )
+      if(z <= int(m_nGridRes_d) -1- abs(m_local_shift.z) )
       {
-        z = z + abs(m_shift.z);
+        z = z + abs(m_local_shift.z);
       }
       else
       {
-        z = z + ( int(m_nGridRes_d) - abs(m_shift.z) );
+        z = z + ( int(m_nGridRes_d) - abs(m_local_shift.z) );
       }
     }
 
@@ -702,13 +633,13 @@ public:
   // ===========================================================================
   // input the index of grid sdf that we want to access. return the global index for it.
   // If the index is shift, its global index will ++. Otherwise, the global index
-  // will be the same as it was. The role of this function is to see if the m_global_shift
+  // will be the same as it was. The role of this fun is to see if the m_global_shift
   // does not reset yet but there is a current shift for the grid.
   // ===========================================================================
   inline __device__ __host__
   int3 GetGlobalIndex(int x, int y, int z) const
   {
-    if(m_shift.x==0 && m_shift.y == 0 && m_shift.z ==0)
+    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
       return m_global_shift;
     }
@@ -717,48 +648,48 @@ public:
     int3 GlobalIndex = m_global_shift;
 
     // for x
-    if(m_shift.x>0 && m_shift.x<=int(m_nGridRes_w))
+    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nGridRes_w))
     {
-      if(x<m_shift.x)
+      if(x<m_local_shift.x)
       {
         GlobalIndex.x = m_global_shift.x+1;
       }
     }
-    else if( m_shift.x<0 && m_shift.x>=-int(m_nGridRes_w) )
+    else if( m_local_shift.x<0 && m_local_shift.x>=-int(m_nGridRes_w) )
     {
-      if( x<=abs(m_shift.x) )
+      if( x<=abs(m_local_shift.x) )
       {
         GlobalIndex.x = m_global_shift.x-1;
       }
     }
 
     // for y
-    if(m_shift.y>0 && m_shift.y<= int(m_nGridRes_h))
+    if(m_local_shift.y>0 && m_local_shift.y<= int(m_nGridRes_h))
     {
-      if(y<m_shift.y)
+      if(y<m_local_shift.y)
       {
         GlobalIndex.y = m_global_shift.y+1;
       }
     }
-    else if(m_shift.y<0 && m_shift.y>=-int(m_nGridRes_h))
+    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nGridRes_h))
     {
-      if( y<=abs(m_shift.y) )
+      if( y<=abs(m_local_shift.y) )
       {
         GlobalIndex.y = m_global_shift.y-1;
       }
     }
 
     // for z
-    if(m_shift.z>0 && m_shift.z<=int(m_nGridRes_d) )
+    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nGridRes_d) )
     {
-      if(z<m_shift.z)
+      if(z<m_local_shift.z)
       {
         GlobalIndex.z = m_global_shift.z+1;
       }
     }
-    else if(m_shift.z<0 && m_shift.z>=-int(m_nGridRes_d))
+    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nGridRes_d))
     {
-      if( z<=abs(m_shift.z) )
+      if( z<=abs(m_local_shift.z) )
       {
         GlobalIndex.z = m_global_shift.z-1;
       }
@@ -775,64 +706,62 @@ public:
   void UpdateGlobalShift(int3 cur_local_shift)
   {
     // in case of huge local shift
-    m_shift.x = m_shift.x + cur_local_shift.x % int(m_nGridRes_w);
-    m_shift.y = m_shift.y + cur_local_shift.y % int(m_nGridRes_h);
-    m_shift.z = m_shift.z + cur_local_shift.z % int(m_nGridRes_d);
+    m_local_shift.x = m_local_shift.x + cur_local_shift.x % int(m_nGridRes_w);
+    m_local_shift.y = m_local_shift.y + cur_local_shift.y % int(m_nGridRes_h);
+    m_local_shift.z = m_local_shift.z + cur_local_shift.z % int(m_nGridRes_d);
 
     m_global_shift.x = m_global_shift.x + cur_local_shift.x/int(m_nGridRes_w);
     m_global_shift.y = m_global_shift.y + cur_local_shift.y/int(m_nGridRes_h);
     m_global_shift.z = m_global_shift.z + cur_local_shift.z/int(m_nGridRes_d);
 
     // --- for x
-    if(m_shift.x >= int(m_nGridRes_w)+1)
+    if(m_local_shift.x >= int(m_nGridRes_w)+1)
     {
-      m_shift.x = m_shift.x-int(m_nGridRes_w);
+      m_local_shift.x = m_local_shift.x-int(m_nGridRes_w);
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] update global shift x\n");
     }
 
-    if(m_shift.x <= -int(m_nGridRes_w+1))
+    if(m_local_shift.x <= -int(m_nGridRes_w+1))
     {
-      m_shift.x = m_shift.x-(-int(m_nGridRes_w));
+      m_local_shift.x = m_local_shift.x-(-int(m_nGridRes_w));
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] update global shift x\n");
     }
 
     // --- for y
-    if(m_shift.y >= int(m_nGridRes_h)+1)
+    if(m_local_shift.y >= int(m_nGridRes_h)+1)
     {
-      m_shift.y = m_shift.y - int(m_nGridRes_h);
+      m_local_shift.y = m_local_shift.y - int(m_nGridRes_h);
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] update global shift y\n");
     }
 
-    if(m_shift.y <= -int(m_nGridRes_h+1))
+    if(m_local_shift.y <= -int(m_nGridRes_h+1))
     {
-      m_shift.y = m_shift.y-(-int(m_nGridRes_h));
+      m_local_shift.y = m_local_shift.y-(-int(m_nGridRes_h));
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] update global shift y\n");
     }
 
-
-
     // --- for z
-    if(m_shift.z >= int(m_nGridRes_d)+1)
+    if(m_local_shift.z >= int(m_nGridRes_d)+1)
     {
-      m_shift.z = m_shift.z-int(m_nGridRes_d);
+      m_local_shift.z = m_local_shift.z-int(m_nGridRes_d);
       m_global_shift.z++;
       printf("[BoundedVolumeGrid] update global shift z\n");
     }
 
-    if(m_shift.z <= -int(m_nGridRes_d+1))
+    if(m_local_shift.z <= -int(m_nGridRes_d+1))
     {
-      m_shift.z = m_shift.z-(-int(m_nGridRes_d));
+      m_local_shift.z = m_local_shift.z-(-int(m_nGridRes_d));
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] update global shift z\n");
     }
 
     printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d;"
            "Global shift: x=%d,y=%d,z=%d; Max shift (%d,%d,%d) \n",
-           m_shift.x,m_shift.y,m_shift.z,
+           m_local_shift.x,m_local_shift.y,m_local_shift.z,
            m_global_shift.x,m_global_shift.y,m_global_shift.z,
            m_nGridRes_w, m_nGridRes_h,m_nGridRes_d);
 
@@ -843,7 +772,7 @@ public:
       exit(-1);
     }
 
-    if(abs(m_shift.x)>99999 || abs(m_shift.y)>99999 || abs(m_shift.z)>99999 )
+    if(abs(m_local_shift.x)>99999 || abs(m_local_shift.y)>99999 || abs(m_local_shift.z)>99999 )
     {
       printf("[BoundedVolumeGrid] fatal error! local shift overflow!\n");
       exit(-1);
@@ -854,7 +783,7 @@ public:
   inline __device__
   void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
   {
-    const int nIndex = GetIndex(x/m_nVolumeGridRes, y/m_nVolumeGridRes, z/m_nVolumeGridRes );
+    const int nIndex = ConvertLocalIndexToRealIndex(x/m_nVolumeGridRes, y/m_nVolumeGridRes, z/m_nVolumeGridRes );
 
     if(m_NextInitBasicSDFs[nIndex] == 0 && CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -865,28 +794,28 @@ public:
   inline __host__
   void UpdateShift(int3 shift_index)
   {
-    m_shift = m_shift + shift_index;
+    m_local_shift = m_local_shift + shift_index;
 
-    if(m_shift.x == m_nGridRes_w ||  m_shift.x == -m_nGridRes_w)
+    if(m_local_shift.x == m_nGridRes_w ||  m_local_shift.x == -m_nGridRes_w)
     {
-      m_shift.x = 0;
+      m_local_shift.x = 0;
       printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
     }
 
-    if(m_shift.y == m_nGridRes_h || m_shift.y == -m_nGridRes_h)
+    if(m_local_shift.y == m_nGridRes_h || m_local_shift.y == -m_nGridRes_h)
     {
-      m_shift.y = 0;
+      m_local_shift.y = 0;
       printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
     }
 
-    if(m_shift.z == m_nGridRes_d || m_shift.z == -m_nGridRes_d)
+    if(m_local_shift.z == m_nGridRes_d || m_local_shift.z == -m_nGridRes_d)
     {
-      m_shift.z = 0;
+      m_local_shift.z = 0;
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
     printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift x=%d,y=%d,z=%d \n",
-           m_shift.x,m_shift.y,m_shift.z, m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
+           m_local_shift.x,m_local_shift.y,m_local_shift.z, m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
   }
 
 
@@ -965,18 +894,18 @@ public:
   {
     BoundingBox mBBox = m_bbox;
 
-    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_shift.x)/
+    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_local_shift.x)/
         float(m_nGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
-    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_shift.y)/
+    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_local_shift.y)/
         float(m_nGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
-    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_shift.z)/
+    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_local_shift.z)/
         float(m_nGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
 
-    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_shift.x)/
+    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_local_shift.x)/
         float(m_nGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
-    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_shift.y)/
+    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_local_shift.y)/
         float(m_nGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
-    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_shift.z)/
+    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_local_shift.z)/
         float(m_nGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
 
     return mBBox;
@@ -989,8 +918,7 @@ public:
 
   // for rolling sdf. When this value is not zero, we need to recompute
   // index based on the shift
-  int3                                        m_shift;
-
+  int3                                        m_local_shift;
   int3                                        m_global_shift;  // when m_shift set to 0, global will ++
   int3                                        m_subVol_shift;  // shift for sub bounded volume.
 

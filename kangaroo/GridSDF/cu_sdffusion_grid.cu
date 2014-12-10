@@ -79,7 +79,7 @@ __global__ void KernSdfInitGrayGrid(
             //        }else if(sd < 5*trunc_dist) {
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+              int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                           int(floorf(y/g_vol.m_nVolumeGridRes)),
                                           int(floorf(z/g_vol.m_nVolumeGridRes)) );
               g_NextInitSDFs[nIndex] = 1;
@@ -330,7 +330,7 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-          int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+          int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                       int(floorf(y/g_vol.m_nVolumeGridRes)),
                                       int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
@@ -421,7 +421,7 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndex(
   // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < g_vol.m_d; ++z)
   {
-    int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+    int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                 int(floorf(y/g_vol.m_nVolumeGridRes)),
                                 int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
@@ -633,7 +633,7 @@ __global__ void KernSdfFuseDirectGrayGridAutoInit(
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
           {
-            int nIndex = g_vol.GetIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
+            int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
                                         int(floorf(y/g_vol.m_nVolumeGridRes)),
                                         int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
@@ -928,7 +928,7 @@ __global__ void KernSdfInitGrayGridSmart(
             //        }else if(sd < 5*trunc_dist) {
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+              int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
                                                 int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
                                                 int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
               g_NextInitSDFs[nIndex] = 1;
@@ -1179,7 +1179,7 @@ __global__ void KernSdfFuseDirectGrayGridSafeSmart(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-          int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+          int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
                                             int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
                                             int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
@@ -1272,7 +1272,7 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndexSmart(
   // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < g_vol_smart.m_d; ++z)
   {
-    int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+    int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
                                       int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
                                       int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
@@ -1484,7 +1484,7 @@ __global__ void KernSdfFuseDirectGrayGridAutoInitSmart(
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
-            int nIndex = g_vol_smart.GetIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+            int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
                                               int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
                                               int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 

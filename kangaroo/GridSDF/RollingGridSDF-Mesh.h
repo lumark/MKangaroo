@@ -134,14 +134,14 @@ public:
 
             //----- for x
             if(CurLocalShift.x>0 &&
-               i>=pVol->m_shift.x - CurLocalShift.x && i<pVol->m_shift.x)
+               i>=pVol->m_local_shift.x - CurLocalShift.x && i<pVol->m_local_shift.x)
             {
               bx = true;
               bReset = true;
             }
             if(CurLocalShift.x<0 &&
-               i>= int(pVol->m_nGridRes_w) + pVol->m_shift.x &&
-               i<int(pVol->m_nGridRes_w) + pVol->m_shift.x-CurLocalShift.x)
+               i>= int(pVol->m_nGridRes_w) + pVol->m_local_shift.x &&
+               i<int(pVol->m_nGridRes_w) + pVol->m_local_shift.x-CurLocalShift.x)
             {
               //              bx = true;
               //              bReset = true;
@@ -150,14 +150,14 @@ public:
 
             //----- for y
             if(CurLocalShift.y>0 &&
-               j>=pVol->m_shift.y - CurLocalShift.y && j <pVol->m_shift.y)
+               j>=pVol->m_local_shift.y - CurLocalShift.y && j <pVol->m_local_shift.y)
             {
               by = true;
               bReset = true;
             }
             if(CurLocalShift.y<0 &&
-               i>= int(pVol->m_nGridRes_h) + pVol->m_shift.y &&
-               i<int(pVol->m_nGridRes_h) + pVol->m_shift.y-CurLocalShift.y)
+               i>= int(pVol->m_nGridRes_h) + pVol->m_local_shift.y &&
+               i<int(pVol->m_nGridRes_h) + pVol->m_local_shift.y-CurLocalShift.y)
             {
               //              by = true;
               //              bReset = true;
@@ -166,14 +166,14 @@ public:
 
             //----- for z
             if(CurLocalShift.z>0 &&
-               k>=pVol->m_shift.z - CurLocalShift.z && k<pVol->m_shift.z)
+               k>=pVol->m_local_shift.z - CurLocalShift.z && k<pVol->m_local_shift.z)
             {
               bz = true;
               bReset = true;
             }
             if(CurLocalShift.z<0 &&
-               i>= int(pVol->m_nGridRes_d) + pVol->m_shift.z &&
-               i<int(pVol->m_nGridRes_d) + pVol->m_shift.z-CurLocalShift.z)
+               i>= int(pVol->m_nGridRes_d) + pVol->m_local_shift.z &&
+               i<int(pVol->m_nGridRes_d) + pVol->m_local_shift.z-CurLocalShift.z)
             {
               //              bz = true;
               //              bReset = true;

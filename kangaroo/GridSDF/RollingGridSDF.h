@@ -75,7 +75,7 @@ public:
     pVol->UpdateShift(shift_index);
 
     // update total shift
-    TotalShift = pVol->m_shift;
+    TotalShift = pVol->m_local_shift;
   }
 
   // ---------------------------------------------------------------------------

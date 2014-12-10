@@ -145,7 +145,7 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
   }
 
   // save shift params in grid sdf data struct
-  vol.m_shift = shift;
+  vol.m_local_shift = shift;
 
   // 2, Kernel functin. Initialization for GPU parallelization
   //  dim3 blockDim(16,16);
@@ -209,7 +209,7 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t_Smart> vol, 
   }
 
   // save shift params in grid sdf data struct
-  vol.m_shift = shift;
+  vol.m_local_shift = shift;
 
   // 2, Kernel functin. Initialization for GPU parallelization
   //  dim3 blockDim(16,16);

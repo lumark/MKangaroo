@@ -336,7 +336,7 @@ aiMesh* GetMeshGrid(
     {
       for(int k=0;k!=vol.m_nGridRes_d;k++)
       {
-        if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
+        if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)) == true)
         {
           GenMeshSingleGrid(vol,volColor,i,j,k,verts, norms, faces, colors);
           nNumSave++;
@@ -449,7 +449,7 @@ void SaveMeshGrid(
     {
       for(int k=0;k!=vol.m_nGridRes_d;k++)
       {
-        if(vol.CheckIfBasicSDFActive(vol.GetIndex(i,j,k)) == true)
+        if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)) == true)
         {
           GenMeshSingleGrid(vol,volColor,i,j,k,ObjMesh.verts,
                             ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
