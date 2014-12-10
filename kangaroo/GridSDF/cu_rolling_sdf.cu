@@ -30,7 +30,6 @@ __global__ void KernSdfResetPartial(BoundedVolume<SDF_t> vol, float3 boxmin, flo
   }
 }
 
-// TODO: Name the function better.
 void SdfResetPartial(BoundedVolume<SDF_t> vol, float3 shift)
 {
   //Initialization for GPU parallelization
@@ -67,9 +66,9 @@ void SdfResetPartial(BoundedVolume<SDF_t> vol, float3 shift)
 /// Rolling GRID SDF
 //////////////////////////////////////////////////////
 
-__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>  g_vol;
+__device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>        g_vol;
 __device__ BoundedVolumeGrid<SDF_t_Smart, roo::TargetDevice, roo::Manage>  g_vol_smart;
-__device__ int                                                       g_NextResetSDFs[512];
+__device__ int                                                             g_NextResetSDFs[MAX_SUPPORT_GRID_NUM];
 
 // =============================================================================
 // Boxmin and boxmax define the box that is to be kept intact, rest will be cleared.
@@ -78,7 +77,10 @@ __device__ int                                                       g_NextReset
 // bit expensive
 // =============================================================================
 
-__global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
+__global__ void KernRollingGridSdf(
+    float3                                boxmin,
+    float3                                boxmax,
+    float3                                shift)
 {
   const int x = blockIdx.x*blockDim.x + threadIdx.x;
   const int y = blockIdx.y*blockDim.y + threadIdx.y;
@@ -110,7 +112,6 @@ __global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
 }
 
 
-
 // =============================================================================
 // Rolling grid sdf. Each time we compute the index of sdf that we are going
 // to reset and free the memory of it.
@@ -118,7 +119,10 @@ __global__ void KernRollingGridSdf(float3 boxmin, float3 boxmax, float3 shift)
 // shift is n * grid num in one diminsion. It can be positive or negative.
 // by now each time we need to move at least one grid volume
 // =============================================================================
-void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 shift)
+void RollingGridSdfCuda(
+    int*                                  pNextInitSDFs,
+    BoundedVolumeGrid<SDF_t>              vol,
+    int3                                  shift)
 {
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
@@ -182,7 +186,10 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t> vol, int3 s
   }
 }
 
-void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t_Smart> vol, int3 shift)
+void RollingGridSdfCuda(
+    int*                                  pNextInitSDFs,
+    BoundedVolumeGrid<SDF_t_Smart>        vol,
+    int3                                  shift)
 {
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
@@ -249,19 +256,22 @@ void RollingGridSdfCuda(int* pNextInitSDFs, BoundedVolumeGrid<SDF_t_Smart> vol, 
 __device__ float3 g_positive_shift;
 __device__ float3 g_negative_shift;
 __global__ void KernDetectRollingSdfShift(
-    Image<float> imgdepth, const Mat<float,3,4> T_wc, ImageIntrinsics K )
+    Image<float> imgdepth, const Mat<float,3,4> T_wc, float3 T_wc_translate, ImageIntrinsics K )
 {
   const int u = blockIdx.x*blockDim.x + threadIdx.x;
   const int v = blockIdx.y*blockDim.y + threadIdx.y;
 
   if( u < imgdepth.w && v < imgdepth.h )
   {
-    if(imgdepth(u,v)>0.5)
+    if(imgdepth(u,v)>0)
     {
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
 
-      float3 shift = g_vol.GetShiftValue(ray_w);
+      // check if the valid pixel is out of grid.
+      float3 shift = g_vol.GetShiftValue(ray_w,T_wc_translate);
+
+//      printf("d:%f,x:%f,y:%f,z:%f;",imgdepth(u,v), shift.x, shift.y, shift.z);
 
       if(abs(shift.x)>1 )
       {
@@ -306,14 +316,17 @@ __global__ void KernDetectRollingSdfShift(
         }
       }
     }
-
   }
 }
 
 
-void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float> depth,
-                     const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
-                     const Mat<float,3,4> T_wc, ImageIntrinsics K)
+void RollingDetShift(
+    float3&                               positive_shift,
+    float3&                               negative_shift,
+    Image<float>                          depth,
+    const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
+    const Mat<float,3,4>                  T_wc,
+    ImageIntrinsics                       K)
 {
 
   // load vol val to golbal memory
@@ -328,9 +341,12 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
   cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
+  printf("camera translate x%f,y%f,z%f\n",
+         SE3Translation(T_wc).x,SE3Translation(T_wc).y,SE3Translation(T_wc).z);
+
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
-  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
+  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, SE3Translation(T_wc), K);
   GpuCheckErrors();
 
   //  cudaMemcpy(&positive_shift,&g_positive_shift,sizeof(positive_shift),cudaMemcpyDeviceToHost);
@@ -346,9 +362,13 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
 }
 
 
-void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float> depth,
-                     const BoundedVolumeGrid<SDF_t_Smart,roo::TargetDevice, roo::Manage> vol,
-                     const Mat<float,3,4> T_wc, ImageIntrinsics K)
+void RollingDetShift(
+    float3&                               positive_shift,
+    float3&                               negative_shift,
+    Image<float>                          depth,
+    const BoundedVolumeGrid<SDF_t_Smart,roo::TargetDevice, roo::Manage> vol,
+    const Mat<float,3,4>                  T_wc,
+    ImageIntrinsics                       K)
 {
 
   // load vol val to golbal memory
@@ -365,7 +385,7 @@ void RollingDetShift(float3& positive_shift, float3& negative_shift, Image<float
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
-  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
+  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, SE3Translation(T_wc), K);
   GpuCheckErrors();
 
   //  cudaMemcpy(&positive_shift,&g_positive_shift,sizeof(positive_shift),cudaMemcpyDeviceToHost);
