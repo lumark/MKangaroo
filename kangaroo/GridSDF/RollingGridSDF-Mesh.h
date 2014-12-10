@@ -7,19 +7,29 @@
 
 namespace roo {
 
+class NextResetSDF
+{
+public:
+  int  m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
+  int  m_x[MAX_SUPPORT_GRID_NUM];
+  int  m_y[MAX_SUPPORT_GRID_NUM];
+  int  m_z[MAX_SUPPORT_GRID_NUM];
+};
+
 // the folling is a CPU version of rolling grid sdf
 class RollingGridSDFMesh
 {
 public:
   // ---------------------------------------------------------------------------
   // update shift parameters. if true repersent update global shift
+  // ---------------------------------------------------------------------------
   template<typename T> inline
-  void UpdateShift(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol,
-                   int3 shift_index, bool bVerbose=false)
+  void UpdateShift(
+      roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
+      int3                                                        shift_index,
+      bool                                                        bVerbose=false)
   {
-    //////////////////////////////////////////////////////////////////////////////
-    /// change bbox min and max value based on shif parameters
-    //////////////////////////////////////////////////////////////////////////////
+    // change bbox min and max value based on shif parameters
     if(bVerbose==true)
     {
       printf("[UpdateShift] new shift for current frame is x=%d,y=%d,z=%d; Updating BB.\n",
@@ -84,25 +94,10 @@ public:
     }
   }
 
-
-
-
-  class NextResetSDF
-  {
-  public:
-    int  m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
-    int  m_x[MAX_SUPPORT_GRID_NUM];
-    int  m_y[MAX_SUPPORT_GRID_NUM];
-    int  m_z[MAX_SUPPORT_GRID_NUM];
-  };
-
-
-
-
-
   // ---------------------------------------------------------------------------
   // compute index of grid sdf that need to be reset and freed.
   // only free that part that we just "shift"
+  // ---------------------------------------------------------------------------
   template<typename T> inline
   void GetGridSDFIndexNeedFree(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
@@ -226,14 +221,10 @@ public:
     std::cout<<"[GetGridSDFIndexNeedFree] Finished"<<std::endl;
   }
 
-
-
   template<typename T> inline
-  void ResetAndFreeGird(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
+  void ResetAndFreeGird(
+      roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol)
   {
-    //////////////////////////////////////////////////////////////////////////////
-    /// free grid sdf
-    //////////////////////////////////////////////////////////////////////////////
     for(unsigned int i=0;i!=pVol->m_nGridRes_w* pVol->m_nGridRes_h* pVol->m_nGridRes_d; i++)
     {
       if(m_nNextResetSDFs.m_nNextResetSDFs[i] == 1 && pVol->CheckIfBasicSDFActive(i) == true)

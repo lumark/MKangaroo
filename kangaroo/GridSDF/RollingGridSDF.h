@@ -104,26 +104,22 @@ public:
             nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
-
           if(TotalShift.x<0 && i>= int(pVol->m_nGridRes_w) + TotalShift.x)
           {
             nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[x]prepare free index %d,%d,%d\n", i, j, k);
           }
-
           // for y
           if(TotalShift.y>0 && j<TotalShift.y)
           {
             nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
-
           if(TotalShift.y<0 && j>= int(pVol->m_nGridRes_h) + TotalShift.y)
           {
             nNextResetSDFs[i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k)] =1;
             //          printf("[y]prepare free index %d,%d,%d\n", i, j, k);
           }
-
 
           // for z
           if(TotalShift.z>0 && k<TotalShift.z)
@@ -163,13 +159,10 @@ public:
         if (pVol->CheckIfBasicSDFActive(i) == true)
         {
           roo::SdfReset(pVol->m_GridVolumes[i]);
-
           pVol->FreeMemoryByIndex(i);
-
           pVol->m_GridVolumes[i].d = 0;
           pVol->m_GridVolumes[i].w = 0;
           pVol->m_GridVolumes[i].h = 0;
-
           nFreeNum ++;
         }
       }
