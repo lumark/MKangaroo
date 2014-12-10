@@ -358,8 +358,9 @@ public:
   }
 
   inline __device__ __host__
-  float3 VoxelPositionInUnitsGlobal(int x, int y, int z,
-                                    int3 cur_global, int3 max_global, int3 min_global) const
+  float3 VoxelPositionInUnitsGlobal(
+      int x, int y, int z,
+      int3 cur_global, int3 max_global, int3 min_global) const
   {
     if(x>=m_w || y>= m_h || z>=m_d)
     {

@@ -27,10 +27,6 @@
 
 namespace roo
 {
-// Instantiate templates
-//template void SaveMeshGrid<roo::SDF_t,float>(std::string, BoundedVolumeGrid<SDF_t,TargetHost, Manage> vol,
-//BoundedVolumeGrid<float,TargetHost, Manage> volColor);
-
 ///////////////////////////////////////////////////////////////////////////////
 ///                 Save Single Mesh from Several BBVolumes                 ///
 ///////////////////////////////////////////////////////////////////////////////
@@ -279,13 +275,6 @@ bool GenMeshFromPPM(
 
   return true;
 }
-
-// Instantiate templates
-//template void SaveMeshGrid<roo::SDF_t_Smart, Manage>
-//(
-//std::string,
-//const BoundedVolume<SDF_t,TargetHost,DontManage> vol
-//);
 
 template void SaveMeshGrid<roo::SDF_t_Smart, float, Manage>
 (
