@@ -15,7 +15,6 @@ __device__ BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>  g_grayVol;
 __device__ int                            g_NextInitSDFs[MAX_SUPPORT_GRID_NUM];
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 __global__ void KernSdfInitGrayGrid(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
@@ -79,9 +78,10 @@ __global__ void KernSdfInitGrayGrid(
             //        }else if(sd < 5*trunc_dist) {
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                          int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                          int(floorf(z/g_vol.m_nVolumeGridRes)) );
+              int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+                    int(floorf(x/g_vol.m_nVolumeGridRes)),
+                    int(floorf(y/g_vol.m_nVolumeGridRes)),
+                    int(floorf(z/g_vol.m_nVolumeGridRes)) );
               g_NextInitSDFs[nIndex] = 1;
             }
           }
@@ -116,7 +116,9 @@ void SDFInitGrayGrid(
   // launch kernel for SDF fusion
   dim3 blockDim(32,32);
   dim3 gridDim(vol.m_w / blockDim.x, vol.m_h / blockDim.y);
-  KernSdfInitGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray, T_iw, Krgb, trunc_dist, max_w, mincostheta, min_depth);
+  KernSdfInitGrayGrid<<<gridDim,blockDim>>>(depth, norm, T_cw, Kdepth, gray,
+                                            T_iw, Krgb, trunc_dist,
+                                            max_w, mincostheta, min_depth);
   GpuCheckErrors();
 
   //  printf("[SDFInitgrayGrid.cu] Finished kernel.\n");
@@ -149,7 +151,6 @@ void SDFInitGrayGrid(
 }
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 // the following must be used with SDFInitgrayGrid
 __global__ void KernSdfFuseDirectGrayGrid(
@@ -268,7 +269,6 @@ void SdfFuseDirectGrayGrid(
 
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 // the following must be used with SDFInitgrayGrid
 __global__ void KernSdfFuseDirectGrayGridSafe(
@@ -297,6 +297,7 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
 
     const float3 P_i = T_iw * P_w;
     const float2 p_i = Krgb.Project(P_i);
+
 
     // If the voxel is in image coordinate (inside of image boundary), then we
     // see if we should fuse this voxel
@@ -330,9 +331,10 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-          int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                      int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                      int(floorf(z/g_vol.m_nVolumeGridRes)) );
+          int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+                int(floorf(x/g_vol.m_nVolumeGridRes)),
+                int(floorf(y/g_vol.m_nVolumeGridRes)),
+                int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
           {
@@ -357,7 +359,6 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
                      int(floorf(y/g_vol.m_nVolumeGridRes)),
                      int(floorf(z/g_vol.m_nVolumeGridRes)) );
             }
-
           }
         }
       }
@@ -402,7 +403,6 @@ void SdfFuseDirectGrayGridSafe(
 
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion for certain index without consideing void (zero intensity) pixels
 // notice that in this function, we check each voxel we have and see if we need
 // to fuse any information into it. This is different from check each pixel we have
@@ -421,9 +421,10 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndex(
   // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < g_vol.m_d; ++z)
   {
-    int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                int(floorf(z/g_vol.m_nVolumeGridRes)) );
+    int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+          int(floorf(x/g_vol.m_nVolumeGridRes)),
+          int(floorf(y/g_vol.m_nVolumeGridRes)),
+          int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
     if(g_NextInitSDFs[nIndex] == 1)
     {
@@ -568,7 +569,6 @@ void SdfFuseDirectGrayGridDesireIndex(
 
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // the following do Grid SDF fusion and also mark voxels that cannot be fused in
 // due to uninitialized Grid SDF.
 __global__ void KernSdfFuseDirectGrayGridAutoInit(
@@ -633,9 +633,10 @@ __global__ void KernSdfFuseDirectGrayGridAutoInit(
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
           {
-            int nIndex = g_vol.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol.m_nVolumeGridRes)),
-                                        int(floorf(y/g_vol.m_nVolumeGridRes)),
-                                        int(floorf(z/g_vol.m_nVolumeGridRes)) );
+            int nIndex = g_vol.ConvertLocalIndexToRealIndex(
+                  int(floorf(x/g_vol.m_nVolumeGridRes)),
+                  int(floorf(y/g_vol.m_nVolumeGridRes)),
+                  int(floorf(z/g_vol.m_nVolumeGridRes)) );
 
             if(g_vol.CheckIfBasicSDFActive(nIndex) == true)
             {
@@ -734,7 +735,6 @@ void SdfFuseDirectGrayGridAutoInit(
 
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 //__global__ void KernSdfFuseDirectgrayGrid(float* depth, float4* normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
 //                                          Image<float> gray, Mat<float,3,4> T_iw, ImageIntrinsics Krgb,
@@ -864,7 +864,6 @@ void SdfFuseDirectGrayGridAutoInit(
 __device__ BoundedVolumeGrid<SDF_t_Smart, roo::TargetDevice, roo::Manage>  g_vol_smart;
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 __global__ void KernSdfInitGrayGridSmart(
     Image<float> depth, Image<float4> normals, Mat<float,3,4> T_cw, ImageIntrinsics Kdepth,
@@ -909,7 +908,7 @@ __global__ void KernSdfInitGrayGridSmart(
         // depth value at image coordinate
         const float md   = depth.GetBilinear<float>(p_c);
 
-        if(md>min_depth)
+        if(md > 0)
         {
           // normal value at image coordinate
           const float3 mdn = make_float3(normals.GetBilinear<float4>(p_c));
@@ -928,9 +927,11 @@ __global__ void KernSdfInitGrayGridSmart(
             //        }else if(sd < 5*trunc_dist) {
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
-              int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                                int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                                int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+              int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(
+                    int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+                    int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                    int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+
               g_NextInitSDFs[nIndex] = 1;
             }
           }
@@ -998,7 +999,6 @@ void SDFInitGrayGrid(
 }
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 // the following must be used with SDFInitgrayGrid
 __global__ void KernSdfFuseDirectGrayGridSmart(
@@ -1092,7 +1092,8 @@ void SdfFuseDirectGrayGrid(
   /// load grid sdf to golbal memory. We do this because there is a size limit of
   // the parameters that we can send the the kernel function.
   cudaMemcpyToSymbol(g_vol_smart, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_grayVol, &colorVol, sizeof(colorVol), size_t(0), cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_grayVol, &colorVol, sizeof(colorVol),
+                     size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
@@ -1117,7 +1118,6 @@ void SdfFuseDirectGrayGrid(
 
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion without consideing void (zero intensity) pixels
 // the following must be used with SDFInitgrayGrid
 __global__ void KernSdfFuseDirectGrayGridSafeSmart(
@@ -1179,9 +1179,10 @@ __global__ void KernSdfFuseDirectGrayGridSafeSmart(
         else
         {
           //        }else if(sd < 5*trunc_dist) {
-          int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                            int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                            int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+          int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(
+                int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+                int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
@@ -1206,12 +1207,12 @@ __global__ void KernSdfFuseDirectGrayGridSafeSmart(
                      int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
                      int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
             }
-
           }
         }
       }
     }
   }
+
 }
 
 
@@ -1253,7 +1254,6 @@ void SdfFuseDirectGrayGridSafe(
 
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // do SDF fusion for certain index without consideing void (zero intensity) pixels
 // notice that in this function, we check each voxel we have and see if we need
 // to fuse any information into it. This is different from check each pixel we have
@@ -1272,9 +1272,10 @@ __global__ void KernSdfFuseDirectgrayGridDesireIndexSmart(
   // For each voxel (x,y,z) we have in a bounded volume
   for(int z=0; z < g_vol_smart.m_d; ++z)
   {
-    int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                      int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                      int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+    int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(
+          int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+          int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+          int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
     if(g_NextInitSDFs[nIndex] == 1)
     {
@@ -1390,7 +1391,8 @@ void SdfFuseDirectGrayGridDesireIndex(
     nNextInitSDFs[i] = pNextInitSDFs[i] ;
   }
 
-  cudaMemcpyToSymbol(g_NextInitSDFs, nNextInitSDFs, sizeof(nNextInitSDFs), 0, cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_NextInitSDFs, nNextInitSDFs, sizeof(nNextInitSDFs),
+                     0, cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // launch kernel for SDF fusion
@@ -1419,7 +1421,6 @@ void SdfFuseDirectGrayGridDesireIndex(
 
 
 // -----------------------------------------------------------------------------
-//--the following add by luma---------------------------------------------------
 // the following do Grid SDF fusion and also mark voxels that cannot be fused in
 // due to uninitialized Grid SDF.
 __global__ void KernSdfFuseDirectGrayGridAutoInitSmart(
@@ -1484,9 +1485,10 @@ __global__ void KernSdfFuseDirectGrayGridAutoInitSmart(
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md> min_depth && costheta > mincostheta )
           {
-            int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                                              int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                                              int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+            int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(
+                  int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+                  int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                  int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
             if(g_vol_smart.CheckIfBasicSDFActive(nIndex) == true)
             {
@@ -1558,7 +1560,8 @@ void SdfFuseDirectGrayGridAutoInit(
 
   // check if need to init new grid sdf
   int nNextInitSDFs[MAX_SUPPORT_GRID_NUM];
-  cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs),
+                       0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
   // copy array back
@@ -1569,7 +1572,8 @@ void SdfFuseDirectGrayGridAutoInit(
   }
 
   // reset index
-  cudaMemcpyToSymbol(g_NextInitSDFs,nNextInitSDFs,sizeof(nNextInitSDFs),0,cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_NextInitSDFs,nNextInitSDFs,sizeof(nNextInitSDFs),
+                     0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   // copy data back after launch the kernel
