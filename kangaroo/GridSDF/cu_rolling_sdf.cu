@@ -268,12 +268,12 @@ __global__ void KernDetectRollingSdfShift(
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
 
-      // check if the valid pixel is out of grid.
-      float3 shift = g_vol.GetShiftValue(ray_w,T_wc_translate);
+      // check if the valid pixel is out of grid. shift is the change of % of poses
+      // in the boulding box
+      float3 shift = g_vol.GetShiftValue(ray_w, T_wc_translate);
 
-//      printf("d:%f,x:%f,y:%f,z:%f;",imgdepth(u,v), shift.x, shift.y, shift.z);
-
-      if(abs(shift.x)>1 )
+      // if change if greater than 1: (means the current bounding box cannot hold the new pixel)
+      if(abs(shift.x)>1.f)
       {
         // for positive
         if(shift.x > g_positive_shift.x)
@@ -288,7 +288,8 @@ __global__ void KernDetectRollingSdfShift(
         }
       }
 
-      if( abs(shift.y) >1)
+      // if change if greater than 1: (means the current bounding box cannot hold the new pixel)
+      if( abs(shift.y) >1.f)
       {
         if(shift.y > g_positive_shift.y)
         {
@@ -302,7 +303,8 @@ __global__ void KernDetectRollingSdfShift(
         }
       }
 
-      if( abs(shift.z)>1)
+      // if change if greater than 1: (means the current bounding box cannot hold the new pixel)
+      if( abs(shift.z)>1.f)
       {
         if(shift.z > g_positive_shift.z)
         {
@@ -328,12 +330,11 @@ void RollingDetShift(
     const Mat<float,3,4>                  T_wc,
     ImageIntrinsics                       K)
 {
-
   // load vol val to golbal memory
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  // set shift to 0
+  // init the pose shift to 0
   positive_shift = make_float3(0,0,0);
   negative_shift = make_float3(0,0,0);
 
@@ -342,14 +343,14 @@ void RollingDetShift(
   GpuCheckErrors();
 
   printf("camera translate x%f,y%f,z%f\n",
-         SE3Translation(T_wc).x,SE3Translation(T_wc).y,SE3Translation(T_wc).z);
+         SE3Translation(T_wc).x,SE3Translation(T_wc).y, SE3Translation(T_wc).z);
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
   KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, SE3Translation(T_wc), K);
   GpuCheckErrors();
 
-  //  cudaMemcpy(&positive_shift,&g_positive_shift,sizeof(positive_shift),cudaMemcpyDeviceToHost);
+  // copy camera shift back to host memory
   cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
@@ -383,12 +384,14 @@ void RollingDetShift(
   cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
+  printf("camera translate x%f,y%f,z%f\n",
+         SE3Translation(T_wc).x,SE3Translation(T_wc).y, SE3Translation(T_wc).z);
+
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
   KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, SE3Translation(T_wc), K);
   GpuCheckErrors();
 
-  //  cudaMemcpy(&positive_shift,&g_positive_shift,sizeof(positive_shift),cudaMemcpyDeviceToHost);
   cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
