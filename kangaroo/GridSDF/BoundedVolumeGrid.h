@@ -553,16 +553,119 @@ public:
   }
 
 
+//  inline __device__ __host__
+//  unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
+//  {
+//    // return real index directlly if no rolling sdf applied
+//    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
+//    {
+//      const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
+//      return nIndex;
+//    }
+
+//    // convert local index to real index if shift is detected
+//    // --- for x
+//    if(m_local_shift.x>0 && m_local_shift.x<=static_cast<int>(m_nGridRes_w))
+//    {
+//      if( x <= static_cast<int>(m_nGridRes_w) -1- m_local_shift.x )
+//      {
+//        x = x + m_local_shift.x;
+//      }
+//      else
+//      {
+//        x = x - ( static_cast<int>(m_nGridRes_w) - m_local_shift.x );
+//      }
+//    }
+//    else if(m_local_shift.x<0 && m_local_shift.x>=-static_cast<int>(m_nGridRes_w))
+//    {
+//      if( x <= static_cast<int>(m_nGridRes_w) -1 -abs(m_local_shift.x) )
+//      {
+//        x = x + abs(m_local_shift.x);
+//      }
+//      else
+//      {
+//        x = x + ( static_cast<int>(m_nGridRes_w) - abs(m_local_shift.x) );
+//      }
+//    }
+//    else
+//    {
+//      printf("[BoundedVolumeGrid] Fatal error! Shift x OverFlow!\n");
+//    }
+
+//    // --- for y
+//    if(m_local_shift.y>0 && m_local_shift.y<=static_cast<int>(m_nGridRes_h))
+//    {
+//      if( y<=static_cast<int>(m_nGridRes_h)-1-m_local_shift.y)
+//      {
+//        y = y+m_local_shift.y;
+//      }
+//      else
+//      {
+//        y = y- ( static_cast<int>(m_nGridRes_h) - m_local_shift.y );
+//      }
+//    }
+//    else if(m_local_shift.y<0 && m_local_shift.y>=-static_cast<int>(m_nGridRes_h))
+//    {
+//      if(y <= static_cast<int>(m_nGridRes_h) -1- abs(m_local_shift.y) )
+//      {
+//        y = y + abs(m_local_shift.y);
+//      }
+//      else
+//      {
+//        y = y + ( static_cast<int>(m_nGridRes_h) - abs(m_local_shift.y) );
+//      }
+//    }
+//    else
+//    {
+//      printf("[BoundedVolumeGrid] Fatal error! Shift y OverFlow!\n");
+//    }
+
+//    // --- for z
+//    if(m_local_shift.z>0 && m_local_shift.z<=static_cast<int>(m_nGridRes_d) )
+//    {
+//      if(z <= static_cast<int>(m_nGridRes_d) -1 - m_local_shift.z  )
+//      {
+//        z = z + m_local_shift.z;
+//      }
+//      else
+//      {
+//        z = z - ( static_cast<int>(m_nGridRes_d) - m_local_shift.z );
+//      }
+//    }
+//    else if(m_local_shift.z<0 && m_local_shift.z>=-static_cast<int>(m_nGridRes_d))
+//    {
+//      if(z <= static_cast<int>(m_nGridRes_d) -1- abs(m_local_shift.z) )
+//      {
+//        z = z + abs(m_local_shift.z);
+//      }
+//      else
+//      {
+//        z = z + ( static_cast<int>(m_nGridRes_d) - abs(m_local_shift.z) );
+//      }
+//    }
+//    else
+//    {
+//      printf("[BoundedVolumeGrid] Fatal error! Shift z OverFlow!\n");
+
+//    }
+
+//    // compute the actual index
+//    const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
+//    return  nIndex;
+//  }
+
+
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
   {
+    // return real index directlly if no rolling sdf applied
     if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
     {
-      const unsigned int nIndex =x + m_nGridRes_w* (y+ m_nGridRes_h* z);
+      const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
       return nIndex;
     }
 
-    // if detect shift
+    // convert local index to real index if shift is detected
     // --- for x
     if(m_local_shift.x>0 && m_local_shift.x<=static_cast<int>(m_nGridRes_w))
     {
@@ -572,7 +675,7 @@ public:
       }
       else
       {
-        x = x - ( static_cast<int>(m_nGridRes_w) - m_local_shift.x );
+        x = static_cast<int>(m_nGridRes_w) - 1 - x;
       }
     }
     else if(m_local_shift.x<0 && m_local_shift.x>=-static_cast<int>(m_nGridRes_w))
@@ -586,18 +689,24 @@ public:
         x = x + ( static_cast<int>(m_nGridRes_w) - abs(m_local_shift.x) );
       }
     }
-
+    else
+    {
+      if(m_local_shift.x!=0)
+      {
+        printf("[BoundedVolumeGrid] Fatal error! Shift x OverFlow!\n");
+      }
+    }
 
     // --- for y
     if(m_local_shift.y>0 && m_local_shift.y<=static_cast<int>(m_nGridRes_h))
     {
-      if( y<=static_cast<int>(m_nGridRes_h)-1-m_local_shift.y)
+      if( y <= static_cast<int>(m_nGridRes_h)-1-m_local_shift.y)
       {
         y = y+m_local_shift.y;
       }
       else
       {
-        y = y- ( static_cast<int>(m_nGridRes_h) - m_local_shift.y );
+        y = static_cast<int>(m_nGridRes_h) -1 - y;
       }
     }
     else if(m_local_shift.y<0 && m_local_shift.y>=-static_cast<int>(m_nGridRes_h))
@@ -611,6 +720,13 @@ public:
         y = y + ( static_cast<int>(m_nGridRes_h) - abs(m_local_shift.y) );
       }
     }
+    else
+    {
+      if(m_local_shift.y!=0)
+      {
+        printf("[BoundedVolumeGrid] Fatal error! Shift y OverFlow!\n");
+      }
+    }
 
     // --- for z
     if(m_local_shift.z>0 && m_local_shift.z<=static_cast<int>(m_nGridRes_d) )
@@ -621,7 +737,7 @@ public:
       }
       else
       {
-        z = z - ( static_cast<int>(m_nGridRes_d) - m_local_shift.z );
+        z = static_cast<int>(m_nGridRes_d) - 1 - z;
       }
     }
     else if(m_local_shift.z<0 && m_local_shift.z>=-static_cast<int>(m_nGridRes_d))
@@ -635,11 +751,19 @@ public:
         z = z + ( static_cast<int>(m_nGridRes_d) - abs(m_local_shift.z) );
       }
     }
+    else
+    {
+      if(m_local_shift.z!=0)
+      {
+        printf("[BoundedVolumeGrid] Fatal error! Shift z OverFlow!\n");
+      }
+    }
 
     // compute the actual index
     const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
     return  nIndex;
   }
+
 
   // ===========================================================================
   // input the index of grid sdf that want to access. return its global index.
