@@ -23,7 +23,7 @@ public:
       int3                                                       shift_index)
   {
     //////////////////////////////////////////////////////////////////////////////
-    /// change bbox min and max value based on shif parameters
+    /// change bbox min and max value based on the shif parameters
     //////////////////////////////////////////////////////////////////////////////
     printf("BB size x=%f, y=%f, z=%f; Current shift is x=%d,y=%d,z=%d\n ",
            pVol->m_bbox.Size().x,pVol->m_bbox.Size().y,pVol->m_bbox.Size().z,
@@ -71,7 +71,7 @@ public:
              pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
     }
 
-    // save shift params in grid and grid grey sdf data struct
+    // 2, save shift params in grid and grid grey sdf data struct
     pVol->UpdateShift(shift_index);
 
     // update total shift

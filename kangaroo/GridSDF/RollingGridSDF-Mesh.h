@@ -30,7 +30,7 @@ public:
       bool                                                        bVerbose=false)
   {
     // change bbox min and max value based on shif parameters
-    if(bVerbose==true)
+    if(bVerbose)
     {
       printf("[UpdateShift] new shift for current frame is x=%d,y=%d,z=%d; Updating BB.\n",
              shift_index.x, shift_index.y,shift_index.z);
@@ -47,7 +47,7 @@ public:
       pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x +
           float(shift_index.x) * BBSize.x/float(pVol->m_nGridRes_w);
 
-      if(bVerbose==true)
+      if(bVerbose)
       {
         printf("[UpdateShift] shift x:%d (index), %f(m), change bbox bbmin x to %f, bbmax x to %f\n",
                shift_index.x, float(shift_index.x) * BBSize.x/float(pVol->m_nGridRes_w),
@@ -63,7 +63,7 @@ public:
       pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y +
           float(shift_index.y) * BBSize.y/float(pVol->m_nGridRes_h);
 
-      if(bVerbose==true)
+      if(bVerbose)
       {
         printf("[UpdateShift] shift y:%d(index), %f(m), change bbox bbmin y to %f, bbmax y to %f\n",
                shift_index.y, float(shift_index.y) * BBSize.y/float(pVol->m_nGridRes_h),
@@ -79,7 +79,7 @@ public:
       pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z +
           float(shift_index.z) * BBSize.z/float(pVol->m_nGridRes_d);
 
-      if(bVerbose==true)
+      if(bVerbose)
       {
         printf("[UpdateShift] shift z:%d(index), %f(m), change bbox bbmin z to %f, bbmax z to %f\n",
                shift_index.z, float(shift_index.z) * BBSize.z/float(pVol->m_nGridRes_d),
@@ -93,6 +93,9 @@ public:
       pVol->UpdateGlobalShift(shift_index);
     }
   }
+
+
+
 
   // ---------------------------------------------------------------------------
   // compute index of grid sdf that need to be reset and freed.
