@@ -46,15 +46,15 @@ public:
     if(shift_index.x!=0)
     {
       pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x +
-          float(shift_index.x) * BBSize.x/float(pVol->m_nGridRes_w);
+          static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w);
 
       pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x +
-          float(shift_index.x) * BBSize.x/float(pVol->m_nGridRes_w);
+          static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w);
 
       if(bVerbose)
       {
         printf("[UpdateShift] shift x:%d (index), %f(m), change bbox bbmin x to %f, bbmax x to %f\n",
-               shift_index.x, float(shift_index.x) * BBSize.x/float(pVol->m_nGridRes_w),
+               shift_index.x, static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w),
                pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
       }
     }
@@ -62,15 +62,15 @@ public:
     if(shift_index.y!=0)
     {
       pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y +
-          float(shift_index.y) * BBSize.y/float(pVol->m_nGridRes_h);
+          static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h);
 
       pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y +
-          float(shift_index.y) * BBSize.y/float(pVol->m_nGridRes_h);
+          static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h);
 
       if(bVerbose)
       {
         printf("[UpdateShift] shift y:%d(index), %f(m), change bbox bbmin y to %f, bbmax y to %f\n",
-               shift_index.y, float(shift_index.y) * BBSize.y/float(pVol->m_nGridRes_h),
+               shift_index.y, static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h),
                pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
       }
     }
@@ -78,15 +78,15 @@ public:
     if(shift_index.z!=0)
     {
       pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z +
-          float(shift_index.z) * BBSize.z/float(pVol->m_nGridRes_d);
+          static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d);
 
       pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z +
-          float(shift_index.z) * BBSize.z/float(pVol->m_nGridRes_d);
+          static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d);
 
       if(bVerbose)
       {
         printf("[UpdateShift] shift z:%d(index), %f(m), change bbox bbmin z to %f, bbmax z to %f\n",
-               shift_index.z, float(shift_index.z) * BBSize.z/float(pVol->m_nGridRes_d),
+               shift_index.z, static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d),
                pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
       }
     }
@@ -113,73 +113,70 @@ public:
     if (CurLocalShift.x!=0 || CurLocalShift.y!=0 || CurLocalShift.z!=0)
     {
       bool bReset = false;
-      bool bx = false;
-      bool by = false;
-      bool bz = false;
+      bool bx = false; bool by = false; bool bz = false;
 
       printf("cur local shif x%d,y%d,z%d\n", CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
 
-      for(int i=0;i!=int(pVol->m_nGridRes_w);i++)
+      for(int nIndex_x=0; nIndex_x!=int(pVol->m_nGridRes_w); nIndex_x++)
       {
-        for(int j=0;j!=int(pVol->m_nGridRes_h);j++)
+        for(int nIndex_y=0; nIndex_y!=int(pVol->m_nGridRes_h); nIndex_y++)
         {
-          for(int k=0;k!=int(pVol->m_nGridRes_d);k++)
+          for(int nIndex_z=0; nIndex_z!=int(pVol->m_nGridRes_d); nIndex_z++)
           {
             // reset params;
             bReset = false;
-            bx = false;
-            by = false;
-            bz = false;
+            bx = false; by = false; bz = false;
 
             //----- for x
-            if(CurLocalShift.x>0 &&
-               i>=pVol->m_local_shift.x - CurLocalShift.x && i<pVol->m_local_shift.x)
+            if(CurLocalShift.x> 0 &&
+               nIndex_x >= pVol->m_local_shift.x - CurLocalShift.x &&
+               nIndex_x < pVol->m_local_shift.x)
             {
               bx = true;
               bReset = true;
             }
-            if(CurLocalShift.x<0 &&
-               i>= int(pVol->m_nGridRes_w) + pVol->m_local_shift.x &&
-               i<int(pVol->m_nGridRes_w) + pVol->m_local_shift.x-CurLocalShift.x)
+            else if(CurLocalShift.x<0 &&
+                    nIndex_x >= static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x &&
+                    nIndex_x < static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x-CurLocalShift.x)
             {
               //              bx = true;
               //              bReset = true;
             }
 
-
             //----- for y
             if(CurLocalShift.y>0 &&
-               j>=pVol->m_local_shift.y - CurLocalShift.y && j <pVol->m_local_shift.y)
+               nIndex_y >= pVol->m_local_shift.y - CurLocalShift.y &&
+               nIndex_y < pVol->m_local_shift.y)
             {
               by = true;
               bReset = true;
             }
-            if(CurLocalShift.y<0 &&
-               i>= int(pVol->m_nGridRes_h) + pVol->m_local_shift.y &&
-               i<int(pVol->m_nGridRes_h) + pVol->m_local_shift.y-CurLocalShift.y)
+            else if(CurLocalShift.y<0 &&
+                    nIndex_x >= static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y &&
+                    nIndex_x < static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y-CurLocalShift.y)
             {
               //              by = true;
               //              bReset = true;
             }
 
-
             //----- for z
             if(CurLocalShift.z>0 &&
-               k>=pVol->m_local_shift.z - CurLocalShift.z && k<pVol->m_local_shift.z)
+               nIndex_z >= pVol->m_local_shift.z - CurLocalShift.z &&
+               nIndex_z < pVol->m_local_shift.z)
             {
               bz = true;
               bReset = true;
             }
-            if(CurLocalShift.z<0 &&
-               i>= int(pVol->m_nGridRes_d) + pVol->m_local_shift.z &&
-               i<int(pVol->m_nGridRes_d) + pVol->m_local_shift.z-CurLocalShift.z)
+            else if(CurLocalShift.z<0 &&
+               nIndex_x >= static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z &&
+               nIndex_x < static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z - CurLocalShift.z)
             {
               //              bz = true;
               //              bReset = true;
             }
 
-            // set flag for grid that need to be freed
-            int nIndex = i+pVol->m_nGridRes_w*(j+pVol->m_nGridRes_h*k);
+            // ---------- set flag for grid that need to be freed ------------
+            int nIndex = nIndex_x+pVol->m_nGridRes_w*(nIndex_y+pVol->m_nGridRes_h*nIndex_z);
 
             if(bReset == true)
             {
@@ -216,7 +213,6 @@ public:
             {
               m_nNextResetSDFs.m_z[nIndex] = 0;
             }
-
           }
         }
       }
@@ -229,9 +225,10 @@ public:
   inline void ResetAndFreeGird(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol)
   {
-    for(unsigned int i=0;i!=pVol->m_nGridRes_w* pVol->m_nGridRes_h* pVol->m_nGridRes_d; i++)
+    for(unsigned int i=0; i!=pVol->GetTotalGridNum(); i++)
     {
-      if(m_nNextResetSDFs.m_nNextResetSDFs[i] == 1 && pVol->CheckIfBasicSDFActive(i) == true)
+      if(m_nNextResetSDFs.m_nNextResetSDFs[i] == 1 &&
+         pVol->CheckIfBasicSDFActive(i) == true)
       {
         roo::SdfReset(pVol->m_GridVolumes[i]);
         pVol->FreeMemoryByIndex(i);
