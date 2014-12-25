@@ -833,20 +833,17 @@ public:
     return  GlobalIndex;
   }
 
-  // ===========================================================================
-  // check if need to reset local shift and set global shift
-  // ===========================================================================
   inline __host__
-  void UpdateGlobalShift(int3 cur_local_shift)
+  void UpdateLocalAndGlobalShift(int3 shift_index)
   {
     // updage local shift
-    m_local_shift.x = m_local_shift.x + cur_local_shift.x % static_cast<int>(m_nGridRes_w);
-    m_local_shift.y = m_local_shift.y + cur_local_shift.y % static_cast<int>(m_nGridRes_h);
-    m_local_shift.z = m_local_shift.z + cur_local_shift.z % static_cast<int>(m_nGridRes_d);
+    m_local_shift.x = m_local_shift.x + shift_index.x % static_cast<int>(m_nGridRes_w);
+    m_local_shift.y = m_local_shift.y + shift_index.y % static_cast<int>(m_nGridRes_h);
+    m_local_shift.z = m_local_shift.z + shift_index.z % static_cast<int>(m_nGridRes_d);
 
-    //    m_global_shift.x = m_global_shift.x + cur_local_shift.x/static_cast<int>(m_nGridRes_w);
-    //    m_global_shift.y = m_global_shift.y + cur_local_shift.y/static_cast<int>(m_nGridRes_h);
-    //    m_global_shift.z = m_global_shift.z + cur_local_shift.z/static_cast<int>(m_nGridRes_d);
+    //    m_global_shift.x = m_global_shift.x + shift_index.x/static_cast<int>(m_nGridRes_w);
+    //    m_global_shift.y = m_global_shift.y + shift_index.y/static_cast<int>(m_nGridRes_h);
+    //    m_global_shift.z = m_global_shift.z + shift_index.z/static_cast<int>(m_nGridRes_d);
 
     // ----- check if need to update global shift
     // --- for x
@@ -911,22 +908,8 @@ public:
     }
   }
 
-  // set next sdf that we want to init
-  inline __device__
-  void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
-  {
-    const int nIndex =  ConvertLocalIndexToRealIndex(x/m_nVolumeGridRes,
-                                                     y/m_nVolumeGridRes,
-                                                     z/m_nVolumeGridRes );
-
-    if(m_NextInitBasicSDFs[nIndex] == 0 && CheckIfBasicSDFActive(nIndex) == true)
-    {
-      m_NextInitBasicSDFs[nIndex] = 1;
-    }
-  }
-
   inline __host__
-  void UpdateShift(int3 shift_index)
+  void UpdateLocalShift(int3 shift_index)
   {
     m_local_shift = m_local_shift + shift_index;
 
@@ -952,6 +935,19 @@ public:
            m_local_shift.x,m_local_shift.y,m_local_shift.z, m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
   }
 
+  // set next sdf that we want to init
+  inline __device__
+  void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
+  {
+    const int nIndex =  ConvertLocalIndexToRealIndex(x/m_nVolumeGridRes,
+                                                     y/m_nVolumeGridRes,
+                                                     z/m_nVolumeGridRes );
+
+    if(m_NextInitBasicSDFs[nIndex] == 0 && CheckIfBasicSDFActive(nIndex) == true)
+    {
+      m_NextInitBasicSDFs[nIndex] = 1;
+    }
+  }
 
   //////////////////////////////////////////////////////
   // Access sub-regions
