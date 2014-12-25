@@ -1,8 +1,8 @@
 #ifndef ROLLINGGRIDSDF_H
 #define ROLLINGGRIDSDF_H
 
-#include "BoundedVolumeGrid.h"
 #include "kangaroo/cu_sdffusion.h"
+#include "BoundedVolumeGrid.h"
 #include "cu_sdffusion_grid.h"
 
 namespace roo {
@@ -82,7 +82,8 @@ public:
   // compute index of grid sdf that need to be freed. for each single that was shift,
   // we need to reset it
   template<typename T> inline
-  void GetGridSDFIndexNeedFree(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
+  void GetGridSDFIndexNeedFree(
+      roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
   {
     //////////////////////////////////////////////////////////////////////////////
     /// iterator through all grid sdf and see if it need to be free
@@ -142,7 +143,8 @@ public:
 
   // ---------------------------------------------------------------------------
   template<typename T> inline
-  void FreeGird(roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
+  void FreeGird(
+      roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>* pVol)
   {
     //////////////////////////////////////////////////////////////////////////////
     /// free grid sdf
@@ -173,7 +175,7 @@ public:
   }
 
 private:
-  int       nNextResetSDFs[1024];
+  int       nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
   int3      TotalShift;
 };
 

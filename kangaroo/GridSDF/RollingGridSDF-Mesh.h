@@ -16,20 +16,22 @@ public:
   int  m_z[MAX_SUPPORT_GRID_NUM];
 };
 
-// the folling is a CPU version of rolling grid sdf
+// the folling is the CPU version of rolling grid sdf
 class RollingGridSDFMesh
 {
 public:
   // ---------------------------------------------------------------------------
   // update shift parameters. if true repersent update global shift
   // ---------------------------------------------------------------------------
-  template<typename T> inline
-  void UpdateShift(
+  template<typename T>
+  inline void ApplyShiftToVolume(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
       int3                                                        shift_index,
-      bool                                                        bVerbose=false)
+      bool                                                        bVerbose = false)
   {
+    // -------------------------------------------------------------------------
     // change bbox min and max value based on shif parameters
+    // -------------------------------------------------------------------------
     if(bVerbose)
     {
       printf("[UpdateShift] new shift for current frame is x=%d,y=%d,z=%d; Updating BB.\n",
@@ -38,7 +40,9 @@ public:
 
     float3 BBSize = pVol->m_bbox.Size();
 
-    /// 1, Compute the latest bounding box
+    // -------------------------------------------------------------------------
+    // 1, Compute the latest bounding box
+    // -------------------------------------------------------------------------
     if(shift_index.x!=0)
     {
       pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x +
@@ -94,15 +98,12 @@ public:
     }
   }
 
-
-
-
   // ---------------------------------------------------------------------------
   // compute index of grid sdf that need to be reset and freed.
   // only free that part that we just "shift"
   // ---------------------------------------------------------------------------
-  template<typename T> inline
-  void GetGridSDFIndexNeedFree(
+  template<typename T>
+  inline void GetGridSDFIndexNeedFree(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
       int3                                                        CurLocalShift)
   {
@@ -224,8 +225,8 @@ public:
     std::cout<<"[GetGridSDFIndexNeedFree] Finished"<<std::endl;
   }
 
-  template<typename T> inline
-  void ResetAndFreeGird(
+  template<typename T>
+  inline void ResetAndFreeGird(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol)
   {
     for(unsigned int i=0;i!=pVol->m_nGridRes_w* pVol->m_nGridRes_h* pVol->m_nGridRes_d; i++)
