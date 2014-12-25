@@ -17,7 +17,6 @@ namespace roo
 
 const int MAX_SUPPORT_GRID_NUM = 13824;
 
-
 template<typename T, typename Target = TargetDevice, typename Management = DontManage>
 class BoundedVolumeGrid
 {
@@ -32,13 +31,14 @@ public:
   // parameters that we can pass into a kernel function
   // ===========================================================================
   inline __host__
-  void init(unsigned int n_w, unsigned int n_h, unsigned int n_d,
-            unsigned int n_res, const BoundingBox& r_bbox)
+  void init(
+      unsigned int n_w,
+      unsigned int n_h,
+      unsigned int n_d,
+      unsigned int n_res,
+      const BoundingBox& r_bbox)
   {
-    // init grid sdf
-    m_w              = n_w;
-    m_h              = n_h;
-    m_d              = n_d;
+    m_w = n_w; m_h = n_h; m_d = n_d;
 
     m_bbox           = r_bbox;
     m_nVolumeGridRes = n_res;
@@ -53,7 +53,7 @@ public:
     {
       printf("[BoundedVolumeGrid/init] Error! overflow! Max allow %d, req %d .\n",
              MAX_SUPPORT_GRID_NUM, m_nTotalGridRes);
-      printf("Please reset VOL_RES and VOL_GRID_RES parameters!!!");
+      std::cerr<<"Please check VOL_RES and VOL_GRID_RES parameters!!"<<std::endl;
       exit(-1);
     }
 
@@ -83,9 +83,9 @@ public:
     }
   }
 
-  // the following code init all basic SDFs directlly.
-  // if we don't use this code right after init, we will have to call roo::SDFInitGreyGrid
-  // before fusing
+  // ===========================================================================
+  // Use it for init all basic sdf or call roo::SDFInitGreyGrid before fusing
+  // ===========================================================================
   inline __host__
   void InitAllBasicSDFs()
   {
@@ -102,7 +102,10 @@ public:
   }
 
   inline __host__
-  void InitSingleBasicSDFWithGridIndex(unsigned int x, unsigned int y, unsigned int z)
+  void InitSingleBasicSDFWithGridIndex(
+      unsigned int x,
+      unsigned int y,
+      unsigned int z)
   {
     int nIndex =ConvertLocalIndexToRealIndex(
           static_cast<int>(floorf(x/m_nVolumeGridRes)),
@@ -136,7 +139,6 @@ public:
   }
 
 
-
   //////////////////////////////////////////////////////
   // Dimensions
   //////////////////////////////////////////////////////
@@ -167,10 +169,9 @@ public:
   //////////////////////////////////////////////////////
 
   inline __host__
-  bool IsValid() const {
-
+  bool IsValid() const
+  {
     int nNum = 0;
-
     for(unsigned int i=0;i!=m_nTotalGridRes;i++)
     {
       if(m_GridVolumes[i].d !=m_nVolumeGridRes &&
@@ -180,7 +181,6 @@ public:
         nNum ++;
       }
     }
-
     return nNum>0 && m_w >= 8 && m_h >= 8 && m_d >= 8;
   }
 
@@ -198,9 +198,10 @@ public:
   inline __host__ __device__
   bool CheckIfVoxelExist(int x, int y, int z)
   {
-    int nIndex = ConvertLocalIndexToRealIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
-                                               static_cast<int>(floorf(y/m_nVolumeGridRes)),
-                                               static_cast<int>(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = ConvertLocalIndexToRealIndex(
+          static_cast<int>(floorf(x/m_nVolumeGridRes)),
+          static_cast<int>(floorf(y/m_nVolumeGridRes)),
+          static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if( CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -239,13 +240,14 @@ public:
   inline  __device__  __host__
   T& Get(unsigned int x,unsigned int y, unsigned int z)
   {
-    int nIndex = ConvertLocalIndexToRealIndex( static_cast<int>(floorf(x/m_nVolumeGridRes)),
-                                               static_cast<int>(floorf(y/m_nVolumeGridRes)),
-                                               static_cast<int>(floorf(z/m_nVolumeGridRes)) );
+    int nIndex = ConvertLocalIndexToRealIndex(
+          static_cast<int>(floorf(x/m_nVolumeGridRes)),
+          static_cast<int>(floorf(y/m_nVolumeGridRes)),
+          static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      //       return 0.0/0.0;
+      //      return 0.0/0.0;
     }
 
     return m_GridVolumes[nIndex](x%m_nVolumeGridRes, y%m_nVolumeGridRes, z%m_nVolumeGridRes);
@@ -364,7 +366,7 @@ public:
   {
     if(x>=m_w || y>= m_h || z>=m_d)
     {
-      printf("[VoxelPositionInUnitsGlobal] fatal error! index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
+      printf("[VoxelPositionInUnitsGlobal] Error! index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
              x,y,z,int(m_w),int(m_h),int(m_d));
     }
 
@@ -391,7 +393,7 @@ public:
 
 
   //////////////////////////////////////////////////////
-  // copy and free  Memory
+  // Copy and Free Memory
   //////////////////////////////////////////////////////
   inline __host__
   void CopyFrom(BoundedVolumeGrid<T, TargetDevice, Management>& rVol )
@@ -543,17 +545,14 @@ public:
   inline __device__
   float3 GetShiftValue(float3 pos_w, float3 cam_pose) const
   {
-    /// get pose of voxel in whole sdf, in %
-    // change pos_w to global pose
-    pos_w = pos_w+cam_pose;
+    // get pose of voxel in whole sdf, in %
+    // change pos_w to the global pose
+    pos_w = pos_w + cam_pose;
 
     return (pos_w - m_bbox.Min()) / (m_bbox.Size());
   }
 
 
-  // ===========================================================================
-  // For desire grid index (x,y,z), return real index in the Volume when shift is applied
-  // ===========================================================================
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
   {
@@ -563,6 +562,7 @@ public:
       return nIndex;
     }
 
+    // if detect shift
     // --- for x
     if(m_local_shift.x>0 && m_local_shift.x<=static_cast<int>(m_nGridRes_w))
     {
@@ -636,15 +636,15 @@ public:
       }
     }
 
-    // compute actual index
+    // compute the actual index
     const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
     return  nIndex;
   }
 
   // ===========================================================================
-  // input the index of grid sdf that we want to access. return the global index for it.
-  // If the index is shift, its global index will ++. Otherwise, the global index
-  // will be the same as it was. The role of this fun is to see if the m_global_shift
+  // input the index of grid sdf that want to access. return its global index.
+  // If the index is shift, its global index will ++. Otherwise, its global index
+  // will be the same as it was. This fun is to see if the m_global_shift
   // does not reset yet but there is a current shift for the grid.
   // ===========================================================================
   inline __device__ __host__
@@ -668,7 +668,7 @@ public:
     }
     else if( m_local_shift.x<0 && m_local_shift.x>=-int(m_nGridRes_w) )
     {
-      if( x<=abs(m_local_shift.x) )
+      if( x<= abs(m_local_shift.x) )
       {
         GlobalIndex.x = m_global_shift.x-1;
       }
@@ -706,7 +706,6 @@ public:
       }
     }
 
-    // compute actual index
     return  GlobalIndex;
   }
 
@@ -721,11 +720,11 @@ public:
     m_local_shift.y = m_local_shift.y + cur_local_shift.y % static_cast<int>(m_nGridRes_h);
     m_local_shift.z = m_local_shift.z + cur_local_shift.z % static_cast<int>(m_nGridRes_d);
 
-//    m_global_shift.x = m_global_shift.x + cur_local_shift.x/static_cast<int>(m_nGridRes_w);
-//    m_global_shift.y = m_global_shift.y + cur_local_shift.y/static_cast<int>(m_nGridRes_h);
-//    m_global_shift.z = m_global_shift.z + cur_local_shift.z/static_cast<int>(m_nGridRes_d);
+    //    m_global_shift.x = m_global_shift.x + cur_local_shift.x/static_cast<int>(m_nGridRes_w);
+    //    m_global_shift.y = m_global_shift.y + cur_local_shift.y/static_cast<int>(m_nGridRes_h);
+    //    m_global_shift.z = m_global_shift.z + cur_local_shift.z/static_cast<int>(m_nGridRes_d);
 
-    // ----- check if update global shift
+    // ----- check if need to update global shift
     // --- for x
     if(m_local_shift.x >= static_cast<int>(m_nGridRes_w)+1)
     {
@@ -792,7 +791,9 @@ public:
   inline __device__
   void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
   {
-    const int nIndex = ConvertLocalIndexToRealIndex(x/m_nVolumeGridRes, y/m_nVolumeGridRes, z/m_nVolumeGridRes );
+    const int nIndex =  ConvertLocalIndexToRealIndex(x/m_nVolumeGridRes,
+                                                     y/m_nVolumeGridRes,
+                                                     z/m_nVolumeGridRes );
 
     if(m_NextInitBasicSDFs[nIndex] == 0 && CheckIfBasicSDFActive(nIndex) == true)
     {
@@ -921,29 +922,28 @@ public:
   }
 
 public:
-  size_t                                      m_w;
-  size_t                                      m_h;
-  size_t                                      m_d;
+  size_t        m_w;
+  size_t        m_h;
+  size_t        m_d;
 
-  // for rolling sdf. When this value is not zero, we need to recompute
-  // index based on the shift
-  int3                                        m_local_shift;
-  int3                                        m_global_shift;  // when m_shift set to 0, global will ++
-  int3                                        m_subVol_shift;  // shift for sub bounded volume.
+  int3          m_local_shift;     // compute real index based on the shift
+  int3          m_global_shift;    // when m_shift set to 0, global will ++
+  int3          m_subVol_shift;    // shift for sub bounded volume.
 
-  // bounding box of bounded volume grid
-  BoundingBox                                 m_bbox;
+  BoundingBox   m_bbox;            // bounding box of bounded volume grid
 
-  unsigned int                                m_nVolumeGridRes;         // resolution of a single grid in one dim.
-  unsigned int                                m_nGridRes_w;             // resolution of grid in x. usually 4, 8, 16
-  unsigned int                                m_nGridRes_h;             // resolution of grid in y. usually 4, 8, 16
-  unsigned int                                m_nGridRes_d;             // resolution of grid in z. usually 4, 8, 16
-  unsigned int                                m_nTotalGridRes;          // total num of grids we use. usually 4, 8, 16
+  unsigned int  m_nVolumeGridRes;  // resolution of a single grid in one dim.
+  unsigned int  m_nGridRes_w;      // resolution of grid in x. usually 4, 8, 16
+  unsigned int  m_nGridRes_h;      // resolution of grid in y. usually 4, 8, 16
+  unsigned int  m_nGridRes_d;      // resolution of grid in z. usually 4, 8, 16
+  unsigned int  m_nTotalGridRes;   // total num of grids we use. usually 4, 8, 16
 
-  // volume that save all data
-  // maximum allow size of grid vol is 4096. larger than this size will lead to a very slow profermance.
-  VolumeGrid<T, Target, Manage>               m_GridVolumes[MAX_SUPPORT_GRID_NUM];
-  int                                         m_NextInitBasicSDFs[MAX_SUPPORT_GRID_NUM];  // an array that record basic SDFs we want to init
+  // Volume that save all data; Maximum size of grid vol is MAX_SUPPORT_GRID_NUM.
+  // larger size will lead to a slow profermance.
+  VolumeGrid<T, Target, Manage>  m_GridVolumes[MAX_SUPPORT_GRID_NUM];
+
+  // an array that record basic SDFs we want to init
+  int                            m_NextInitBasicSDFs[MAX_SUPPORT_GRID_NUM];
 };
 
 
