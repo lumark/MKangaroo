@@ -107,120 +107,126 @@ public:
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
       int3                                                        CurLocalShift)
   {
-    std::cout<<"[GetGridSDFIndexNeedFree] Computing Grids index need to be freed"<<std::endl;
+    std::cout<<"[GetGridSDFIndexNeedFree] Computing Grids index need to be freed.."<<std::endl;
+
+    if (CurLocalShift.x==0 && CurLocalShift.y==0 && CurLocalShift.z==0)
+    {
+      return;
+    }
 
     // for each grid sdf in the volume
-    if (CurLocalShift.x!=0 || CurLocalShift.y!=0 || CurLocalShift.z!=0)
+    bool bReset = false;
+    bool bx = false; bool by = false; bool bz = false;
+    int nResetNum = 0;
+    printf("Cur local shif (%d,%d,%d)\n",CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
+
+    int3 Index = make_int3(0,0,0);
+    for(; Index.x!=static_cast<int>(pVol->m_nGridRes_w); Index.x++)
     {
-      bool bReset = false;
-      bool bx = false; bool by = false; bool bz = false;
-
-      printf("cur local shif x%d,y%d,z%d\n", CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
-
-      for(int nIndex_x=0; nIndex_x!=int(pVol->m_nGridRes_w); nIndex_x++)
+      for(; Index.y!=static_cast<int>(pVol->m_nGridRes_h); Index.y++)
       {
-        for(int nIndex_y=0; nIndex_y!=int(pVol->m_nGridRes_h); nIndex_y++)
+        for(; Index.z!=static_cast<int>(pVol->m_nGridRes_d); Index.z++)
         {
-          for(int nIndex_z=0; nIndex_z!=int(pVol->m_nGridRes_d); nIndex_z++)
+          // reset params;
+          bReset = false;
+          bx = false; by = false; bz = false;
+
+          //----- for x
+          if(CurLocalShift.x> 0 &&
+             Index.x >= pVol->m_local_shift.x - CurLocalShift.x &&
+             Index.x < pVol->m_local_shift.x)
           {
-            // reset params;
-            bReset = false;
-            bx = false; by = false; bz = false;
+            bx = true;
+            bReset = true;
+          }
+          else if(CurLocalShift.x<0 &&
+                  Index.x >= static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x &&
+                  Index.x < static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x-CurLocalShift.x)
+          {
+            //              bx = true;
+            //              bReset = true;
+          }
 
-            //----- for x
-            if(CurLocalShift.x> 0 &&
-               nIndex_x >= pVol->m_local_shift.x - CurLocalShift.x &&
-               nIndex_x < pVol->m_local_shift.x)
-            {
-              bx = true;
-              bReset = true;
-            }
-            else if(CurLocalShift.x<0 &&
-                    nIndex_x >= static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x &&
-                    nIndex_x < static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x-CurLocalShift.x)
-            {
-              //              bx = true;
-              //              bReset = true;
-            }
+          //----- for y
+          if(CurLocalShift.y>0 &&
+             Index.y >= pVol->m_local_shift.y - CurLocalShift.y &&
+             Index.y < pVol->m_local_shift.y)
+          {
+            by = true;
+            bReset = true;
+          }
+          else if(CurLocalShift.y<0 &&
+                  Index.x >= static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y &&
+                  Index.x < static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y-CurLocalShift.y)
+          {
+            //              by = true;
+            //              bReset = true;
+          }
 
-            //----- for y
-            if(CurLocalShift.y>0 &&
-               nIndex_y >= pVol->m_local_shift.y - CurLocalShift.y &&
-               nIndex_y < pVol->m_local_shift.y)
-            {
-              by = true;
-              bReset = true;
-            }
-            else if(CurLocalShift.y<0 &&
-                    nIndex_x >= static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y &&
-                    nIndex_x < static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y-CurLocalShift.y)
-            {
-              //              by = true;
-              //              bReset = true;
-            }
+          //----- for z
+          if(CurLocalShift.z>0 &&
+             Index.z >= pVol->m_local_shift.z - CurLocalShift.z &&
+             Index.z < pVol->m_local_shift.z)
+          {
+            bz = true;
+            bReset = true;
+          }
+          else if(CurLocalShift.z<0 &&
+                  Index.x >= static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z &&
+                  Index.x < static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z - CurLocalShift.z)
+          {
+            //              bz = true;
+            //              bReset = true;
+          }
 
-            //----- for z
-            if(CurLocalShift.z>0 &&
-               nIndex_z >= pVol->m_local_shift.z - CurLocalShift.z &&
-               nIndex_z < pVol->m_local_shift.z)
-            {
-              bz = true;
-              bReset = true;
-            }
-            else if(CurLocalShift.z<0 &&
-               nIndex_x >= static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z &&
-               nIndex_x < static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z - CurLocalShift.z)
-            {
-              //              bz = true;
-              //              bReset = true;
-            }
+          // ---------- set flag for grid that need to be freed ------------
+          int nGridIndex = Index.x + pVol->m_nGridRes_w*(Index.y + pVol->m_nGridRes_h*Index.z);
 
-            // ---------- set flag for grid that need to be freed ------------
-            int nIndex = nIndex_x+pVol->m_nGridRes_w*(nIndex_y+pVol->m_nGridRes_h*nIndex_z);
+          if(bReset == true)
+          {
+            m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 1;
+            nResetNum ++;
+          }
+          else
+          {
+            m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 0;
+          }
 
-            if(bReset == true)
-            {
-              m_nNextResetSDFs.m_nNextResetSDFs[nIndex] = 1;
-            }
-            else
-            {
-              m_nNextResetSDFs.m_nNextResetSDFs[nIndex] = 0;
-            }
+          if(bx == true)
+          {
+            m_nNextResetSDFs.m_x[nGridIndex] = 1;
+          }
+          else
+          {
+            m_nNextResetSDFs.m_x[nGridIndex] = 0;
+          }
 
-            if(bx == true)
-            {
-              m_nNextResetSDFs.m_x[nIndex] = 1;
-            }
-            else
-            {
-              m_nNextResetSDFs.m_x[nIndex] = 0;
-            }
+          if(by == true)
+          {
+            m_nNextResetSDFs.m_y[nGridIndex] = 1;
+          }
+          else
+          {
+            m_nNextResetSDFs.m_y[nGridIndex] = 0;
+          }
 
-            if(by == true)
-            {
-              m_nNextResetSDFs.m_y[nIndex] = 1;
-            }
-            else
-            {
-              m_nNextResetSDFs.m_y[nIndex] = 0;
-            }
-
-            if(bz == true)
-            {
-              m_nNextResetSDFs.m_z[nIndex] = 1;
-            }
-            else
-            {
-              m_nNextResetSDFs.m_z[nIndex] = 0;
-            }
+          if(bz == true)
+          {
+            m_nNextResetSDFs.m_z[nGridIndex] = 1;
+          }
+          else
+          {
+            m_nNextResetSDFs.m_z[nGridIndex] = 0;
           }
         }
       }
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] Finished"<<std::endl;
+    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Reset & Free "<<nResetNum<<" grid;"<<std::endl;
+
   }
 
+  // ---------------------------------------------------------------------------
   template<typename T>
   inline void ResetAndFreeGird(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol)
