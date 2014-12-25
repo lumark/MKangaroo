@@ -552,7 +552,7 @@ public:
 
 
   // ===========================================================================
-  // For desire grid index (x,y,z), return real index in Volume when shift is applied
+  // For desire grid index (x,y,z), return real index in the Volume when shift is applied
   // ===========================================================================
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
@@ -564,80 +564,80 @@ public:
     }
 
     // --- for x
-    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nGridRes_w))
+    if(m_local_shift.x>0 && m_local_shift.x<=static_cast<int>(m_nGridRes_w))
     {
-      if( x <= int(m_nGridRes_w) -1- m_local_shift.x )
+      if( x <= static_cast<int>(m_nGridRes_w) -1- m_local_shift.x )
       {
         x = x + m_local_shift.x;
       }
       else
       {
-        x = x - ( int(m_nGridRes_w) - m_local_shift.x );
+        x = x - ( static_cast<int>(m_nGridRes_w) - m_local_shift.x );
       }
     }
-    else if(m_local_shift.x<0 && m_local_shift.x>=-int(m_nGridRes_w))
+    else if(m_local_shift.x<0 && m_local_shift.x>=-static_cast<int>(m_nGridRes_w))
     {
-      if( x <= int(m_nGridRes_w) -1 -abs(m_local_shift.x) )
+      if( x <= static_cast<int>(m_nGridRes_w) -1 -abs(m_local_shift.x) )
       {
         x = x + abs(m_local_shift.x);
       }
       else
       {
-        x = x + ( int(m_nGridRes_w) - abs(m_local_shift.x) );
+        x = x + ( static_cast<int>(m_nGridRes_w) - abs(m_local_shift.x) );
       }
     }
 
 
     // --- for y
-    if(m_local_shift.y>0 && m_local_shift.y<=int(m_nGridRes_h))
+    if(m_local_shift.y>0 && m_local_shift.y<=static_cast<int>(m_nGridRes_h))
     {
-      if( y<=int(m_nGridRes_h)-1-m_local_shift.y)
+      if( y<=static_cast<int>(m_nGridRes_h)-1-m_local_shift.y)
       {
         y = y+m_local_shift.y;
       }
       else
       {
-        y = y- ( int(m_nGridRes_h) - m_local_shift.y );
+        y = y- ( static_cast<int>(m_nGridRes_h) - m_local_shift.y );
       }
     }
-    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nGridRes_h))
+    else if(m_local_shift.y<0 && m_local_shift.y>=-static_cast<int>(m_nGridRes_h))
     {
-      if(y <= int(m_nGridRes_h) -1- abs(m_local_shift.y) )
+      if(y <= static_cast<int>(m_nGridRes_h) -1- abs(m_local_shift.y) )
       {
         y = y + abs(m_local_shift.y);
       }
       else
       {
-        y = y + ( int(m_nGridRes_h) - abs(m_local_shift.y) );
+        y = y + ( static_cast<int>(m_nGridRes_h) - abs(m_local_shift.y) );
       }
     }
 
     // --- for z
-    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nGridRes_d) )
+    if(m_local_shift.z>0 && m_local_shift.z<=static_cast<int>(m_nGridRes_d) )
     {
-      if(z <= int(m_nGridRes_d) -1 - m_local_shift.z  )
+      if(z <= static_cast<int>(m_nGridRes_d) -1 - m_local_shift.z  )
       {
         z = z + m_local_shift.z;
       }
       else
       {
-        z = z - ( int(m_nGridRes_d) - m_local_shift.z );
+        z = z - ( static_cast<int>(m_nGridRes_d) - m_local_shift.z );
       }
     }
-    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nGridRes_d))
+    else if(m_local_shift.z<0 && m_local_shift.z>=-static_cast<int>(m_nGridRes_d))
     {
-      if(z <= int(m_nGridRes_d) -1- abs(m_local_shift.z) )
+      if(z <= static_cast<int>(m_nGridRes_d) -1- abs(m_local_shift.z) )
       {
         z = z + abs(m_local_shift.z);
       }
       else
       {
-        z = z + ( int(m_nGridRes_d) - abs(m_local_shift.z) );
+        z = z + ( static_cast<int>(m_nGridRes_d) - abs(m_local_shift.z) );
       }
     }
 
     // compute actual index
-    const unsigned int nIndex =x + m_nGridRes_w* (y+ m_nGridRes_h* z);
+    const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
     return  nIndex;
   }
 
@@ -716,67 +716,65 @@ public:
   inline __host__
   void UpdateGlobalShift(int3 cur_local_shift)
   {
-    // in case of huge local shift
-    m_local_shift.x = m_local_shift.x + cur_local_shift.x % int(m_nGridRes_w);
-    m_local_shift.y = m_local_shift.y + cur_local_shift.y % int(m_nGridRes_h);
-    m_local_shift.z = m_local_shift.z + cur_local_shift.z % int(m_nGridRes_d);
+    // updage local shift
+    m_local_shift.x = m_local_shift.x + cur_local_shift.x % static_cast<int>(m_nGridRes_w);
+    m_local_shift.y = m_local_shift.y + cur_local_shift.y % static_cast<int>(m_nGridRes_h);
+    m_local_shift.z = m_local_shift.z + cur_local_shift.z % static_cast<int>(m_nGridRes_d);
 
-    m_global_shift.x = m_global_shift.x + cur_local_shift.x/int(m_nGridRes_w);
-    m_global_shift.y = m_global_shift.y + cur_local_shift.y/int(m_nGridRes_h);
-    m_global_shift.z = m_global_shift.z + cur_local_shift.z/int(m_nGridRes_d);
+//    m_global_shift.x = m_global_shift.x + cur_local_shift.x/static_cast<int>(m_nGridRes_w);
+//    m_global_shift.y = m_global_shift.y + cur_local_shift.y/static_cast<int>(m_nGridRes_h);
+//    m_global_shift.z = m_global_shift.z + cur_local_shift.z/static_cast<int>(m_nGridRes_d);
 
+    // ----- check if update global shift
     // --- for x
-    if(m_local_shift.x >= int(m_nGridRes_w)+1)
+    if(m_local_shift.x >= static_cast<int>(m_nGridRes_w)+1)
     {
-      m_local_shift.x = m_local_shift.x-int(m_nGridRes_w);
+      m_local_shift.x = m_local_shift.x-static_cast<int>(m_nGridRes_w);
       m_global_shift.x++;
       printf("[BoundedVolumeGrid] update global shift x\n");
     }
-
-    if(m_local_shift.x <= -int(m_nGridRes_w+1))
+    else if(m_local_shift.x <= -static_cast<int>(m_nGridRes_w+1))
     {
-      m_local_shift.x = m_local_shift.x-(-int(m_nGridRes_w));
+      m_local_shift.x = m_local_shift.x-(-static_cast<int>(m_nGridRes_w));
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] update global shift x\n");
     }
 
     // --- for y
-    if(m_local_shift.y >= int(m_nGridRes_h)+1)
+    if(m_local_shift.y >= static_cast<int>(m_nGridRes_h)+1)
     {
-      m_local_shift.y = m_local_shift.y - int(m_nGridRes_h);
+      m_local_shift.y = m_local_shift.y - static_cast<int>(m_nGridRes_h);
       m_global_shift.y++;
       printf("[BoundedVolumeGrid] update global shift y\n");
     }
-
-    if(m_local_shift.y <= -int(m_nGridRes_h+1))
+    else if(m_local_shift.y <= -static_cast<int>(m_nGridRes_h+1))
     {
-      m_local_shift.y = m_local_shift.y-(-int(m_nGridRes_h));
+      m_local_shift.y = m_local_shift.y-(-static_cast<int>(m_nGridRes_h));
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] update global shift y\n");
     }
 
     // --- for z
-    if(m_local_shift.z >= int(m_nGridRes_d)+1)
+    if(m_local_shift.z >= static_cast<int>(m_nGridRes_d)+1)
     {
-      m_local_shift.z = m_local_shift.z-int(m_nGridRes_d);
+      m_local_shift.z = m_local_shift.z-static_cast<int>(m_nGridRes_d);
       m_global_shift.z++;
       printf("[BoundedVolumeGrid] update global shift z\n");
     }
-
-    if(m_local_shift.z <= -int(m_nGridRes_d+1))
+    else if(m_local_shift.z <= -static_cast<int>(m_nGridRes_d+1))
     {
-      m_local_shift.z = m_local_shift.z-(-int(m_nGridRes_d));
+      m_local_shift.z = m_local_shift.z-(-static_cast<int>(m_nGridRes_d));
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] update global shift z\n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! local shift: x=%d,y=%d,z=%d;"
+    printf("[BoundedVolumeGrid] local shift: x=%d,y=%d,z=%d;"
            "Global shift: x=%d,y=%d,z=%d; Max shift (%d,%d,%d) \n",
            m_local_shift.x,m_local_shift.y,m_local_shift.z,
            m_global_shift.x,m_global_shift.y,m_global_shift.z,
            m_nGridRes_w, m_nGridRes_h,m_nGridRes_d);
 
-    // check for error
+    // check if error
     if(abs(m_global_shift.x)>99999 || abs(m_global_shift.y)>99999 || abs(m_global_shift.z)>99999 )
     {
       printf("[BoundedVolumeGrid] fatal error! global shift overflow!\n");
