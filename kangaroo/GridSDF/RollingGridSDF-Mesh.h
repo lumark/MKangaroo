@@ -19,9 +19,9 @@ public:
 class RollingGridSDFMesh
 {
 public:
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // update shift parameters. if true repersent update global shift
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   template<typename T>
   inline void ApplyShiftToVolume(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
@@ -44,49 +44,40 @@ public:
     // -------------------------------------------------------------------------
     if(shift_index.x!=0)
     {
-      pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x +
-          static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w);
-
-      pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x +
-          static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w);
+      float fx = static_cast<float>(shift_index.x) * BBSize.x / static_cast<float>(pVol->m_nGridRes_w);
+      pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x + fx;
+      pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x + fx;
 
       if(bVerbose)
       {
-        printf("[UpdateShift] shift x:%d (index), %f(m), change bbox bbmin x to %f, bbmax x to %f\n",
-               shift_index.x, static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w),
-               pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
+        printf("[UpdateShift] shift x:%d (index), %f(m), bbmin x->%f, bbmax x->%f\n",
+               shift_index.x, fx, pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
       }
     }
 
     if(shift_index.y!=0)
     {
-      pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y +
-          static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h);
-
-      pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y +
-          static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h);
+      float fy = static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h);
+      pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y + fy;
+      pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y + fy;
 
       if(bVerbose)
       {
-        printf("[UpdateShift] shift y:%d(index), %f(m), change bbox bbmin y to %f, bbmax y to %f\n",
-               shift_index.y, static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h),
-               pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
+        printf("[UpdateShift] shift y:%d(index), %f(m), bbmin y->%f, bbmax y->%f\n",
+               shift_index.y, fy, pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
       }
     }
 
     if(shift_index.z!=0)
     {
-      pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z +
-          static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d);
-
-      pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z +
-          static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d);
+      float fz = static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d);
+      pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z + fz;
+      pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z + fz;
 
       if(bVerbose)
       {
-        printf("[UpdateShift] shift z:%d(index), %f(m), change bbox bbmin z to %f, bbmax z to %f\n",
-               shift_index.z, static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d),
-               pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
+        printf("[UpdateShift] shift z:%d(index), %f(m), bbmin z->%f, bbmax z->%f\n",
+               shift_index.z, fz, pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
       }
     }
 
@@ -97,10 +88,9 @@ public:
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // compute the index of grid sdf that need to be reset and freed.
-  // only free that part that we just "shift"
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // Get index of grid that need to be freed. Only free grid that just "shift"
+  // ===========================================================================
   template<typename T>
   inline void GetGridSDFIndexNeedFree(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
@@ -224,7 +214,7 @@ public:
     std::cout<<"[GetGridSDFIndexNeedFree] Finished. Reset & Free "<<nResetNum<<" grid;"<<std::endl;
   }
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   template<typename T>
   inline void ResetAndFreeGird(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol)
