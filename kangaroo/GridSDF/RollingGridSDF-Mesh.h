@@ -29,28 +29,28 @@ public:
       bool                                                        bVerbose = false)
   {
     // -------------------------------------------------------------------------
-    // change bbox min and max value based on shif parameters
+    // change bbox min and max value based on the shif parameters
     // -------------------------------------------------------------------------
     if(bVerbose)
     {
       printf("[UpdateShift] new shift for current frame is x=%d,y=%d,z=%d; Updating BB.\n",
-             shift_index.x, shift_index.y,shift_index.z);
+             shift_index.x, shift_index.y, shift_index.z);
     }
 
     float3 BBSize = pVol->m_bbox.Size();
 
     // -------------------------------------------------------------------------
-    // 1, Compute the latest bounding box
+    // Compute the latest bounding box
     // -------------------------------------------------------------------------
     if(shift_index.x!=0)
     {
-      float fx = static_cast<float>(shift_index.x) * BBSize.x / static_cast<float>(pVol->m_nGridRes_w);
+      float fx = static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w);
       pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x + fx;
       pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x + fx;
 
       if(bVerbose)
       {
-        printf("[UpdateShift] shift x:%d (index), %f(m), bbmin x->%f, bbmax x->%f\n",
+        printf("[ApplyShiftToVolume] shift x:%d (index), %f(m), bbmin x->%f, bbmax x->%f\n",
                shift_index.x, fx, pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
       }
     }
@@ -63,7 +63,7 @@ public:
 
       if(bVerbose)
       {
-        printf("[UpdateShift] shift y:%d(index), %f(m), bbmin y->%f, bbmax y->%f\n",
+        printf("[ApplyShiftToVolume] shift y:%d(index), %f(m), bbmin y->%f, bbmax y->%f\n",
                shift_index.y, fy, pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
       }
     }
@@ -76,12 +76,14 @@ public:
 
       if(bVerbose)
       {
-        printf("[UpdateShift] shift z:%d(index), %f(m), bbmin z->%f, bbmax z->%f\n",
+        printf("[ApplyShiftToVolume] shift z:%d(index), %f(m), bbmin z->%f, bbmax z->%f\n",
                shift_index.z, fz, pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
       }
     }
 
+    // -------------------------------------------------------------------------
     // reset local and global shift
+    // -------------------------------------------------------------------------
     if(shift_index.x!=0 || shift_index.y!= 0 || shift_index.z!=0)
     {
       pVol->UpdateLocalAndGlobalShift(shift_index);
@@ -103,20 +105,24 @@ public:
       return;
     }
 
+    printf("[GetGridSDFIndexNeedFree] Cur local shift (%d,%d,%d)\n",
+           CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
+
     // for each grid sdf in the volume
     bool bReset = false;
     bool bx = false; bool by = false; bool bz = false;
     int nResetNum = 0;
-    printf("Cur local shif (%d,%d,%d)\n",CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
-
+    int3 GridDim = make_int3(static_cast<int>(pVol->m_nGridRes_w),
+                             static_cast<int>(pVol->m_nGridRes_h),
+                             static_cast<int>(pVol->m_nGridRes_d));
     int3 Index;
-    for(Index.x = 0; Index.x!=static_cast<int>(pVol->m_nGridRes_w); Index.x++)
+
+    for(Index.x = 0; Index.x!=GridDim.x; Index.x++)
     {
-      for(Index.y = 0; Index.y!=static_cast<int>(pVol->m_nGridRes_h); Index.y++)
+      for(Index.y = 0; Index.y!=GridDim.y; Index.y++)
       {
-        for(Index.z = 0; Index.z!=static_cast<int>(pVol->m_nGridRes_d); Index.z++)
+        for(Index.z = 0; Index.z!=GridDim.z; Index.z++)
         {
-          // ----
           bReset = false;
           bx = false; by = false; bz = false;
 
@@ -129,8 +135,8 @@ public:
             bReset = true;
           }
           else if(CurLocalShift.x<0 &&
-                  Index.x >= static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x &&
-                  Index.x < static_cast<int>(pVol->m_nGridRes_w) + pVol->m_local_shift.x-CurLocalShift.x)
+                  Index.x >= GridDim.x + pVol->m_local_shift.x &&
+                  Index.x < GridDim.x + pVol->m_local_shift.x - CurLocalShift.x)
           {
             //              bx = true;
             //              bReset = true;
@@ -145,8 +151,8 @@ public:
             bReset = true;
           }
           else if(CurLocalShift.y<0 &&
-                  Index.x >= static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y &&
-                  Index.x < static_cast<int>(pVol->m_nGridRes_h) + pVol->m_local_shift.y-CurLocalShift.y)
+                  Index.x >= GridDim.y + pVol->m_local_shift.y &&
+                  Index.x < GridDim.y + pVol->m_local_shift.y-CurLocalShift.y)
           {
             //              by = true;
             //              bReset = true;
@@ -161,14 +167,16 @@ public:
             bReset = true;
           }
           else if(CurLocalShift.z<0 &&
-                  Index.x >= static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z &&
-                  Index.x < static_cast<int>(pVol->m_nGridRes_d) + pVol->m_local_shift.z - CurLocalShift.z)
+                  Index.x >= GridDim.z + pVol->m_local_shift.z &&
+                  Index.x < GridDim.z + pVol->m_local_shift.z - CurLocalShift.z)
           {
             //              bz = true;
             //              bReset = true;
           }
 
-          // ---------- set flag for grid that need to be freed ------------
+          // -------------------------------------------------------------------
+          // ---------- set flag for grid that need to be freed ----------------
+          // -------------------------------------------------------------------
           int nGridIndex = Index.x + pVol->m_nGridRes_w*(Index.y + pVol->m_nGridRes_h*Index.z);
 
           if(bReset == true)
@@ -211,7 +219,8 @@ public:
       }
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Reset & Free "<<nResetNum<<" grid;"<<std::endl;
+    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Prepare to Reset & Free "<<
+               nResetNum<<" grid;"<<std::endl;
   }
 
   // ===========================================================================
