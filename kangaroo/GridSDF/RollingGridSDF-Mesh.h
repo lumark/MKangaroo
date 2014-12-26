@@ -106,7 +106,7 @@ public:
     }
 
     printf("[GetGridSDFIndexNeedFree] Cur local shift (%d,%d,%d)\n",
-           CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
+           CurLocalShift.x, CurLocalShift.y, CurLocalShift.z);
 
     // for each grid sdf in the volume
     bool bReset = false;
@@ -126,7 +126,7 @@ public:
           bReset = false;
           bx = false; by = false; bz = false;
 
-          //----- for x
+          //----- for x -----
           if(CurLocalShift.x> 0 &&
              Index.x >= pVol->m_local_shift.x - CurLocalShift.x &&
              Index.x < pVol->m_local_shift.x)
@@ -138,11 +138,11 @@ public:
                   Index.x >= GridDim.x + pVol->m_local_shift.x &&
                   Index.x < GridDim.x + pVol->m_local_shift.x - CurLocalShift.x)
           {
-            //              bx = true;
-            //              bReset = true;
+            //            bx = true;
+            //            bReset = true;
           }
 
-          //----- for y
+          //----- for y -----
           if(CurLocalShift.y>0 &&
              Index.y >= pVol->m_local_shift.y - CurLocalShift.y &&
              Index.y < pVol->m_local_shift.y)
@@ -158,7 +158,7 @@ public:
             //              bReset = true;
           }
 
-          //----- for z
+          //----- for z -----
           if(CurLocalShift.z>0 &&
              Index.z >= pVol->m_local_shift.z - CurLocalShift.z &&
              Index.z < pVol->m_local_shift.z)
@@ -183,37 +183,37 @@ public:
           {
             m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 1;
             nResetNum ++;
+
+            if(bx == true)
+            {
+              m_nNextResetSDFs.m_x[nGridIndex] = 1;
+            }
+            else
+            {
+              m_nNextResetSDFs.m_x[nGridIndex] = 0;
+            }
+
+            if(by == true)
+            {
+              m_nNextResetSDFs.m_y[nGridIndex] = 1;
+            }
+            else
+            {
+              m_nNextResetSDFs.m_y[nGridIndex] = 0;
+            }
+
+            if(bz == true)
+            {
+              m_nNextResetSDFs.m_z[nGridIndex] = 1;
+            }
+            else
+            {
+              m_nNextResetSDFs.m_z[nGridIndex] = 0;
+            }
           }
           else
           {
             m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 0;
-          }
-
-          if(bx == true)
-          {
-            m_nNextResetSDFs.m_x[nGridIndex] = 1;
-          }
-          else
-          {
-            m_nNextResetSDFs.m_x[nGridIndex] = 0;
-          }
-
-          if(by == true)
-          {
-            m_nNextResetSDFs.m_y[nGridIndex] = 1;
-          }
-          else
-          {
-            m_nNextResetSDFs.m_y[nGridIndex] = 0;
-          }
-
-          if(bz == true)
-          {
-            m_nNextResetSDFs.m_z[nGridIndex] = 1;
-          }
-          else
-          {
-            m_nNextResetSDFs.m_z[nGridIndex] = 0;
           }
         }
       }
