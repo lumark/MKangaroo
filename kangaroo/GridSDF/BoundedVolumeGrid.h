@@ -50,19 +50,20 @@ public:
 
     if(m_nTotalGridRes > MAX_SUPPORT_GRID_NUM)
     {
-      printf("[BoundedVolumeGrid/init] Error! overflow! Max allow %d, req %d .\n",
-             MAX_SUPPORT_GRID_NUM, m_nTotalGridRes);
-      std::cerr<<"Please check VOL_RES and VOL_GRID_RES parameters!!"<<std::endl;
+      std::cerr<<"[BoundedVolumeGrid/init] Error! overflow! Max allow "<<
+                 MAX_SUPPORT_GRID_NUM<<"; req "<<m_nTotalGridRes<<
+                 ";Please check VOL_RES and VOL_GRID_RES setting !"<<std::endl;
       exit(-1);
     }
 
+    // -----------------------------------------------------------------------
     ResetAllGridVol();
     m_local_shift = make_int3(0,0,0);
     m_global_shift = make_int3(0,0,0);
 
     if(n_w != n_h || n_h != n_d || n_w!=n_d)
     {
-      std::cerr<<"[BoundedVolumeGrid/init] suggest to use cube size SDF!"<<std::endl;
+      std::cerr<<"[BoundedVolumeGrid/init] suggest use cube size SDF!"<<std::endl;
     }
   }
 
@@ -82,9 +83,6 @@ public:
     }
   }
 
-  // ===========================================================================
-  // Use it for init all basic sdf or call roo::SDFInitGreyGrid before fusing
-  // ===========================================================================
   inline __host__
   void InitAllBasicSDFs()
   {
@@ -250,14 +248,14 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("[Kangaroo/BoundedVolumeGrid] Fatal Error!!!!! basicSDF doesn't exist."
-             "shift (x,y,z)=(%d,%d,%d); index x=%d,y=%d,z=%d; Max index (x,y,z)=(%d,%d,%d)\n",
+      printf("BoundedVolumeGrid] Fatal Error!!!!! basicSDF doesn't exist."
+             "shift (%d,%d,%d); index (%d,%d,%d); Max index (%d,%d,%d)\n",
              m_local_shift.x,
              m_local_shift.y,
              m_local_shift.z,
-             int(floorf(x/m_nVolumeGridRes)),
-             int(floorf(y/m_nVolumeGridRes)),
-             int(floorf(z/m_nVolumeGridRes)),
+             static_cast<int>(floorf(x/m_nVolumeGridRes)),
+             static_cast<int>(floorf(y/m_nVolumeGridRes)),
+             static_cast<int>(floorf(z/m_nVolumeGridRes)),
              m_nGridRes_w-1,
              m_nGridRes_h-1,
              m_nGridRes_d-1);
@@ -391,8 +389,8 @@ public:
   {
     if(x>=m_w || y>= m_h || z>=m_d)
     {
-      printf("[VoxelPositionInUnitsGlobal] Error! index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
-             x,y,z,int(m_w),int(m_h),int(m_d));
+      printf("[VoxelPositionInUnitsGlobal] Index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
+             x,y,z,static_cast<int>(m_w),static_cast<int>(m_h),static_cast<int>(m_d));
     }
 
     const float3 vol_size = m_bbox.Size();
@@ -403,9 +401,12 @@ public:
           m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
           );
 
-    float global_pos_x = (float(cur_global.x-min_global.x) + local_pos.x)/float(max_global.x-min_global.x);
-    float global_pos_y = (float(cur_global.y-min_global.y) + local_pos.y)/float(max_global.y-min_global.y);
-    float global_pos_z = (float(cur_global.z-min_global.z) + local_pos.z)/float(max_global.z-min_global.z);
+    float global_pos_x = (static_cast<float>(cur_global.x-min_global.x) + local_pos.x)/
+        static_cast<float>(max_global.x-min_global.x);
+    float global_pos_y = (static_cast<float>(cur_global.y-min_global.y) + local_pos.y)/
+        static_cast<float>(max_global.y-min_global.y);
+    float global_pos_z = (static_cast<float>(cur_global.z-min_global.z) + local_pos.z)/
+        static_cast<float>(max_global.z-min_global.z);
 
     float3 global_pos = make_float3(global_pos_x, global_pos_y, global_pos_z);
 
@@ -444,11 +445,11 @@ public:
     for(unsigned int i=0;i!= GetTotalGridNum();i++)
     {
       // skip void volum grid
-      if(rVol.CheckIfBasicSDFActive(i)== true)
+      if(rVol.CheckIfBasicSDFActive(i) == true)
       {
-        if(CheckIfBasicSDFActive(i)==false)
+        if(CheckIfBasicSDFActive(i) == false)
         {
-          if(InitSingleBasicSDFWithIndex(i)==false)
+          if(InitSingleBasicSDFWithIndex(i) == false)
           {
             printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
             exit(-1);
@@ -488,7 +489,6 @@ public:
             exit(-1);
           }
         }
-
         m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
         GpuCheckErrors();
       }
@@ -811,8 +811,8 @@ public:
       printf("[BoundedVolumeGrid] update global shift z\n");
     }
 
-    printf("[BoundedVolumeGrid] local shift: x=%d,y=%d,z=%d;"
-           "Global shift: x=%d,y=%d,z=%d; Max shift (%d,%d,%d) \n",
+    printf("[BoundedVolumeGrid] local shift: (%d,%d,%d);"
+           "Global shift: (%d,%d,%d); Max shift (%d,%d,%d) \n",
            m_local_shift.x,m_local_shift.y,m_local_shift.z,
            m_global_shift.x,m_global_shift.y,m_global_shift.z,
            m_nGridRes_w, m_nGridRes_h,m_nGridRes_d);
@@ -854,8 +854,9 @@ public:
       printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
     }
 
-    printf("[BoundedVolumeGrid] Update Shift success! current shift x=%d,y=%d,z=%d; Max shift x=%d,y=%d,z=%d \n",
-           m_local_shift.x,m_local_shift.y,m_local_shift.z, m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
+    printf("[BoundedVolumeGrid] Update Shift success! current shift (%d,%d,%d);"
+           " Max shift (%d,%d,%d) \n", m_local_shift.x, m_local_shift.y, m_local_shift.z,
+           m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
   }
 
   // set next sdf that we want to init
