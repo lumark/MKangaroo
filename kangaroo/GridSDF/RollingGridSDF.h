@@ -72,7 +72,7 @@ public:
     }
 
     // 2, save shift params in grid and grid grey sdf data struct
-    pVol->UpdateShift(shift_index);
+    pVol->UpdateLocalShift(shift_index);
 
     // update total shift
     TotalShift = pVol->m_local_shift;

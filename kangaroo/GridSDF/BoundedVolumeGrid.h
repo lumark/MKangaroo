@@ -543,13 +543,12 @@ public:
   //  }
 
   inline __device__
-  float3 GetShiftValue(float3 pos_w, float3 cam_pose) const
+  float3 GetShiftValue(float3 pos_w, float3 cam_translate) const
   {
-    // get pose of voxel in whole sdf, in %
-    // change pos_w to the global pose
-    pos_w = pos_w + cam_pose;
-
-    return (pos_w - m_bbox.Min()) / (m_bbox.Size());
+    // pos_w: world pose of the voxel in the camera frame
+    // cam_translate: world pose of the camera
+    // this function get pose of the voxel in whole bounding box, in %
+    return (pos_w + cam_translate - m_bbox.Min()) / (m_bbox.Size());
   }
 
 

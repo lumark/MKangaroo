@@ -65,18 +65,16 @@ void SdfResetPartial(BoundedVolume<SDF_t> vol, float3 shift)
 //////////////////////////////////////////////////////
 /// Rolling GRID SDF
 //////////////////////////////////////////////////////
-
 __device__ BoundedVolumeGrid<SDF_t, roo::TargetDevice, roo::Manage>        g_vol;
 __device__ BoundedVolumeGrid<SDF_t_Smart, roo::TargetDevice, roo::Manage>  g_vol_smart;
 __device__ int                                                             g_NextResetSDFs[MAX_SUPPORT_GRID_NUM];
 
 // =============================================================================
-// Boxmin and boxmax define the box that is to be kept intact, rest will be cleared.
+// Boxmin & boxmax define the box that is to be kept intact, rest will be cleared.
 // This approach makes if conditions inside simpler.
 // When we clean a grid sdf, we also need to free its memory.. This maybe a little
 // bit expensive
 // =============================================================================
-
 __global__ void KernRollingGridSdf(
     float3                                boxmin,
     float3                                boxmax,
@@ -99,16 +97,14 @@ __global__ void KernRollingGridSdf(
       g_vol(x,y,z) = SDF_t(0.0/0.0,0.0);
 
       // get the index of grid sdf that need to be reseted
-      int nIndex =  int(floorf(x/g_vol.m_nVolumeGridRes)) +
-          g_vol.m_nGridRes_w * ( int(floorf(y/g_vol.m_nVolumeGridRes)) +
-                                 g_vol.m_nGridRes_h * int(floorf(z/g_vol.m_nVolumeGridRes)) );
+      int nIndex = static_cast<int>(floorf(x/g_vol.m_nVolumeGridRes)) +
+          g_vol.m_nGridRes_w * ( static_cast<int>(floorf(y/g_vol.m_nVolumeGridRes)) +
+                                 g_vol.m_nGridRes_h * static_cast<int>(floorf(z/g_vol.m_nVolumeGridRes)) );
 
       // save index of sdf that need to be reset later
       g_NextResetSDFs[nIndex] = 1;
     }
-
   }
-
 }
 
 
@@ -252,75 +248,71 @@ void RollingGridSdfCuda(
   }
 }
 
+// =============================================================================
 // raycast grid gray SDF
+// =============================================================================
 __device__ float3 g_positive_shift;
 __device__ float3 g_negative_shift;
 __global__ void KernDetectRollingSdfShift(
-    Image<float> imgdepth, const Mat<float,3,4> T_wc, float3 T_wc_translate, ImageIntrinsics K )
+    Image<float>                          imgdepth,
+    const Mat<float,3,4>                  T_wc,
+    float3                                T_wc_translate,
+    ImageIntrinsics                       K )
 {
   const int u = blockIdx.x*blockDim.x + threadIdx.x;
   const int v = blockIdx.y*blockDim.y + threadIdx.y;
 
   if( u < imgdepth.w && v < imgdepth.h )
   {
-    if(imgdepth(u,v)>0)
+    if(imgdepth(u,v) > 0)
     {
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
 
-      // check if the valid pixel is out of grid. shift is the change of % of poses
-      // in the boulding box
-      float3 shift = g_vol.GetShiftValue(ray_w, T_wc_translate);
+      // check if the pixel is out of BB. shift is the change of % of poses in BB
+      float3 shift_precentage = g_vol.GetShiftValue(ray_w, T_wc_translate);
 
-      // if change if greater than 1: (means the current bounding box cannot hold the new pixel)
-      if(abs(shift.x)>1.f)
+      // if shift > 1: (the current bounding box (BB) cannot hold the new pixel)
+      if(abs(shift_precentage.x) > 1.f)
       {
-        // for positive
-        if(shift.x > g_positive_shift.x)
+        if(shift_precentage.x > g_positive_shift.x)
         {
-          g_positive_shift.x = shift.x;
-          //          printf("positive_shift_x:%f;",g_positive_shift.x);
+          g_positive_shift.x = shift_precentage.x;
         }
-        else if(shift.x < g_negative_shift.x)
+        else if(shift_precentage.x < g_negative_shift.x)
         {
-          g_negative_shift.x = shift.x;
-          //          printf("negative_shift_x:%f;",g_negative_shift.x);
+          g_negative_shift.x = shift_precentage.x;
         }
       }
 
-      // if change if greater than 1: (means the current bounding box cannot hold the new pixel)
-      if( abs(shift.y) >1.f)
+      // if shift > 1: (the current bounding box (BB) cannot hold the new pixel)
+      if( abs(shift_precentage.y) > 1.f)
       {
-        if(shift.y > g_positive_shift.y)
+        if(shift_precentage.y > g_positive_shift.y)
         {
-          g_positive_shift.y = shift.y;
-          //          printf("positive_shift_y:%f;",g_positive_shift.y);
+          g_positive_shift.y = shift_precentage.y;
         }
-        else if(shift.y < g_negative_shift.y)
+        else if(shift_precentage.y < g_negative_shift.y)
         {
-          g_negative_shift.y = shift.y;
-          //          printf("negative_shift_y:%f;",g_negative_shift.y);
+          g_negative_shift.y = shift_precentage.y;
         }
       }
 
-      // if change if greater than 1: (means the current bounding box cannot hold the new pixel)
-      if( abs(shift.z)>1.f)
+      // if shift > 1: (the current bounding box (BB) cannot hold the new pixel)
+      if( abs(shift_precentage.z) > 1.f)
       {
-        if(shift.z > g_positive_shift.z)
+        if(shift_precentage.z > g_positive_shift.z)
         {
-          g_positive_shift.z = shift.z;
-          //          printf("positive_shift_z:%f;",g_positive_shift.z);
+          g_positive_shift.z = shift_precentage.z;
         }
-        else if(shift.z < g_negative_shift.z)
+        else if(shift_precentage.z < g_negative_shift.z)
         {
-          g_negative_shift.z = shift.z;
-          //          printf("negative_shift_z:%f;",g_negative_shift.z);
+          g_negative_shift.z = shift_precentage.z;
         }
       }
     }
   }
 }
-
 
 void RollingDetShift(
     float3&                               positive_shift,
@@ -342,7 +334,7 @@ void RollingDetShift(
   cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  printf("camera translate x%f,y%f,z%f\n",
+  printf("[cu_rolling_sdf.cu/RollingDetShift] camera translate (%f,%f,%f)\n",
          SE3Translation(T_wc).x,SE3Translation(T_wc).y, SE3Translation(T_wc).z);
 
   dim3 blockDim, gridDim;
@@ -355,13 +347,8 @@ void RollingDetShift(
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
-  //  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
-  //         positive_shift.x,positive_shift.y,positive_shift.z,
-  //         negative_shift.x,negative_shift.y,negative_shift.z);
-
   g_vol.FreeMemory();
 }
-
 
 void RollingDetShift(
     float3&                               positive_shift,
@@ -384,7 +371,7 @@ void RollingDetShift(
   cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  printf("camera translate x%f,y%f,z%f\n",
+  printf("[cu_rolling_sdf.cu/RollingDetShift] camera translate (%f,%f,%f)\n",
          SE3Translation(T_wc).x,SE3Translation(T_wc).y, SE3Translation(T_wc).z);
 
   dim3 blockDim, gridDim;
@@ -395,10 +382,6 @@ void RollingDetShift(
   cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
   cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
-
-  //  printf("positive parameter is %f,%f,%f; negative params:%f,%f,%f\n",
-  //         positive_shift.x,positive_shift.y,positive_shift.z,
-  //         negative_shift.x,negative_shift.y,negative_shift.z);
 
   g_vol.FreeMemory();
 }

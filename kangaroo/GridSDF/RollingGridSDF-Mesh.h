@@ -16,7 +16,6 @@ public:
   int  m_z[MAX_SUPPORT_GRID_NUM];
 };
 
-// the folling is the CPU version of rolling grid sdf
 class RollingGridSDFMesh
 {
 public:
@@ -94,12 +93,12 @@ public:
     // reset local and global shift
     if(shift_index.x!=0 || shift_index.y!= 0 || shift_index.z!=0)
     {
-      pVol->UpdateGlobalShift(shift_index);
+      pVol->UpdateLocalAndGlobalShift(shift_index);
     }
   }
 
   // ---------------------------------------------------------------------------
-  // compute index of grid sdf that need to be reset and freed.
+  // compute the index of grid sdf that need to be reset and freed.
   // only free that part that we just "shift"
   // ---------------------------------------------------------------------------
   template<typename T>
@@ -120,14 +119,14 @@ public:
     int nResetNum = 0;
     printf("Cur local shif (%d,%d,%d)\n",CurLocalShift.x,CurLocalShift.y,CurLocalShift.z);
 
-    int3 Index = make_int3(0,0,0);
-    for(; Index.x!=static_cast<int>(pVol->m_nGridRes_w); Index.x++)
+    int3 Index;
+    for(Index.x = 0; Index.x!=static_cast<int>(pVol->m_nGridRes_w); Index.x++)
     {
-      for(; Index.y!=static_cast<int>(pVol->m_nGridRes_h); Index.y++)
+      for(Index.y = 0; Index.y!=static_cast<int>(pVol->m_nGridRes_h); Index.y++)
       {
-        for(; Index.z!=static_cast<int>(pVol->m_nGridRes_d); Index.z++)
+        for(Index.z = 0; Index.z!=static_cast<int>(pVol->m_nGridRes_d); Index.z++)
         {
-          // reset params;
+          // ----
           bReset = false;
           bx = false; by = false; bz = false;
 
@@ -223,7 +222,6 @@ public:
     }
 
     std::cout<<"[GetGridSDFIndexNeedFree] Finished. Reset & Free "<<nResetNum<<" grid;"<<std::endl;
-
   }
 
   // ---------------------------------------------------------------------------
@@ -248,7 +246,6 @@ public:
 public:
   NextResetSDF  m_nNextResetSDFs;
 };
-
 
 }
 
