@@ -110,7 +110,6 @@ public:
 
     // for each grid sdf in the volume
     bool bReset = false;
-    bool bx = false; bool by = false; bool bz = false;
     int nResetNum = 0;
     int3 GridDim = make_int3(static_cast<int>(pVol->m_nGridRes_w),
                              static_cast<int>(pVol->m_nGridRes_h),
@@ -124,21 +123,18 @@ public:
         for(Index.z = 0; Index.z!=GridDim.z; Index.z++)
         {
           bReset = false;
-          bx = false; by = false; bz = false;
 
           //----- for x -----
           if(CurLocalShift.x> 0 &&
              Index.x >= pVol->m_local_shift.x - CurLocalShift.x &&
              Index.x < pVol->m_local_shift.x)
           {
-            bx = true;
             bReset = true;
           }
           else if(CurLocalShift.x<0 &&
                   Index.x >= GridDim.x + pVol->m_local_shift.x &&
                   Index.x < GridDim.x + pVol->m_local_shift.x - CurLocalShift.x)
           {
-            //            bx = true;
             //            bReset = true;
           }
 
@@ -147,14 +143,12 @@ public:
              Index.y >= pVol->m_local_shift.y - CurLocalShift.y &&
              Index.y < pVol->m_local_shift.y)
           {
-            by = true;
             bReset = true;
           }
           else if(CurLocalShift.y<0 &&
                   Index.x >= GridDim.y + pVol->m_local_shift.y &&
                   Index.x < GridDim.y + pVol->m_local_shift.y-CurLocalShift.y)
           {
-            //              by = true;
             //              bReset = true;
           }
 
@@ -163,14 +157,12 @@ public:
              Index.z >= pVol->m_local_shift.z - CurLocalShift.z &&
              Index.z < pVol->m_local_shift.z)
           {
-            bz = true;
             bReset = true;
           }
           else if(CurLocalShift.z<0 &&
                   Index.x >= GridDim.z + pVol->m_local_shift.z &&
                   Index.x < GridDim.z + pVol->m_local_shift.z - CurLocalShift.z)
           {
-            //              bz = true;
             //              bReset = true;
           }
 
@@ -181,35 +173,8 @@ public:
 
           if(bReset == true)
           {
-            m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 1;
             nResetNum ++;
-
-            if(bx == true)
-            {
-              m_nNextResetSDFs.m_x[nGridIndex] = 1;
-            }
-            else
-            {
-              m_nNextResetSDFs.m_x[nGridIndex] = 0;
-            }
-
-            if(by == true)
-            {
-              m_nNextResetSDFs.m_y[nGridIndex] = 1;
-            }
-            else
-            {
-              m_nNextResetSDFs.m_y[nGridIndex] = 0;
-            }
-
-            if(bz == true)
-            {
-              m_nNextResetSDFs.m_z[nGridIndex] = 1;
-            }
-            else
-            {
-              m_nNextResetSDFs.m_z[nGridIndex] = 0;
-            }
+            m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 1;
           }
           else
           {
