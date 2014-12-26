@@ -96,80 +96,78 @@ public:
   template<typename T>
   inline void GetGridSDFIndexNeedFree(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
-      int3                                                        CurLocalShift)
+      int3                                                        shift)
   {
-    std::cout<<"[GetGridSDFIndexNeedFree] Computing Grids index need to be freed.."<<std::endl;
-
-    if (CurLocalShift.x==0 && CurLocalShift.y==0 && CurLocalShift.z==0)
+    if (shift.x==0 && shift.y==0 && shift.z==0)
     {
       return;
     }
 
-    printf("[GetGridSDFIndexNeedFree] Cur local shift (%d,%d,%d)\n",
-           CurLocalShift.x, CurLocalShift.y, CurLocalShift.z);
+    std::cout<<"[GetGridSDFIndexNeedFree] Getting Grids index need to be free."<<
+               "local shift ("<<shift.x<<","<<shift.y<<","<< shift.z<<")"<<std::endl;
 
-    // for each grid sdf in the volume
-    bool bReset = false;
     int nResetNum = 0;
+    int3 Index;
+    bool bReset = false;
     int3 GridDim = make_int3(static_cast<int>(pVol->m_nGridRes_w),
                              static_cast<int>(pVol->m_nGridRes_h),
                              static_cast<int>(pVol->m_nGridRes_d));
-    int3 Index;
 
-    for(Index.x = 0; Index.x!=GridDim.x; Index.x++)
+    // for each grid sdf in the volume
+    for(Index.x = 0; Index.x!= GridDim.x; Index.x++)
     {
-      for(Index.y = 0; Index.y!=GridDim.y; Index.y++)
+      for(Index.y = 0; Index.y!= GridDim.y; Index.y++)
       {
-        for(Index.z = 0; Index.z!=GridDim.z; Index.z++)
+        for(Index.z = 0; Index.z!= GridDim.z; Index.z++)
         {
           bReset = false;
 
           //----- for x -----
-          if(CurLocalShift.x> 0 &&
-             Index.x >= pVol->m_local_shift.x - CurLocalShift.x &&
+          if(shift.x > 0 &&
+             Index.x >= pVol->m_local_shift.x - shift.x &&
              Index.x < pVol->m_local_shift.x)
           {
             bReset = true;
           }
-          else if(CurLocalShift.x<0 &&
+          else if(shift.x < 0 &&
                   Index.x >= GridDim.x + pVol->m_local_shift.x &&
-                  Index.x < GridDim.x + pVol->m_local_shift.x - CurLocalShift.x)
+                  Index.x < GridDim.x + pVol->m_local_shift.x - shift.x)
           {
-            //            bReset = true;
+            bReset = true;
           }
 
           //----- for y -----
-          if(CurLocalShift.y>0 &&
-             Index.y >= pVol->m_local_shift.y - CurLocalShift.y &&
+          if(shift.y > 0 &&
+             Index.y >= pVol->m_local_shift.y - shift.y &&
              Index.y < pVol->m_local_shift.y)
           {
             bReset = true;
           }
-          else if(CurLocalShift.y<0 &&
+          else if(shift.y < 0 &&
                   Index.x >= GridDim.y + pVol->m_local_shift.y &&
-                  Index.x < GridDim.y + pVol->m_local_shift.y-CurLocalShift.y)
+                  Index.x < GridDim.y + pVol->m_local_shift.y - shift.y)
           {
-            //              bReset = true;
+            bReset = true;
           }
 
           //----- for z -----
-          if(CurLocalShift.z>0 &&
-             Index.z >= pVol->m_local_shift.z - CurLocalShift.z &&
+          if(shift.z > 0 &&
+             Index.z >= pVol->m_local_shift.z - shift.z &&
              Index.z < pVol->m_local_shift.z)
           {
             bReset = true;
           }
-          else if(CurLocalShift.z<0 &&
+          else if(shift.z < 0 &&
                   Index.x >= GridDim.z + pVol->m_local_shift.z &&
-                  Index.x < GridDim.z + pVol->m_local_shift.z - CurLocalShift.z)
+                  Index.x < GridDim.z + pVol->m_local_shift.z - shift.z)
           {
-            //              bReset = true;
+            bReset = true;
           }
 
           // -------------------------------------------------------------------
           // ---------- set flag for grid that need to be freed ----------------
           // -------------------------------------------------------------------
-          int nGridIndex = Index.x + pVol->m_nGridRes_w*(Index.y + pVol->m_nGridRes_h*Index.z);
+          int nGridIndex = Index.x + pVol->m_nGridRes_w * (Index.y + pVol->m_nGridRes_h*Index.z);
 
           if(bReset == true)
           {
