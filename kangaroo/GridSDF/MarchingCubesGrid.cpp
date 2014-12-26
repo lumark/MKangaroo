@@ -198,10 +198,10 @@ bool GenMeshFromPPM(
   roo::BoundingBox BBox;
 
   roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
+  hvol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
   roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(1,1,1, nGridRes, BBox);
+  hvolcolor.Init(1,1,1, nGridRes, BBox);
 
   // get max and min global index
   int3 MaxGlobalIndex = make_int3(-999999999,-999999999,-999999999);

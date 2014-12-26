@@ -96,7 +96,7 @@ void SavePXM(
 {
   // load data from device to host
   roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
-  hvol.init(vol.m_w,vol.m_h,vol.m_d,vol.m_nVolumeGridRes,vol.m_bbox);
+  hvol.Init(vol.m_w,vol.m_h,vol.m_d,vol.m_nVolumeGridRes,vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
   // first save bounding box
@@ -168,7 +168,7 @@ void SavePXMGridDesire(
   {
     // load data from device to host
     roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
-    hvol.init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
+    hvol.Init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
     hvol.CopyAndInitFrom(rDVol);
     hvol.m_global_shift = rDVol.m_global_shift;
 
@@ -338,7 +338,7 @@ bool LoadPXMGrid(
   roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
 
   // init sdf
-  hvol.init(vol.m_w, vol.m_h,vol.m_d,vol.m_nVolumeGridRes,BBox);
+  hvol.Init(vol.m_w, vol.m_h,vol.m_d,vol.m_nVolumeGridRes,BBox);
 
   // read bb box..
   int nNum = 0;

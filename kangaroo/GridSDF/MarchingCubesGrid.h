@@ -120,11 +120,11 @@ aiMesh* GetMeshGrid(
     BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+  hvol.Init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
   roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d,
+  hvolcolor.Init(volColor.m_w, volColor.m_h, volColor.m_d,
                  volColor.m_nVolumeGridRes,volColor.m_bbox);
 
   hvolcolor.CopyAndInitFrom(volColor);
@@ -577,11 +577,11 @@ void SaveMeshGrid(
     BoundedVolumeGrid<T,TargetDevice,Manage>&         vol )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
+  hvol.Init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
   roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
+  hvolcolor.Init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
 
   SaveMeshGrid<T,float>(filename, hvol, hvolcolor);
 }
@@ -594,11 +594,11 @@ void SaveMeshGrid(
     BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+  hvol.Init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
   roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d,
+  hvolcolor.Init(volColor.m_w, volColor.m_h, volColor.m_d,
                  volColor.m_nVolumeGridRes,volColor.m_bbox);
 
   hvolcolor.CopyAndInitFrom(volColor);
@@ -738,11 +738,11 @@ void SaveMeshGridSepreate(
     BoundedVolumeGrid<T,TargetDevice,Manage>&         vol )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
+  hvol.Init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes, vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
   roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
+  hvolcolor.Init(1,1,1, vol.m_nVolumeGridRes,vol.m_bbox );
 
   SaveMeshGridSepreate<T,float>(filename, hvol, hvolcolor);
 }
@@ -755,11 +755,11 @@ void SaveMeshGridSepreate(
     BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
 {
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
+  hvol.Init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
   roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.init(volColor.m_w, volColor.m_h, volColor.m_d,
+  hvolcolor.Init(volColor.m_w, volColor.m_h, volColor.m_d,
                  volColor.m_nVolumeGridRes,volColor.m_bbox);
 
   hvolcolor.CopyAndInitFrom(volColor);

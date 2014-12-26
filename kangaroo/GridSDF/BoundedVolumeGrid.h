@@ -23,15 +23,14 @@ class BoundedVolumeGrid
 public:
 
   // ===========================================================================
-  // we cannot implement a constructor for this because we have to use this class
-  // as global variables in kernel function, which does not allow us to have a
-  // constructor.
+  // we cannot implement a constructor for this as we have to use this class
+  // as global variables in kernel function, which forbid us to have a constructor.
   // the reason we have to use this as global veriables in kernel function is that
   // it may contain more than 16 VolumeGrid, which over the maximum size of the
   // parameters that we can pass into a kernel function
   // ===========================================================================
   inline __host__
-  void init(
+  void Init(
       unsigned int n_w,
       unsigned int n_h,
       unsigned int n_d,
@@ -164,8 +163,7 @@ public:
   }
 
   //////////////////////////////////////////////////////
-  // Return true if this BoundedVolumeGrid represents a positive
-  // amount of space.
+  // Tools
   //////////////////////////////////////////////////////
 
   inline __host__
@@ -184,15 +182,35 @@ public:
     return nNum>0 && m_w >= 8 && m_h >= 8 && m_d >= 8;
   }
 
-
-  //////////////////////////////////////////////////////
-  // Access Elements
-  //////////////////////////////////////////////////////
-
-  inline __device__ __host__
-  uint3 Voxels() const
+  inline __host__ __device__
+  bool CheckIfBasicSDFActive(const int nIndex) const
   {
-    return make_uint3(m_w,m_h,m_d);
+    if(m_GridVolumes[nIndex].d == m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].w == m_nVolumeGridRes &&
+       m_GridVolumes[nIndex].h == m_nVolumeGridRes)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  inline __host__
+  int GetActiveGridVolNum()
+  {
+    int nNum = 0;
+
+    for(int i=0;i!= GetTotalGridNum();i++)
+    {
+      if(CheckIfBasicSDFActive(i)==true)
+      {
+        nNum ++;
+      }
+    }
+
+    return nNum;
   }
 
   inline __host__ __device__
@@ -209,6 +227,17 @@ public:
     }
 
     return false;
+  }
+
+
+  //////////////////////////////////////////////////////
+  // Access Elements
+  //////////////////////////////////////////////////////
+
+  inline __device__ __host__
+  uint3 Voxels() const
+  {
+    return make_uint3(m_w,m_h,m_d);
   }
 
   inline  __device__
@@ -291,7 +320,6 @@ public:
     return m_GridVolumes[nIndex].GetFractionalTrilinearClamped(pos_v_grid);
   }
 
-
   inline __device__
   float3 GetUnitsBackwardDiffDxDyDz(float3 pos_w) const
   {
@@ -330,9 +358,6 @@ public:
 
     return deriv / VoxelSizeUnits();
   }
-
-
-  //////////////////////////////////////////////////////
 
   inline __device__
   float3 GetUnitsOutwardNormal(float3 pos_w) const
@@ -500,37 +525,6 @@ public:
     cudaFree( m_GridVolumes[nIndex].ptr );
   }
 
-  inline __host__ __device__
-  bool CheckIfBasicSDFActive(const int nIndex) const
-  {
-    if(m_GridVolumes[nIndex].d == m_nVolumeGridRes &&
-       m_GridVolumes[nIndex].w == m_nVolumeGridRes &&
-       m_GridVolumes[nIndex].h == m_nVolumeGridRes)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-  inline __host__
-  int GetActiveGridVolNum()
-  {
-    int nNum = 0;
-
-    for(int i=0;i!= GetTotalGridNum();i++)
-    {
-      if(CheckIfBasicSDFActive(i)==true)
-      {
-        nNum ++;
-      }
-    }
-
-    return nNum;
-  }
-
 
   //////////////////////////////////////////////////////
   // for rolling SDF
@@ -653,7 +647,6 @@ public:
 //    return  nIndex;
 //  }
 
-
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
   {
@@ -761,75 +754,6 @@ public:
     // compute the actual index
     const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
     return  nIndex;
-  }
-
-
-  // ===========================================================================
-  // input the index of grid sdf that want to access. return its global index.
-  // If the index is shift, its global index will ++. Otherwise, its global index
-  // will be the same as it was. This fun is to see if the m_global_shift
-  // does not reset yet but there is a current shift for the grid.
-  // ===========================================================================
-  inline __device__ __host__
-  int3 GetGlobalIndex(int x, int y, int z) const
-  {
-    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
-    {
-      return m_global_shift;
-    }
-
-    // compute global index for single grid
-    int3 GlobalIndex = m_global_shift;
-
-    // for x
-    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nGridRes_w))
-    {
-      if(x<m_local_shift.x)
-      {
-        GlobalIndex.x = m_global_shift.x+1;
-      }
-    }
-    else if( m_local_shift.x<0 && m_local_shift.x>=-int(m_nGridRes_w) )
-    {
-      if( x<= abs(m_local_shift.x) )
-      {
-        GlobalIndex.x = m_global_shift.x-1;
-      }
-    }
-
-    // for y
-    if(m_local_shift.y>0 && m_local_shift.y<= int(m_nGridRes_h))
-    {
-      if(y<m_local_shift.y)
-      {
-        GlobalIndex.y = m_global_shift.y+1;
-      }
-    }
-    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nGridRes_h))
-    {
-      if( y<=abs(m_local_shift.y) )
-      {
-        GlobalIndex.y = m_global_shift.y-1;
-      }
-    }
-
-    // for z
-    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nGridRes_d) )
-    {
-      if(z<m_local_shift.z)
-      {
-        GlobalIndex.z = m_global_shift.z+1;
-      }
-    }
-    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nGridRes_d))
-    {
-      if( z<=abs(m_local_shift.z) )
-      {
-        GlobalIndex.z = m_global_shift.z-1;
-      }
-    }
-
-    return  GlobalIndex;
   }
 
   inline __host__
@@ -1015,6 +939,10 @@ public:
     return m_nTotalGridRes;
   }
 
+  //////////////////////////////////////////////////////
+  // Global SDF (Save/Load SDF)
+  //////////////////////////////////////////////////////
+
   // ===========================================================================
   // get bb of current global index without any shift parameters
   // ===========================================================================
@@ -1038,6 +966,74 @@ public:
         float(m_nGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
 
     return mBBox;
+  }
+
+  // ===========================================================================
+  // input the index of grid sdf that want to access. return its global index.
+  // If the index is shift, its global index will ++. Otherwise, its global index
+  // will be the same as it was. This fun is to see if the m_global_shift
+  // does not reset yet but there is a current shift for the grid.
+  // ===========================================================================
+  inline __device__ __host__
+  int3 GetGlobalIndex(int x, int y, int z) const
+  {
+    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
+    {
+      return m_global_shift;
+    }
+
+    // compute global index for single grid
+    int3 GlobalIndex = m_global_shift;
+
+    // for x
+    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nGridRes_w))
+    {
+      if(x<m_local_shift.x)
+      {
+        GlobalIndex.x = m_global_shift.x+1;
+      }
+    }
+    else if( m_local_shift.x<0 && m_local_shift.x>=-int(m_nGridRes_w) )
+    {
+      if( x<= abs(m_local_shift.x) )
+      {
+        GlobalIndex.x = m_global_shift.x-1;
+      }
+    }
+
+    // for y
+    if(m_local_shift.y>0 && m_local_shift.y<= int(m_nGridRes_h))
+    {
+      if(y<m_local_shift.y)
+      {
+        GlobalIndex.y = m_global_shift.y+1;
+      }
+    }
+    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nGridRes_h))
+    {
+      if( y<=abs(m_local_shift.y) )
+      {
+        GlobalIndex.y = m_global_shift.y-1;
+      }
+    }
+
+    // for z
+    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nGridRes_d) )
+    {
+      if(z<m_local_shift.z)
+      {
+        GlobalIndex.z = m_global_shift.z+1;
+      }
+    }
+    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nGridRes_d))
+    {
+      if( z<=abs(m_local_shift.z) )
+      {
+        GlobalIndex.z = m_global_shift.z-1;
+      }
+    }
+
+    return  GlobalIndex;
   }
 
 public:

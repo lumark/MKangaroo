@@ -254,10 +254,10 @@ void RollingGridSdfCuda(
 __device__ float3 g_positive_shift;
 __device__ float3 g_negative_shift;
 __global__ void KernDetectRollingSdfShift(
-    Image<float>                          imgdepth,
-    const Mat<float,3,4>                  T_wc,
-    float3                                T_wc_translate,
-    ImageIntrinsics                       K )
+    Image<float>                                                  imgdepth,
+    const Mat<float,3,4>                                          T_wc,
+    float3                                                        T_wc_translate,
+    ImageIntrinsics                                               K )
 {
   const int u = blockIdx.x*blockDim.x + threadIdx.x;
   const int v = blockIdx.y*blockDim.y + threadIdx.y;
@@ -315,12 +315,12 @@ __global__ void KernDetectRollingSdfShift(
 }
 
 void RollingDetShift(
-    float3&                               positive_shift,
-    float3&                               negative_shift,
-    Image<float>                          depth,
+    float3&                                                       positive_shift,
+    float3&                                                       negative_shift,
+    Image<float>                                                  depth,
     const BoundedVolumeGrid<SDF_t,roo::TargetDevice, roo::Manage> vol,
-    const Mat<float,3,4>                  T_wc,
-    ImageIntrinsics                       K)
+    const Mat<float,3,4>                                          T_wc,
+    ImageIntrinsics                                               K)
 {
   // load vol val to golbal memory
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
@@ -351,12 +351,12 @@ void RollingDetShift(
 }
 
 void RollingDetShift(
-    float3&                               positive_shift,
-    float3&                               negative_shift,
-    Image<float>                          depth,
+    float3&                                                             positive_shift,
+    float3&                                                             negative_shift,
+    Image<float>                                                        depth,
     const BoundedVolumeGrid<SDF_t_Smart,roo::TargetDevice, roo::Manage> vol,
-    const Mat<float,3,4>                  T_wc,
-    ImageIntrinsics                       K)
+    const Mat<float,3,4>                                                T_wc,
+    ImageIntrinsics                                                     K)
 {
 
   // load vol val to golbal memory
