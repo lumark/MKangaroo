@@ -759,7 +759,9 @@ public:
   inline __host__
   void UpdateLocalAndGlobalShift(int3 shift_index)
   {
+    // ------------------------------------------------------------------------
     // updage local shift
+    // ------------------------------------------------------------------------
     m_local_shift.x = m_local_shift.x + shift_index.x % static_cast<int>(m_nGridRes_w);
     m_local_shift.y = m_local_shift.y + shift_index.y % static_cast<int>(m_nGridRes_h);
     m_local_shift.z = m_local_shift.z + shift_index.z % static_cast<int>(m_nGridRes_d);
@@ -768,7 +770,9 @@ public:
     //    m_global_shift.y = m_global_shift.y + shift_index.y/static_cast<int>(m_nGridRes_h);
     //    m_global_shift.z = m_global_shift.z + shift_index.z/static_cast<int>(m_nGridRes_d);
 
-    // ----- check if need to update global shift
+    // ------------------------------------------------------------------------
+    // ----- update global shift
+    // ------------------------------------------------------------------------
     // --- for x
     if(m_local_shift.x >= static_cast<int>(m_nGridRes_w)+1)
     {
@@ -781,6 +785,10 @@ public:
       m_local_shift.x = m_local_shift.x-(-static_cast<int>(m_nGridRes_w));
       m_global_shift.x--;
       printf("[BoundedVolumeGrid] update global shift x\n");
+    }
+    else
+    {
+      std::cerr<<"[BoundedVolumeGrid] Error! Invalid Shift Value (x)!"<<std::endl;
     }
 
     // --- for y
@@ -796,6 +804,10 @@ public:
       m_global_shift.y--;
       printf("[BoundedVolumeGrid] update global shift y\n");
     }
+    else
+    {
+      std::cerr<<"[BoundedVolumeGrid] Error! Invalid Shift Value (y)!"<<std::endl;
+    }
 
     // --- for z
     if(m_local_shift.z >= static_cast<int>(m_nGridRes_d)+1)
@@ -810,14 +822,20 @@ public:
       m_global_shift.z--;
       printf("[BoundedVolumeGrid] update global shift z\n");
     }
+    else
+    {
+      std::cerr<<"[BoundedVolumeGrid] Error! Invalid Shift Value! (z)"<<std::endl;
+    }
 
     printf("[BoundedVolumeGrid] local shift: (%d,%d,%d);"
            "Global shift: (%d,%d,%d); Max shift (%d,%d,%d) \n",
-           m_local_shift.x,m_local_shift.y,m_local_shift.z,
-           m_global_shift.x,m_global_shift.y,m_global_shift.z,
-           m_nGridRes_w, m_nGridRes_h,m_nGridRes_d);
+           m_local_shift.x, m_local_shift.y, m_local_shift.z,
+           m_global_shift.x, m_global_shift.y, m_global_shift.z,
+           m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
 
+    // ------------------------------------------------------------------------
     // check if error
+    // ------------------------------------------------------------------------
     if(abs(m_global_shift.x)>99999 || abs(m_global_shift.y)>99999 || abs(m_global_shift.z)>99999 )
     {
       printf("[BoundedVolumeGrid] fatal error! global shift overflow!\n");
@@ -836,7 +854,7 @@ public:
   {
     m_local_shift = m_local_shift + shift_index;
 
-    if(m_local_shift.x == m_nGridRes_w ||  m_local_shift.x == -m_nGridRes_w)
+    if(m_local_shift.x == m_nGridRes_w || m_local_shift.x == -m_nGridRes_w)
     {
       m_local_shift.x = 0;
       printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
