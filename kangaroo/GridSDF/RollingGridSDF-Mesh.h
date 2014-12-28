@@ -92,23 +92,39 @@ public:
 
   // ===========================================================================
   // Get index of grid that need to be freed. Only free grid that just "shift"
+  // shift value from 1 ~ 8
   // ===========================================================================
   template<typename T>
-  inline void GetGridSDFIndexNeedFree(
+  inline void GetGridSDFIndexNeedReset(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
-      int3                                                        shift)
+      int3                                                        cur_shift)
   {
-    if (shift.x==0 && shift.y==0 && shift.z==0)
+    if (cur_shift.x==0 && cur_shift.y==0 && cur_shift.z==0)
     {
       return;
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] Getting Grids index need to be free."<<
-               "local shift ("<<shift.x<<","<<shift.y<<","<< shift.z<<")"<<std::endl;
+    // check if error
+    if(abs(cur_shift.x)> abs(pVol->m_local_shift.x) ||
+       abs(cur_shift.y)> abs(pVol->m_local_shift.y) ||
+       abs(cur_shift.z)> abs(pVol->m_local_shift.z) )
+    {
+      std::cerr<<"[GetGridSDFIndexNeedFree] Fatal Error ! Local shift must < cur shift!"<<std::endl;
+      exit(-1);
+    }
+
+    std::cout<<"[GetGridSDFIndexNeedFree] marking Grids index that need to be reset."<<
+               "cur shift ("<<cur_shift.x<<","<<cur_shift.y<<","<< cur_shift.z<<")"<<
+               " local shift ("<<pVol->m_local_shift.x<<","<<pVol->m_local_shift.y<<
+               ","<<pVol->m_local_shift.x<<")"<<std::endl;
 
     int nResetNum = 0;
-    int3 Index;
     bool bReset = false;
+
+    // real index of a grid, from 0 ~ 7
+    int3 Index;
+
+    // dimision of a grid, usually 8, 16 etc
     int3 GridDim = make_int3(static_cast<int>(pVol->m_nGridRes_w),
                              static_cast<int>(pVol->m_nGridRes_h),
                              static_cast<int>(pVol->m_nGridRes_d));
@@ -123,43 +139,43 @@ public:
           bReset = false;
 
           //----- for x -----
-          if(bReset == false && shift.x > 0 &&
-             Index.x >= pVol->m_local_shift.x - shift.x &&
-             Index.x < pVol->m_local_shift.x)
+          // notice that the local shift is the acculmate local shift.
+          // cur_local_shift = pre_local_shift + cur_shift
+          // cur_shift is the shift in current frame.
+          if(bReset == false && cur_shift.x > 0 &&
+             Index.x >= cur_shift.x && Index.x < pVol->m_local_shift.x)
           {
             bReset = true;
           }
-          else if(bReset == false && shift.x < 0 &&
-                  Index.x >= GridDim.x + pVol->m_local_shift.x &&
-                  Index.x < GridDim.x + pVol->m_local_shift.x - shift.x)
+          else if(bReset == false && cur_shift.x < 0 &&
+                  Index.x >= GridDim.x - pVol->m_local_shift.x &&
+                  Index.x < GridDim.x - (pVol->m_local_shift.x - cur_shift.x) )
           {
             bReset = true;
           }
 
           //----- for y -----
-          if(bReset == false && shift.y > 0 &&
-             Index.y >= pVol->m_local_shift.y - shift.y &&
-             Index.y < pVol->m_local_shift.y)
+          if(bReset == false && cur_shift.y > 0 &&
+             Index.y >= cur_shift.y && Index.y < pVol->m_local_shift.y)
           {
             bReset = true;
           }
-          else if(bReset == false && shift.y < 0 &&
-                  Index.x >= GridDim.y + pVol->m_local_shift.y &&
-                  Index.x < GridDim.y + pVol->m_local_shift.y - shift.y)
+          else if(bReset == false && cur_shift.y < 0 &&
+                  Index.x >= GridDim.y - pVol->m_local_shift.y &&
+                  Index.x < GridDim.y - (pVol->m_local_shift.y - cur_shift.y) )
           {
             bReset = true;
           }
 
           //----- for z -----
-          if(bReset == false && shift.z > 0 &&
-             Index.z >= pVol->m_local_shift.z - shift.z &&
-             Index.z < pVol->m_local_shift.z)
+          if(bReset == false && cur_shift.z > 0 &&
+             Index.z >= cur_shift.z && Index.z < pVol->m_local_shift.z)
           {
             bReset = true;
           }
-          else if(bReset == false && shift.z < 0 &&
-                  Index.x >= GridDim.z + pVol->m_local_shift.z &&
-                  Index.x < GridDim.z + pVol->m_local_shift.z - shift.z)
+          else if(bReset == false && cur_shift.z < 0 &&
+                  Index.x >= GridDim.z - pVol->m_local_shift.z &&
+                  Index.x < GridDim.z - (pVol->m_local_shift.z - cur_shift.z))
           {
             bReset = true;
           }
@@ -182,7 +198,7 @@ public:
       }
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Prepare to Reset & Free "<<
+    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Prepare to Reset "<<
                nResetNum<<" grid;"<<std::endl;
   }
 
