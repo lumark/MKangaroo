@@ -996,7 +996,7 @@ public:
   // will be the same as it was. This fun is to see if the m_global_shift
   // does not reset yet but there is a current shift for the grid.
   // ===========================================================================
-  inline __device__ __host__
+  inline __host__
   int3 GetGlobalIndex(int x, int y, int z) const
   {
     if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
@@ -1004,7 +1004,7 @@ public:
       return m_global_shift;
     }
 
-    // compute global index for single grid
+    // compute the global index for the desire grid
     int3 GlobalIndex = m_global_shift;
 
     // for x
@@ -1022,6 +1022,10 @@ public:
         GlobalIndex.x = m_global_shift.x-1;
       }
     }
+    else
+    {
+      printf("[GetGlobalIndex] Error! Unknown Global Gird index!\n");
+    }
 
     // for y
     if(m_local_shift.y>0 && m_local_shift.y<= int(m_nGridRes_h))
@@ -1038,6 +1042,10 @@ public:
         GlobalIndex.y = m_global_shift.y-1;
       }
     }
+    else
+    {
+      printf("[GetGlobalIndex] Error! Unknown Global Gird index!\n");
+    }
 
     // for z
     if(m_local_shift.z>0 && m_local_shift.z<=int(m_nGridRes_d) )
@@ -1053,6 +1061,10 @@ public:
       {
         GlobalIndex.z = m_global_shift.z-1;
       }
+    }
+    else
+    {
+      printf("[GetGlobalIndex] Error! Unknown Global Gird index!\n");
     }
 
     return  GlobalIndex;
@@ -1082,6 +1094,8 @@ public:
   // an array that record basic SDFs we want to init
   int                            m_NextInitBasicSDFs[MAX_SUPPORT_GRID_NUM];
 };
+
+}
 
 
 //namespace roo
@@ -1397,9 +1411,7 @@ public:
 //  int                            m_NextInitBasicSDFs[MAX_SUPPORT_GRID_NUM];
 //};
 
-
 //}
 
 
 
-}

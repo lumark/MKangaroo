@@ -3,14 +3,6 @@
 namespace roo
 {
 
-// =============================================================================
-// A BoundedVolumeGrid consist n numbers of single volume. Each volume is
-// (m_BasicGridRes*m_BasicGridRes*m_BasicGridRes) cube.
-// Using this function requires calling roo::SDFInitGreyGrid first.
-// =============================================================================
-
-const int MAX_SUPPORT_GRID_NUM = 13824;
-
 // ===========================================================================
 // we cannot implement a constructor for this as we have to use this class
 // as global variables in kernel function, which forbid us to have a constructor.
@@ -985,7 +977,7 @@ BoundingBox BoundedVolumeGrid::GetDesireBB(int3 GlobalIndex)
 // will be the same as it was. This fun is to see if the m_global_shift
 // does not reset yet but there is a current shift for the grid.
 // ===========================================================================
-inline __device__ __host__
+inline __host__
 int3 BoundedVolumeGrid::GetGlobalIndex(int x, int y, int z) const
 {
   if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)

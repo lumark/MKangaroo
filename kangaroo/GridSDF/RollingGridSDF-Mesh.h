@@ -123,13 +123,13 @@ public:
           bReset = false;
 
           //----- for x -----
-          if(shift.x > 0 &&
+          if(bReset == false && shift.x > 0 &&
              Index.x >= pVol->m_local_shift.x - shift.x &&
              Index.x < pVol->m_local_shift.x)
           {
             bReset = true;
           }
-          else if(shift.x < 0 &&
+          else if(bReset == false && shift.x < 0 &&
                   Index.x >= GridDim.x + pVol->m_local_shift.x &&
                   Index.x < GridDim.x + pVol->m_local_shift.x - shift.x)
           {
@@ -137,13 +137,13 @@ public:
           }
 
           //----- for y -----
-          if(shift.y > 0 &&
+          if(bReset == false && shift.y > 0 &&
              Index.y >= pVol->m_local_shift.y - shift.y &&
              Index.y < pVol->m_local_shift.y)
           {
             bReset = true;
           }
-          else if(shift.y < 0 &&
+          else if(bReset == false && shift.y < 0 &&
                   Index.x >= GridDim.y + pVol->m_local_shift.y &&
                   Index.x < GridDim.y + pVol->m_local_shift.y - shift.y)
           {
@@ -151,13 +151,13 @@ public:
           }
 
           //----- for z -----
-          if(shift.z > 0 &&
+          if(bReset == false && shift.z > 0 &&
              Index.z >= pVol->m_local_shift.z - shift.z &&
              Index.z < pVol->m_local_shift.z)
           {
             bReset = true;
           }
-          else if(shift.z < 0 &&
+          else if(bReset == false && shift.z < 0 &&
                   Index.x >= GridDim.z + pVol->m_local_shift.z &&
                   Index.x < GridDim.z + pVol->m_local_shift.z - shift.z)
           {
