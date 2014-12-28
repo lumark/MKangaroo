@@ -138,10 +138,13 @@ public:
         {
           bReset = false;
 
-          //----- for x -----
+          // -------------------------------------------------------------------
           // notice that the local shift is the acculmate local shift.
           // cur_local_shift = pre_local_shift + cur_shift
           // cur_shift is the shift in current frame.
+          // -------------------------------------------------------------------
+
+          //----- for x -----
           if(bReset == false && cur_shift.x > 0 &&
              Index.x >= cur_shift.x && Index.x < pVol->m_local_shift.x)
           {

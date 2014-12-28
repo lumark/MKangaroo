@@ -789,7 +789,7 @@ public:
     else
     {
       std::cerr<<"[BoundedVolumeGrid] Invalid Shift x="<<m_local_shift.x<<"!"<<std::endl;
-      exit(-1);
+//      exit(-1);
     }
 
     // --- for y
@@ -808,7 +808,7 @@ public:
     else
     {
       std::cerr<<"[BoundedVolumeGrid] Invalid Shift y="<<m_local_shift.y<<"!"<<std::endl;
-      exit(-1);
+//      exit(-1);
     }
 
     // --- for z
@@ -827,7 +827,7 @@ public:
     else
     {
       std::cerr<<"[BoundedVolumeGrid] Invalid Shift z="<<m_local_shift.z<<"!"<<std::endl;
-      exit(-1);
+//      exit(-1);
     }
 
     printf("[BoundedVolumeGrid] local shift: (%d,%d,%d);"
@@ -1075,9 +1075,12 @@ public:
   size_t        m_h;
   size_t        m_d;
 
-  int3          m_local_shift;     // compute real index based on the shift
-  int3          m_global_shift;    // when m_shift set to 0, global will ++
-  int3          m_subVol_shift;    // shift for sub bounded volume.
+  // The acculmate local index; cur_local_shift = pre_local_shift + cur_shift
+  // we can compute the real index based on the local shift, its val range: 1 ~ 8
+  int3          m_local_shift;
+
+  // global shift of the bounded box; when m_local_shift set to 0, global will ++
+  int3          m_global_shift;
 
   BoundingBox   m_bbox;            // bounding box of bounded volume grid
 
