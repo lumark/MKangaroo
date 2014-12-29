@@ -82,7 +82,7 @@ public:
     }
 
     // -------------------------------------------------------------------------
-    // reset local and global shift
+    // update local and global shift
     // -------------------------------------------------------------------------
     if(shift_index.x!=0 || shift_index.y!= 0 || shift_index.z!=0)
     {
@@ -113,10 +113,10 @@ public:
       exit(-1);
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] marking Grids index that need to be reset."<<
+    std::cout<<"[GetGridSDFIndexNeedFree] marking Grids index that need to be reset. "<<
                "cur shift ("<<cur_shift.x<<","<<cur_shift.y<<","<< cur_shift.z<<")"<<
                " local shift ("<<pVol->m_local_shift.x<<","<<pVol->m_local_shift.y<<
-               ","<<pVol->m_local_shift.x<<")"<<std::endl;
+               ","<<pVol->m_local_shift.z<<")"<<std::endl;
 
     int nResetNum = 0;
     bool bReset = false;
