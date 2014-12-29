@@ -809,8 +809,9 @@ public:
       printf("[BoundedVolumeGrid] update global shift z\n");
     }
 
-    printf("[BoundedVolumeGrid] cur shift: (%d,%d,%d); local shift: (%d,%d,%d);"
+    printf("[BoundedVolumeGrid] cur shift: (%d,%d,%d); local shift: (%d,%d,%d); "
            "Global shift: (%d,%d,%d); Max local shift (%d,%d,%d) \n",
+           cur_shift.x, cur_shift.y, cur_shift.z,
            m_local_shift.x, m_local_shift.y, m_local_shift.z,
            m_global_shift.x, m_global_shift.y, m_global_shift.z,
            m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
