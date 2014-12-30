@@ -834,7 +834,7 @@ void BoundedVolumeGrid::UpdateLocalAndGlobalShift(int3 shift_index)
 }
 
 inline __host__
-void BoundedVolumeGrid::UpdateLocalShift(int3 shift_index)
+void BoundedVolumeGrid::UpdateLocalShiftOld(int3 shift_index)
 {
   m_local_shift = m_local_shift + shift_index;
 
