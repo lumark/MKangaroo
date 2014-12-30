@@ -109,13 +109,14 @@ public:
        abs(cur_shift.y)> abs(pVol->m_local_shift.y) ||
        abs(cur_shift.z)> abs(pVol->m_local_shift.z) )
     {
-      std::cerr<<"[GetGridSDFIndexNeedFree] Fatal Error ! Local shift must < cur shift!"<<std::endl;
+      std::cerr<<"[GetGridSDFIndexNeedFree] Err! Locshift must<curshift!"<<std::endl;
       exit(-1);
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] marking Grids index that need to be reset. "<<
+    // -------------------------------------------------------------------------
+    std::cout<<"[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."<<
                "cur shift ("<<cur_shift.x<<","<<cur_shift.y<<","<< cur_shift.z<<")"<<
-               " local shift ("<<pVol->m_local_shift.x<<","<<pVol->m_local_shift.y<<
+               ";local shift ("<<pVol->m_local_shift.x<<","<<pVol->m_local_shift.y<<
                ","<<pVol->m_local_shift.z<<")"<<std::endl;
 
     int nResetNum = 0;
@@ -146,7 +147,8 @@ public:
 
           //----- for x -----
           if(bReset == false && cur_shift.x > 0 &&
-             Index.x >= cur_shift.x && Index.x < pVol->m_local_shift.x)
+             Index.x >= pVol->m_local_shift.x - cur_shift.x &&
+             Index.x < pVol->m_local_shift.x)
           {
             bReset = true;
           }
@@ -154,12 +156,13 @@ public:
                   Index.x >= GridDim.x - pVol->m_local_shift.x &&
                   Index.x < GridDim.x - (pVol->m_local_shift.x - cur_shift.x) )
           {
-            bReset = true;
+//            bReset = true;
           }
 
           //----- for y -----
           if(bReset == false && cur_shift.y > 0 &&
-             Index.y >= cur_shift.y && Index.y < pVol->m_local_shift.y)
+             Index.y >= pVol->m_local_shift.y - cur_shift.y &&
+             Index.y < pVol->m_local_shift.y)
           {
             bReset = true;
           }
@@ -167,12 +170,13 @@ public:
                   Index.x >= GridDim.y - pVol->m_local_shift.y &&
                   Index.x < GridDim.y - (pVol->m_local_shift.y - cur_shift.y) )
           {
-            bReset = true;
+//            bReset = true;
           }
 
           //----- for z -----
           if(bReset == false && cur_shift.z > 0 &&
-             Index.z >= cur_shift.z && Index.z < pVol->m_local_shift.z)
+             Index.z >= pVol->m_local_shift.z - cur_shift.z &&
+             Index.z < pVol->m_local_shift.z)
           {
             bReset = true;
           }
@@ -180,7 +184,7 @@ public:
                   Index.x >= GridDim.z - pVol->m_local_shift.z &&
                   Index.x < GridDim.z - (pVol->m_local_shift.z - cur_shift.z))
           {
-            bReset = true;
+//            bReset = true;
           }
 
           // -------------------------------------------------------------------
