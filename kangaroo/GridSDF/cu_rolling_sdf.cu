@@ -371,8 +371,8 @@ void RollingDetShift(
   cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  printf("[cu_rolling_sdf.cu/RollingDetShift] camera translate (%f,%f,%f);"
-         " cur bbox min (%f,%f,%f); bbox max (%f,%f,%f)\n",
+  printf("[cu_rolling_sdf.cu/RollingDetShift] camera translate (%0.2f,%0.2f,%0.2f);"
+         " cur bbox min (%0.2f,%0.2f,%0.2f); bbox max (%0.2f,%0.2f,%0.2f)\n",
          SE3Translation(T_wc).x,SE3Translation(T_wc).y, SE3Translation(T_wc).z,
          vol.m_bbox.boxmin.x, vol.m_bbox.boxmin.y, vol.m_bbox.boxmin.z,
          vol.m_bbox.boxmax.x, vol.m_bbox.boxmax.y, vol.m_bbox.boxmax.z);

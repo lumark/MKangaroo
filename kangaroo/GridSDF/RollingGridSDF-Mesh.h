@@ -29,7 +29,7 @@ public:
       bool                                                        bVerbose = false)
   {
     // -------------------------------------------------------------------------
-    // change bbox min and max value based on the shif parameters
+    // update the bbox min and max value based on the shif parameters
     // -------------------------------------------------------------------------
     if(bVerbose)
     {
@@ -90,6 +90,8 @@ public:
     }
   }
 
+
+
   // ===========================================================================
   // Get index of grid that need to be freed. Only free grid that just "shift"
   // shift value from 1 ~ 8
@@ -104,10 +106,12 @@ public:
       return;
     }
 
+    int3 local_shift = pVol->m_local_shift + cur_shift;
+
     // check if error
-    if(abs(cur_shift.x)> abs(pVol->m_local_shift.x) ||
-       abs(cur_shift.y)> abs(pVol->m_local_shift.y) ||
-       abs(cur_shift.z)> abs(pVol->m_local_shift.z) )
+    if(abs(cur_shift.x)> abs(local_shift.x) ||
+       abs(cur_shift.y)> abs(local_shift.y) ||
+       abs(cur_shift.z)> abs(local_shift.z) )
     {
       std::cerr<<"[GetGridSDFIndexNeedFree] Err! Locshift must<curshift!"<<std::endl;
       exit(-1);
@@ -116,8 +120,8 @@ public:
     // -------------------------------------------------------------------------
     std::cout<<"[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."<<
                "cur shift ("<<cur_shift.x<<","<<cur_shift.y<<","<< cur_shift.z<<")"<<
-               ";local shift ("<<pVol->m_local_shift.x<<","<<pVol->m_local_shift.y<<
-               ","<<pVol->m_local_shift.z<<")"<<std::endl;
+               ";local shift ("<<local_shift.x<<","<<local_shift.y<<
+               ","<<local_shift.z<<")"<<std::endl;
 
     int nResetNum = 0;
     bool bReset = false;
@@ -140,51 +144,51 @@ public:
           bReset = false;
 
           // -------------------------------------------------------------------
-          // notice that the local shift is the acculmate local shift.
-          // cur_local_shift = pre_local_shift + cur_shift
           // cur_shift is the shift in current frame.
+          // notice that the local shift is the acculmate cur shift. Which means:
+          // cur_local_shift = pre_local_shift + cur_shift
           // -------------------------------------------------------------------
 
           //----- for x -----
           if(bReset == false && cur_shift.x > 0 &&
-             Index.x >= pVol->m_local_shift.x - cur_shift.x &&
-             Index.x < pVol->m_local_shift.x)
+             Index.x >= local_shift.x - cur_shift.x &&
+             Index.x < local_shift.x)
           {
             bReset = true;
           }
           else if(bReset == false && cur_shift.x < 0 &&
-                  Index.x >= GridDim.x - pVol->m_local_shift.x &&
-                  Index.x < GridDim.x - (pVol->m_local_shift.x - cur_shift.x) )
+                  Index.x >= GridDim.x - local_shift.x &&
+                  Index.x < GridDim.x - (local_shift.x - cur_shift.x) )
           {
-//            bReset = true;
+            bReset = true;
           }
 
           //----- for y -----
           if(bReset == false && cur_shift.y > 0 &&
-             Index.y >= pVol->m_local_shift.y - cur_shift.y &&
-             Index.y < pVol->m_local_shift.y)
+             Index.y >= local_shift.y - cur_shift.y &&
+             Index.y < local_shift.y)
           {
             bReset = true;
           }
           else if(bReset == false && cur_shift.y < 0 &&
-                  Index.x >= GridDim.y - pVol->m_local_shift.y &&
-                  Index.x < GridDim.y - (pVol->m_local_shift.y - cur_shift.y) )
+                  Index.x >= GridDim.y - local_shift.y &&
+                  Index.x < GridDim.y - (local_shift.y - cur_shift.y) )
           {
-//            bReset = true;
+            bReset = true;
           }
 
           //----- for z -----
           if(bReset == false && cur_shift.z > 0 &&
-             Index.z >= pVol->m_local_shift.z - cur_shift.z &&
-             Index.z < pVol->m_local_shift.z)
+             Index.z >= local_shift.z - cur_shift.z &&
+             Index.z < local_shift.z)
           {
             bReset = true;
           }
           else if(bReset == false && cur_shift.z < 0 &&
-                  Index.x >= GridDim.z - pVol->m_local_shift.z &&
-                  Index.x < GridDim.z - (pVol->m_local_shift.z - cur_shift.z))
+                  Index.x >= GridDim.z - local_shift.z &&
+                  Index.x < GridDim.z - (local_shift.z - cur_shift.z))
           {
-//            bReset = true;
+            bReset = true;
           }
 
           // -------------------------------------------------------------------
