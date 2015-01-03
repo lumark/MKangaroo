@@ -106,17 +106,6 @@ public:
 
     int3 local_shift = pVol->m_local_shift + cur_shift;
 
-    //    // check if error
-    //    if(cur_shift.x> local_shift.x ||
-    //       cur_shift.y> local_shift.y ||
-    //       cur_shift.z> local_shift.z )
-    //    {
-    //      std::cerr<<"[GetGridSDFIndexNeedFree] Err! Locshift must<curshift! cur Shitf("<<
-    //                 cur_shift.x<<","<<cur_shift.y<<","<<cur_shift.z<<"); Loc Shift ("<<
-    //                 local_shift.x<<","<<local_shift.y<<","<<local_shift.z<<")"<<std::endl;
-    //      exit(-1);
-    //    }
-
     // -------------------------------------------------------------------------
     std::cout<<"[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."<<
                "cur shift ("<<cur_shift.x<<","<<cur_shift.y<<","<< cur_shift.z<<")"<<
@@ -124,6 +113,7 @@ public:
                ","<<local_shift.z<<")"<<std::endl;
 
     int nResetNum = 0;
+    int nActualResetNum  = 0;
     bool bReset = false;
 
     // real index of a grid, from 0 ~ 7
@@ -200,6 +190,11 @@ public:
           {
             nResetNum ++;
             m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 1;
+
+            if(pVol->CheckIfBasicSDFActive(nGridIndex))
+            {
+              nActualResetNum ++ ;
+            }
           }
           else
           {
@@ -209,8 +204,9 @@ public:
       }
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Ready to Reset "<<
-               nResetNum<<" grid;"<<std::endl;
+    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Prepare to Reset "<<
+               nResetNum<<" grid (in theory); Actual (active grids) Need to reset "<<
+               nActualResetNum<<std::endl;
   }
 
   // ===========================================================================

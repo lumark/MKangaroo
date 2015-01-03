@@ -970,14 +970,9 @@ void SDFInitGrayGrid(
                                                  T_iw, Krgb, trunc_dist, max_w,
                                                  mincostheta, min_depth);
   GpuCheckErrors();
-
-  //  printf("[SDFInitgrayGrid.cu] Finished kernel.\n");
-
   int nNextInitSDFs[MAX_SUPPORT_GRID_NUM];
   cudaMemcpyFromSymbol(nNextInitSDFs, g_NextInitSDFs, sizeof(g_NextInitSDFs), 0, cudaMemcpyDeviceToHost);
   GpuCheckErrors();
-
-  //  printf("[SDFInitgrayGrid.cu] Finished copy.\n");
 
   // copy array back
   for(int i=0;i!=vol.GetTotalGridNum();i++)
@@ -990,12 +985,10 @@ void SDFInitGrayGrid(
   cudaMemcpyToSymbol(g_NextInitSDFs,nNextInitSDFs,sizeof(nNextInitSDFs),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  // cuda free memory
+  // cuda free global memory
   g_vol_smart.FreeMemory();
   g_grayVol.FreeMemory();
   GpuCheckErrors();
-
-  //  free(nNextInitSDFs);
 }
 
 // -----------------------------------------------------------------------------
