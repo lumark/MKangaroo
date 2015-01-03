@@ -33,7 +33,7 @@ public:
     // -------------------------------------------------------------------------
     if(bVerbose)
     {
-      printf("[UpdateShift] new shift for current frame is x=%d,y=%d,z=%d; Updating BB.\n",
+      printf("[ApplyShiftToVolume] Shift for the current frame is (%d,%d,%d); Updating BB.\n",
              shift_index.x, shift_index.y, shift_index.z);
     }
 
@@ -50,7 +50,7 @@ public:
 
       if(bVerbose)
       {
-        printf("[ApplyShiftToVolume] shift x:%d (index), %f(m), bbmin x->%f, bbmax x->%f\n",
+        printf("[ApplyShiftToVolume] shift x:%d (index), %f(m); bbmin x->%f, bbmax x->%f\n",
                shift_index.x, fx, pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
       }
     }
@@ -63,7 +63,7 @@ public:
 
       if(bVerbose)
       {
-        printf("[ApplyShiftToVolume] shift y:%d(index), %f(m), bbmin y->%f, bbmax y->%f\n",
+        printf("[ApplyShiftToVolume] shift y:%d(index), %f(m); bbmin y->%f, bbmax y->%f\n",
                shift_index.y, fy, pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
       }
     }
@@ -76,7 +76,7 @@ public:
 
       if(bVerbose)
       {
-        printf("[ApplyShiftToVolume] shift z:%d(index), %f(m), bbmin z->%f, bbmax z->%f\n",
+        printf("[ApplyShiftToVolume] shift z:%d(index), %f(m); bbmin z->%f, bbmax z->%f\n",
                shift_index.z, fz, pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
       }
     }
@@ -89,8 +89,6 @@ public:
       pVol->UpdateLocalAndGlobalShift(shift_index);
     }
   }
-
-
 
   // ===========================================================================
   // Get index of grid that need to be freed. Only free grid that just "shift"
@@ -108,14 +106,16 @@ public:
 
     int3 local_shift = pVol->m_local_shift + cur_shift;
 
-    // check if error
-    if(abs(cur_shift.x)> abs(local_shift.x) ||
-       abs(cur_shift.y)> abs(local_shift.y) ||
-       abs(cur_shift.z)> abs(local_shift.z) )
-    {
-      std::cerr<<"[GetGridSDFIndexNeedFree] Err! Locshift must<curshift!"<<std::endl;
-      exit(-1);
-    }
+    //    // check if error
+    //    if(cur_shift.x> local_shift.x ||
+    //       cur_shift.y> local_shift.y ||
+    //       cur_shift.z> local_shift.z )
+    //    {
+    //      std::cerr<<"[GetGridSDFIndexNeedFree] Err! Locshift must<curshift! cur Shitf("<<
+    //                 cur_shift.x<<","<<cur_shift.y<<","<<cur_shift.z<<"); Loc Shift ("<<
+    //                 local_shift.x<<","<<local_shift.y<<","<<local_shift.z<<")"<<std::endl;
+    //      exit(-1);
+    //    }
 
     // -------------------------------------------------------------------------
     std::cout<<"[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."<<
@@ -157,8 +157,8 @@ public:
             bReset = true;
           }
           else if(bReset == false && cur_shift.x < 0 &&
-                  Index.x >= GridDim.x - local_shift.x &&
-                  Index.x < GridDim.x - (local_shift.x - cur_shift.x) )
+                  Index.x >= GridDim.x + local_shift.x &&
+                  Index.x < GridDim.x + (local_shift.x - cur_shift.x) )
           {
             bReset = true;
           }
@@ -171,8 +171,8 @@ public:
             bReset = true;
           }
           else if(bReset == false && cur_shift.y < 0 &&
-                  Index.x >= GridDim.y - local_shift.y &&
-                  Index.x < GridDim.y - (local_shift.y - cur_shift.y) )
+                  Index.x >= GridDim.y + local_shift.y &&
+                  Index.x < GridDim.y + (local_shift.y - cur_shift.y) )
           {
             bReset = true;
           }
@@ -185,8 +185,8 @@ public:
             bReset = true;
           }
           else if(bReset == false && cur_shift.z < 0 &&
-                  Index.x >= GridDim.z - local_shift.z &&
-                  Index.x < GridDim.z - (local_shift.z - cur_shift.z))
+                  Index.x >= GridDim.z + local_shift.z &&
+                  Index.x < GridDim.z + (local_shift.z - cur_shift.z))
           {
             bReset = true;
           }
@@ -209,7 +209,7 @@ public:
       }
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Prepare to Reset "<<
+    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Ready to Reset "<<
                nResetNum<<" grid;"<<std::endl;
   }
 

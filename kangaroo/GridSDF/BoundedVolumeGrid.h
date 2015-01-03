@@ -768,13 +768,13 @@ public:
     {
       m_local_shift.x = 0;
       m_global_shift.x++;
-      printf("[BoundedVolumeGrid] update global shift x\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift x\n");
     }
     else if(m_local_shift.x <= -static_cast<int>(m_nGridRes_w))
     {
       m_local_shift.x = 0;
       m_global_shift.x--;
-      printf("[BoundedVolumeGrid] update global shift x\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift x\n");
     }
 
     // --- for y
@@ -782,13 +782,13 @@ public:
     {
       m_local_shift.y = 0;
       m_global_shift.y++;
-      printf("[BoundedVolumeGrid] update global shift y\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift y\n");
     }
     else if(m_local_shift.y <= -static_cast<int>(m_nGridRes_h))
     {
       m_local_shift.y = 0;
       m_global_shift.y--;
-      printf("[BoundedVolumeGrid] update global shift y\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift y\n");
     }
 
     // --- for z
@@ -796,16 +796,16 @@ public:
     {
       m_local_shift.z = 0;
       m_global_shift.z++;
-      printf("[BoundedVolumeGrid] update global shift z\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift z\n");
     }
     else if(m_local_shift.z <= -static_cast<int>(m_nGridRes_d))
     {
       m_local_shift.z = 0;
       m_global_shift.z--;
-      printf("[BoundedVolumeGrid] update global shift z\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift z\n");
     }
 
-    printf("[BoundedVolumeGrid] cur shift: (%d,%d,%d); local shift: (%d,%d,%d); "
+    printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] cur shift: (%d,%d,%d); local shift: (%d,%d,%d); "
            "Global shift: (%d,%d,%d); Max local shift (%d,%d,%d) \n",
            cur_shift.x, cur_shift.y, cur_shift.z,
            m_local_shift.x, m_local_shift.y, m_local_shift.z,
@@ -819,7 +819,7 @@ public:
        abs(m_local_shift.y)>m_nGridRes_h ||
        abs(m_local_shift.z)>m_nGridRes_d )
     {
-      printf("[BoundedVolumeGrid] fatal error! local shift overflow!\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] fatal error! local shift overflow!\n");
       exit(-1);
     }
 
@@ -827,7 +827,7 @@ public:
        abs(m_global_shift.y)>99999 ||
        abs(m_global_shift.z)>99999 )
     {
-      printf("[BoundedVolumeGrid] fatal error! global shift overflow!\n");
+      printf("[BoundedVolumeGrid/UpdateLocalAndGlobalShift] fatal error! global shift overflow!\n");
       exit(-1);
     }
   }
