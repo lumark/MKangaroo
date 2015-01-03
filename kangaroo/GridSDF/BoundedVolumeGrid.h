@@ -378,6 +378,8 @@ public:
     return VoxelPositionInUnits(p_v.x,p_v.y,p_v.z);
   }
 
+
+  // use in marching cubes
   inline __device__ __host__
   float3 VoxelPositionInUnitsGlobal(
       int x, int y, int z,
@@ -392,9 +394,9 @@ public:
     const float3 vol_size = m_bbox.Size();
 
     float3 local_pos =  make_float3(
-          m_bbox.Min().x + vol_size.x * (float)x/(float)(m_w-1),
-          m_bbox.Min().y + vol_size.y * (float)y/(float)(m_h-1),
-          m_bbox.Min().z + vol_size.z * (float)z/(float)(m_d-1)
+          m_bbox.Min().x + vol_size.x * static_cast<float>(x)/static_cast<float>(m_w-1),
+          m_bbox.Min().y + vol_size.y * static_cast<float>(y)/static_cast<float>(m_h-1),
+          m_bbox.Min().z + vol_size.z * static_cast<float>(z)/static_cast<float>(m_d-1)
           );
 
     float global_pos_x = (static_cast<float>(cur_global.x-min_global.x) + local_pos.x)/
@@ -447,13 +449,13 @@ public:
         {
           if(InitSingleBasicSDFWithIndex(i) == false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+            printf("[Kangaroo/BoundedVolumeGrid] Error! Cannot init grid sdf!!\n");
             exit(-1);
           }
 
           if(CheckIfBasicSDFActive(i)==false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! Init grid sdf fail!!\n");
+            printf("[Kangaroo/BoundedVolumeGrid] Error! Init grid sdf fail!!\n");
             exit(-1);
           }
         }
@@ -475,13 +477,13 @@ public:
         {
           if(InitSingleBasicSDFWithIndex(i)==false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! cannot init grid sdf!!\n");
+            printf("[Kangaroo/BoundedVolumeGrid] Error! Cannot init grid sdf!!\n");
             exit(-1);
           }
 
           if(CheckIfBasicSDFActive(i)==false)
           {
-            printf("[Kangaroo/BoundedVolumeGrid] Fatal error! Init grid sdf fail!!\n");
+            printf("[Kangaroo/BoundedVolumeGrid] Error! Init grid sdf fail!!\n");
             exit(-1);
           }
         }
@@ -541,107 +543,6 @@ public:
     return (pos_w + cam_translate - m_bbox.Min()) / (m_bbox.Size());
   }
 
-
-  //  inline __device__ __host__
-  //  unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
-  //  {
-  //    // return real index directlly if no rolling sdf applied
-  //    if(m_local_shift.x==0 && m_local_shift.y == 0 && m_local_shift.z ==0)
-  //    {
-  //      const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
-  //      return nIndex;
-  //    }
-
-  //    // convert local index to real index if shift is detected
-  //    // --- for x
-  //    if(m_local_shift.x>0 && m_local_shift.x<=static_cast<int>(m_nGridRes_w))
-  //    {
-  //      if( x <= static_cast<int>(m_nGridRes_w) -1- m_local_shift.x )
-  //      {
-  //        x = x + m_local_shift.x;
-  //      }
-  //      else
-  //      {
-  //        x = x - ( static_cast<int>(m_nGridRes_w) - m_local_shift.x );
-  //      }
-  //    }
-  //    else if(m_local_shift.x<0 && m_local_shift.x>=-static_cast<int>(m_nGridRes_w))
-  //    {
-  //      if( x <= static_cast<int>(m_nGridRes_w) -1 -abs(m_local_shift.x) )
-  //      {
-  //        x = x + abs(m_local_shift.x);
-  //      }
-  //      else
-  //      {
-  //        x = x + ( static_cast<int>(m_nGridRes_w) - abs(m_local_shift.x) );
-  //      }
-  //    }
-  //    else
-  //    {
-  //      printf("[BoundedVolumeGrid] Fatal error! Shift x OverFlow!\n");
-  //    }
-
-  //    // --- for y
-  //    if(m_local_shift.y>0 && m_local_shift.y<=static_cast<int>(m_nGridRes_h))
-  //    {
-  //      if( y<=static_cast<int>(m_nGridRes_h)-1-m_local_shift.y)
-  //      {
-  //        y = y+m_local_shift.y;
-  //      }
-  //      else
-  //      {
-  //        y = y- ( static_cast<int>(m_nGridRes_h) - m_local_shift.y );
-  //      }
-  //    }
-  //    else if(m_local_shift.y<0 && m_local_shift.y>=-static_cast<int>(m_nGridRes_h))
-  //    {
-  //      if(y <= static_cast<int>(m_nGridRes_h) -1- abs(m_local_shift.y) )
-  //      {
-  //        y = y + abs(m_local_shift.y);
-  //      }
-  //      else
-  //      {
-  //        y = y + ( static_cast<int>(m_nGridRes_h) - abs(m_local_shift.y) );
-  //      }
-  //    }
-  //    else
-  //    {
-  //      printf("[BoundedVolumeGrid] Fatal error! Shift y OverFlow!\n");
-  //    }
-
-  //    // --- for z
-  //    if(m_local_shift.z>0 && m_local_shift.z<=static_cast<int>(m_nGridRes_d) )
-  //    {
-  //      if(z <= static_cast<int>(m_nGridRes_d) -1 - m_local_shift.z  )
-  //      {
-  //        z = z + m_local_shift.z;
-  //      }
-  //      else
-  //      {
-  //        z = z - ( static_cast<int>(m_nGridRes_d) - m_local_shift.z );
-  //      }
-  //    }
-  //    else if(m_local_shift.z<0 && m_local_shift.z>=-static_cast<int>(m_nGridRes_d))
-  //    {
-  //      if(z <= static_cast<int>(m_nGridRes_d) -1- abs(m_local_shift.z) )
-  //      {
-  //        z = z + abs(m_local_shift.z);
-  //      }
-  //      else
-  //      {
-  //        z = z + ( static_cast<int>(m_nGridRes_d) - abs(m_local_shift.z) );
-  //      }
-  //    }
-  //    else
-  //    {
-  //      printf("[BoundedVolumeGrid] Fatal error! Shift z OverFlow!\n");
-
-  //    }
-
-  //    // compute the actual index
-  //    const unsigned int nIndex = x + m_nGridRes_w* (y+ m_nGridRes_h* z);
-  //    return  nIndex;
-  //  }
 
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
