@@ -104,7 +104,7 @@ public:
       unsigned int y,
       unsigned int z)
   {
-    int nIndex =ConvertLocalIndexToRealIndex(
+    int nIndex = ConvertLocalIndexToRealIndex(
           static_cast<int>(floorf(x/m_nVolumeGridRes)),
           static_cast<int>(floorf(y/m_nVolumeGridRes)),
           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
@@ -320,7 +320,7 @@ public:
     /// get pose of voxel in whole sdf, in %
     float3 pos_v = (pos_w - m_bbox.Min()) / (m_bbox.Size());
 
-    if(pos_v.x>=1){ pos_v.x =0.99999f;}
+    if(pos_v.x>=1){pos_v.x =0.99999f;}
     else if(pos_v.x<0) { pos_v.x =0.f;}
 
     if(pos_v.y>=1){pos_v.y =0.99999f;}
@@ -459,6 +459,7 @@ public:
             exit(-1);
           }
         }
+
         m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
         GpuCheckErrors();
       }
@@ -468,7 +469,7 @@ public:
   inline __host__
   void CopyAndInitFrom(BoundedVolumeGrid<T, TargetHost, Management>& rHVol )
   {
-    for(unsigned int i=0;i!= GetTotalGridNum();i++)
+    for(unsigned int i=0; i!= GetTotalGridNum(); i++)
     {
       // skip void volum grid
       if(rHVol.CheckIfBasicSDFActive(i)== true)
@@ -525,7 +526,7 @@ public:
 
 
   //////////////////////////////////////////////////////
-  // for rolling SDF
+  // For rolling SDF
   //////////////////////////////////////////////////////
   inline __device__
   float3 GetPrecentagePosInBB(float3 pos_w, float3 cam_translate) const
@@ -533,7 +534,7 @@ public:
     // pos_w: world pose of the voxel in the camera frame
     // cam_translate: world pose of the camera
     // this function get pose of the voxel in whole bounding box, in %
-    // notice that here, bbox is in gobal pose
+    // notice that the bbox is in gobal pose
     float3 final_pose;
     if(pos_w.x>=0)
     {
@@ -564,7 +565,6 @@ public:
 
     return final_pose / m_bbox.Size();
   }
-
 
   inline __device__ __host__
   unsigned int ConvertLocalIndexToRealIndex(int x, int y, int z) const
@@ -867,7 +867,6 @@ public:
   //////////////////////////////////////////////////////
   // Global SDF (Save/Load SDF)
   //////////////////////////////////////////////////////
-
   // ===========================================================================
   // get bb of current global index without any shift parameters
   // ===========================================================================
@@ -894,10 +893,9 @@ public:
   }
 
   // ===========================================================================
-  // input the index of grid sdf that want to access. return its global index.
-  // If the index is shift, its global index will ++. Otherwise, its global index
-  // will be the same as it was. This fun is to see if the m_global_shift
-  // does not reset yet but there is a current shift for the grid.
+  // input the index of grid sdf that need to access. return its global index.
+  // If the index indicates shift, its global index will++. Otherwise, its global index
+  // will be the same as it was. (used when access grids as mesh)
   // ===========================================================================
   inline __host__
   int3 GetGlobalIndex(int x, int y, int z) const
@@ -978,7 +976,7 @@ public:
   size_t        m_h;
   size_t        m_d;
 
-  // The acculmate local index; cur_local_shift = pre_local_shift + cur_shift
+  // The acculmate local shift; cur_local_shift = pre_local_shift + cur_shift
   // we can compute the real index based on the local shift, its val range: 1 ~ 8
   int3          m_local_shift;
 
