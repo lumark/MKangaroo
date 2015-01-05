@@ -535,11 +535,12 @@ public:
   //  }
 
   inline __device__
-  float3 GetShiftValue(float3 pos_w, float3 cam_translate) const
+  float3 GetPosInBB(float3 pos_w, float3 cam_translate) const
   {
     // pos_w: world pose of the voxel in the camera frame
     // cam_translate: world pose of the camera
     // this function get pose of the voxel in whole bounding box, in %
+    // notice that here, bbox is in gobal pose
     return (pos_w + cam_translate - m_bbox.Min()) / (m_bbox.Size());
   }
 
@@ -669,13 +670,13 @@ public:
     {
       m_local_shift.x = 0;
       m_global_shift.x++;
-      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift x\n");
+      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift in x\n");
     }
     else if(m_local_shift.x <= -static_cast<int>(m_nGridRes_w))
     {
       m_local_shift.x = 0;
       m_global_shift.x--;
-      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift x\n");
+      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift in x\n");
     }
 
     // --- for y
@@ -683,13 +684,13 @@ public:
     {
       m_local_shift.y = 0;
       m_global_shift.y++;
-      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift y\n");
+      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift in y\n");
     }
     else if(m_local_shift.y <= -static_cast<int>(m_nGridRes_h))
     {
       m_local_shift.y = 0;
       m_global_shift.y--;
-      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift y\n");
+      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift in y\n");
     }
 
     // --- for z
@@ -697,17 +698,17 @@ public:
     {
       m_local_shift.z = 0;
       m_global_shift.z++;
-      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift z\n");
+      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift in z\n");
     }
     else if(m_local_shift.z <= -static_cast<int>(m_nGridRes_d))
     {
       m_local_shift.z = 0;
       m_global_shift.z--;
-      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift z\n");
+      printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] update global shift in z\n");
     }
 
-    printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] cur shift: (%d,%d,%d); local shift: (%d,%d,%d); "
-           "Global shift: (%d,%d,%d); Max local shift (%d,%d,%d) \n",
+    printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] cur shift: (%d,%d,%d);"
+           "local shift: (%d,%d,%d); Global shift: (%d,%d,%d); Max local shift: (%d,%d,%d) \n",
            cur_shift.x, cur_shift.y, cur_shift.z,
            m_local_shift.x, m_local_shift.y, m_local_shift.z,
            m_global_shift.x, m_global_shift.y, m_global_shift.z,
@@ -716,9 +717,9 @@ public:
     // ------------------------------------------------------------------------
     // check if error
     // ------------------------------------------------------------------------
-    if(abs(m_local_shift.x)>m_nGridRes_w ||
-       abs(m_local_shift.y)>m_nGridRes_h ||
-       abs(m_local_shift.z)>m_nGridRes_d )
+    if(abs(m_local_shift.x) > m_nGridRes_w ||
+       abs(m_local_shift.y) > m_nGridRes_h ||
+       abs(m_local_shift.z) > m_nGridRes_d )
     {
       printf("   [BoundedVolumeGrid/UpdateLocalAndGlobalShift] fatal error! local shift overflow!\n");
       exit(-1);
