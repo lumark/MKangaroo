@@ -251,8 +251,8 @@ void RollingGridSdfCuda(
 // =============================================================================
 // raycast grid gray SDF
 // =============================================================================
-__device__ float3 g_positive_shift;
-__device__ float3 g_negative_shift;
+__device__ float3 g_positive_precentage_shift;
+__device__ float3 g_negative_precentage_shift;
 __global__ void KernDetectRollingSdfShift(
     Image<float>                                                  imgdepth,
     const Mat<float,3,4>                                          T_wc,
@@ -270,44 +270,44 @@ __global__ void KernDetectRollingSdfShift(
       const float3 T_wc_translate = SE3Translation(T_wc);
 
       // check if the pixel is out of BB. shift is the change of % of poses in BB
-      float3 shift_precentage = g_vol.GetPosInBB(ray_w, T_wc_translate);
+      float3 cur_precentage_shift = g_vol.GetPrecentagePosInBB(ray_w, T_wc_translate);
 
       // if shift > 1: (the current bounding box (BB) cannot hold the new pixel)
-      if(abs(shift_precentage.x) > 1.f)
+      if(abs(cur_precentage_shift.x) > 1.f)
       {
-        if(shift_precentage.x > g_positive_shift.x)
+        if(cur_precentage_shift.x > g_positive_precentage_shift.x)
         {
-          g_positive_shift.x = shift_precentage.x;
+          g_positive_precentage_shift.x = cur_precentage_shift.x;
         }
-        else if(shift_precentage.x < g_negative_shift.x)
+        else if(cur_precentage_shift.x < g_negative_precentage_shift.x)
         {
-          g_negative_shift.x = shift_precentage.x;
+          g_negative_precentage_shift.x = cur_precentage_shift.x;
         }
       }
 
       // if shift > 1: (the current bounding box (BB) cannot hold the new pixel)
-      if( abs(shift_precentage.y) > 1.f)
+      if( abs(cur_precentage_shift.y) > 1.f)
       {
-        if(shift_precentage.y > g_positive_shift.y)
+        if(cur_precentage_shift.y > g_positive_precentage_shift.y)
         {
-          g_positive_shift.y = shift_precentage.y;
+          g_positive_precentage_shift.y = cur_precentage_shift.y;
         }
-        else if(shift_precentage.y < g_negative_shift.y)
+        else if(cur_precentage_shift.y < g_negative_precentage_shift.y)
         {
-          g_negative_shift.y = shift_precentage.y;
+          g_negative_precentage_shift.y = cur_precentage_shift.y;
         }
       }
 
       // if shift > 1: (the current bounding box (BB) cannot hold the new pixel)
-      if( abs(shift_precentage.z) > 1.f)
+      if( abs(cur_precentage_shift.z) > 1.f)
       {
-        if(shift_precentage.z > g_positive_shift.z)
+        if(cur_precentage_shift.z > g_positive_precentage_shift.z)
         {
-          g_positive_shift.z = shift_precentage.z;
+          g_positive_precentage_shift.z = cur_precentage_shift.z;
         }
-        else if(shift_precentage.z < g_negative_shift.z)
+        else if(cur_precentage_shift.z < g_negative_precentage_shift.z)
         {
-          g_negative_shift.z = shift_precentage.z;
+          g_negative_precentage_shift.z = cur_precentage_shift.z;
         }
       }
     }
@@ -326,25 +326,28 @@ void RollingDetShift(
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  // init the pose_shift to 0
+  // init the precentage shift value to 0
   positive_shift = make_float3(0,0,0);
   negative_shift = make_float3(0,0,0);
 
-  cudaMemcpyToSymbol(g_positive_shift,&positive_shift,sizeof(positive_shift),0,cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_positive_precentage_shift,&positive_shift,sizeof(positive_shift),0,cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_negative_precentage_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  printf("[cu_rolling_sdf.cu/RollingDetShift] camera translate (%f,%f,%f)\n",
-         SE3Translation(T_wc).x,SE3Translation(T_wc).y, SE3Translation(T_wc).z);
+  printf("[cu_rolling_sdf.cu/RollingDetShift] camera translate (%0.3f,%0.3f,%0.3f);"
+         " cur bbox min (%0.3f,%0.3f,%0.3f); bbox max (%0.3f,%0.3f,%0.3f)\n",
+         SE3Translation(T_wc).x,SE3Translation(T_wc).y, SE3Translation(T_wc).z,
+         vol.m_bbox.boxmin.x, vol.m_bbox.boxmin.y, vol.m_bbox.boxmin.z,
+         vol.m_bbox.boxmax.x, vol.m_bbox.boxmax.y, vol.m_bbox.boxmax.z);
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
   KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
   GpuCheckErrors();
 
-  // copy camera shift back to host memory
-  cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
-  cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
+  // copy the actual camera shift (in precentage) back to the host memory
+  cudaMemcpyFromSymbol(&positive_shift,g_positive_precentage_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(&negative_shift,g_negative_precentage_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
   g_vol.FreeMemory();
@@ -363,12 +366,12 @@ void RollingDetShift(
   cudaMemcpyToSymbol(g_vol, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
-  // set shift to 0
+  // set the shift value to 0
   positive_shift = make_float3(0,0,0);
   negative_shift = make_float3(0,0,0);
 
-  cudaMemcpyToSymbol(g_positive_shift,&positive_shift,sizeof(positive_shift),0,cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(g_negative_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_positive_precentage_shift,&positive_shift,sizeof(positive_shift),0,cudaMemcpyHostToDevice);
+  cudaMemcpyToSymbol(g_negative_precentage_shift,&negative_shift,sizeof(negative_shift),0,cudaMemcpyHostToDevice);
   GpuCheckErrors();
 
   printf("[cu_rolling_sdf.cu/RollingDetShift] camera translate (%0.3f,%0.3f,%0.3f);"
@@ -382,8 +385,8 @@ void RollingDetShift(
   KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
   GpuCheckErrors();
 
-  cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
-  cudaMemcpyFromSymbol(&negative_shift,g_negative_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(&positive_shift,g_positive_precentage_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
+  cudaMemcpyFromSymbol(&negative_shift,g_negative_precentage_shift,sizeof(negative_shift),0,cudaMemcpyDeviceToHost);
   GpuCheckErrors();
 
   g_vol.FreeMemory();
