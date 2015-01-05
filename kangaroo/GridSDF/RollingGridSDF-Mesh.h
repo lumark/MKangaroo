@@ -39,45 +39,45 @@ public:
 
     float3 BBSize = pVol->m_bbox.Size();
 
-    // -------------------------------------------------------------------------
-    // Compute the latest bounding box based on the shift parameter
-    // -------------------------------------------------------------------------
+    /// -------------------------------------------------------------------------
+    /// Compute the latest bounding box based on the shift parameter
+    /// -------------------------------------------------------------------------
     if(shift_index.x!=0)
     {
-      float fx = static_cast<float>(shift_index.x) * BBSize.x/static_cast<float>(pVol->m_nGridRes_w);
-      pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x + fx;
-      pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x + fx;
+      float new_x = static_cast<float>(shift_index.x) * BBSize.x / static_cast<float>(pVol->m_nGridRes_w);
+      pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x + new_x;
+      pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x + new_x;
 
       if(bVerbose)
       {
         printf("  [ApplyShiftToVolume] shift x:%d (index), %f(m); bbmin x->%f, bbmax x->%f\n",
-               shift_index.x, fx, pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
+               shift_index.x, new_x, pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
       }
     }
 
     if(shift_index.y!=0)
     {
-      float fy = static_cast<float>(shift_index.y) * BBSize.y/static_cast<float>(pVol->m_nGridRes_h);
-      pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y + fy;
-      pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y + fy;
+      float new_y = static_cast<float>(shift_index.y) * BBSize.y / static_cast<float>(pVol->m_nGridRes_h);
+      pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y + new_y;
+      pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y + new_y;
 
       if(bVerbose)
       {
         printf("  [ApplyShiftToVolume] shift y:%d(index), %f(m); bbmin y->%f, bbmax y->%f\n",
-               shift_index.y, fy, pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
+               shift_index.y, new_y, pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
       }
     }
 
     if(shift_index.z!=0)
     {
-      float fz = static_cast<float>(shift_index.z) * BBSize.z/static_cast<float>(pVol->m_nGridRes_d);
-      pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z + fz;
-      pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z + fz;
+      float new_z = static_cast<float>(shift_index.z) * BBSize.z / static_cast<float>(pVol->m_nGridRes_d);
+      pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z + new_z;
+      pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z + new_z;
 
       if(bVerbose)
       {
         printf("  [ApplyShiftToVolume] shift z:%d(index), %f(m); bbmin z->%f, bbmax z->%f\n",
-               shift_index.z, fz, pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
+               shift_index.z, new_z, pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
       }
     }
 
