@@ -33,14 +33,14 @@ public:
     // -------------------------------------------------------------------------
     if(bVerbose)
     {
-      printf("[ApplyShiftToVolume] Shift for the current frame is (%d,%d,%d); Updating BB.\n",
+      printf("  [ApplyShiftToVolume] Shift for the current frame is (%d,%d,%d); Updating BB.\n",
              shift_index.x, shift_index.y, shift_index.z);
     }
 
     float3 BBSize = pVol->m_bbox.Size();
 
     // -------------------------------------------------------------------------
-    // Compute the latest bounding box
+    // Compute the latest bounding box based on the shift parameter
     // -------------------------------------------------------------------------
     if(shift_index.x!=0)
     {
@@ -50,7 +50,7 @@ public:
 
       if(bVerbose)
       {
-        printf("[ApplyShiftToVolume] shift x:%d (index), %f(m); bbmin x->%f, bbmax x->%f\n",
+        printf("  [ApplyShiftToVolume] shift x:%d (index), %f(m); bbmin x->%f, bbmax x->%f\n",
                shift_index.x, fx, pVol->m_bbox.boxmin.x, pVol->m_bbox.boxmax.x);
       }
     }
@@ -63,7 +63,7 @@ public:
 
       if(bVerbose)
       {
-        printf("[ApplyShiftToVolume] shift y:%d(index), %f(m); bbmin y->%f, bbmax y->%f\n",
+        printf("  [ApplyShiftToVolume] shift y:%d(index), %f(m); bbmin y->%f, bbmax y->%f\n",
                shift_index.y, fy, pVol->m_bbox.boxmin.y, pVol->m_bbox.boxmax.y);
       }
     }
@@ -76,7 +76,7 @@ public:
 
       if(bVerbose)
       {
-        printf("[ApplyShiftToVolume] shift z:%d(index), %f(m); bbmin z->%f, bbmax z->%f\n",
+        printf("  [ApplyShiftToVolume] shift z:%d(index), %f(m); bbmin z->%f, bbmax z->%f\n",
                shift_index.z, fz, pVol->m_bbox.boxmin.z, pVol->m_bbox.boxmax.z);
       }
     }
@@ -89,6 +89,9 @@ public:
       pVol->UpdateLocalAndGlobalShift(shift_index);
     }
   }
+
+
+
 
   // ===========================================================================
   // Get index of grid that need to be freed. Only free grid that just "shift"
@@ -107,7 +110,7 @@ public:
     int3 local_shift = pVol->m_local_shift + cur_shift;
 
     // -------------------------------------------------------------------------
-    std::cout<<"[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."<<
+    std::cout<<"  [GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."<<
                "cur shift ("<<cur_shift.x<<","<<cur_shift.y<<","<< cur_shift.z<<")"<<
                ";local shift ("<<local_shift.x<<","<<local_shift.y<<
                ","<<local_shift.z<<")"<<std::endl;
@@ -204,7 +207,7 @@ public:
       }
     }
 
-    std::cout<<"[GetGridSDFIndexNeedFree] Finished. Prepare to Reset "<<
+    std::cout<<"  [GetGridSDFIndexNeedFree] Finished. Prepare to Reset "<<
                nResetNum<<" grid (in theory); Actual (active grids) Need to reset "<<
                nActualResetNum<<std::endl;
   }

@@ -79,9 +79,9 @@ __global__ void KernSdfInitGrayGrid(
             if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
             {
               int nIndex = g_vol.ConvertLocalIndexToRealIndex(
-                    int(floorf(x/g_vol.m_nVolumeGridRes)),
-                    int(floorf(y/g_vol.m_nVolumeGridRes)),
-                    int(floorf(z/g_vol.m_nVolumeGridRes)) );
+                    static_cast<int>(floorf(x/g_vol.m_nVolumeGridRes)),
+                    static_cast<int>(floorf(y/g_vol.m_nVolumeGridRes)),
+                    static_cast<int>(floorf(z/g_vol.m_nVolumeGridRes)) );
               g_NextInitSDFs[nIndex] = 1;
             }
           }
@@ -144,10 +144,6 @@ void SDFInitGrayGrid(
   g_vol.FreeMemory();
   g_grayVol.FreeMemory();
   GpuCheckErrors();
-
-  //  free(nNextInitSDFs);
-
-  //  printf("[SDFInitgrayGrid.cu] Finished.\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -332,9 +328,9 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
         {
           //        }else if(sd < 5*trunc_dist) {
           int nIndex = g_vol.ConvertLocalIndexToRealIndex(
-                int(floorf(x/g_vol.m_nVolumeGridRes)),
-                int(floorf(y/g_vol.m_nVolumeGridRes)),
-                int(floorf(z/g_vol.m_nVolumeGridRes)) );
+                static_cast<int>(floorf(x/g_vol.m_nVolumeGridRes)),
+                static_cast<int>(floorf(y/g_vol.m_nVolumeGridRes)),
+                static_cast<int>(floorf(z/g_vol.m_nVolumeGridRes)) );
 
           if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth && costheta > mincostheta )
           {
@@ -355,9 +351,9 @@ __global__ void KernSdfFuseDirectGrayGridSafe(
             else
             {
               printf("[KernSdfFuseDirectgrayGridSafe] warnning!!! skip %d,%d,%d when fusing!!!\n",
-                     int(floorf(x/g_vol.m_nVolumeGridRes)),
-                     int(floorf(y/g_vol.m_nVolumeGridRes)),
-                     int(floorf(z/g_vol.m_nVolumeGridRes)) );
+                     static_cast<int>(floorf(x/g_vol.m_nVolumeGridRes)),
+                     static_cast<int>(floorf(y/g_vol.m_nVolumeGridRes)),
+                     static_cast<int>(floorf(z/g_vol.m_nVolumeGridRes)) );
             }
           }
         }
@@ -925,12 +921,12 @@ __global__ void KernSdfInitGrayGridSmart(
           else
           {
             //        }else if(sd < 5*trunc_dist) {
-            if(/*sd < 5*trunc_dist && */isfinite(md)  && costheta > mincostheta )
+            if(/*sd < 5*trunc_dist && */isfinite(md) && md>min_depth  && costheta > mincostheta )
             {
               int nIndex = g_vol_smart.ConvertLocalIndexToRealIndex(
-                    int(floorf(x/g_vol_smart.m_nVolumeGridRes)),
-                    int(floorf(y/g_vol_smart.m_nVolumeGridRes)),
-                    int(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
+                    static_cast<int>(floorf(x/g_vol_smart.m_nVolumeGridRes)),
+                    static_cast<int>(floorf(y/g_vol_smart.m_nVolumeGridRes)),
+                    static_cast<int>(floorf(z/g_vol_smart.m_nVolumeGridRes)) );
 
               g_NextInitSDFs[nIndex] = 1;
             }
