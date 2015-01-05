@@ -256,7 +256,6 @@ __device__ float3 g_negative_shift;
 __global__ void KernDetectRollingSdfShift(
     Image<float>                                                  imgdepth,
     const Mat<float,3,4>                                          T_wc,
-    float3                                                        T_wc_translate,
     ImageIntrinsics                                               K )
 {
   const int u = blockIdx.x*blockDim.x + threadIdx.x;
@@ -268,9 +267,10 @@ __global__ void KernDetectRollingSdfShift(
     {
       const float3 ray_c = K.Unproject(u,v);
       const float3 ray_w = mulSO3(T_wc, ray_c);
+      const float3 T_wc_translate = SE3Translation(T_wc);
 
       // check if the pixel is out of BB. shift is the change of % of poses in BB
-      float3 shift_precentage = g_vol.GetShiftValue(ray_w, T_wc_translate);
+      float3 shift_precentage = g_vol.GetPosInBB(ray_w, T_wc_translate);
 
       // if shift > 1: (the current bounding box (BB) cannot hold the new pixel)
       if(abs(shift_precentage.x) > 1.f)
@@ -339,7 +339,7 @@ void RollingDetShift(
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
-  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, SE3Translation(T_wc), K);
+  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
   GpuCheckErrors();
 
   // copy camera shift back to host memory
@@ -379,7 +379,7 @@ void RollingDetShift(
 
   dim3 blockDim, gridDim;
   InitDimFromOutputImageOver(blockDim, gridDim, depth);
-  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, SE3Translation(T_wc), K);
+  KernDetectRollingSdfShift<<<gridDim,blockDim>>>(depth, T_wc, K);
   GpuCheckErrors();
 
   cudaMemcpyFromSymbol(&positive_shift,g_positive_shift,sizeof(positive_shift),0,cudaMemcpyDeviceToHost);
