@@ -527,21 +527,42 @@ public:
   //////////////////////////////////////////////////////
   // for rolling SDF
   //////////////////////////////////////////////////////
-  //  inline __device__
-  //  float3 GetShiftValue(float3 pos_w) const
-  //  {
-  //    /// get pose of voxel in whole sdf, in %
-  //    return (pos_w - m_bbox.Min()) / (m_bbox.Size());
-  //  }
-
   inline __device__
-  float3 GetPosInBB(float3 pos_w, float3 cam_translate) const
+  float3 GetPrecentagePosInBB(float3 pos_w, float3 cam_translate) const
   {
     // pos_w: world pose of the voxel in the camera frame
     // cam_translate: world pose of the camera
     // this function get pose of the voxel in whole bounding box, in %
     // notice that here, bbox is in gobal pose
-    return (pos_w + cam_translate - m_bbox.Min()) / (m_bbox.Size());
+    float3 final_pose;
+    if(pos_w.x>=0)
+    {
+      final_pose.x =pos_w.x + cam_translate.x - m_bbox.Min().x;
+    }
+    else
+    {
+      final_pose.x =pos_w.x + cam_translate.x - m_bbox.Max().x;
+    }
+
+    if(pos_w.y>=0)
+    {
+      final_pose.y =pos_w.y + cam_translate.y - m_bbox.Min().y;
+    }
+    else
+    {
+      final_pose.y =pos_w.y + cam_translate.y - m_bbox.Max().y;
+    }
+
+    if(pos_w.z>=0)
+    {
+      final_pose.z =pos_w.z + cam_translate.z - m_bbox.Min().z;
+    }
+    else
+    {
+      final_pose.z =pos_w.z + cam_translate.z - m_bbox.Max().z;
+    }
+
+    return final_pose / m_bbox.Size();
   }
 
 
