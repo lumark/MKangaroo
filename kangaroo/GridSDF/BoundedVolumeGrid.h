@@ -408,9 +408,9 @@ public:
 
     float3 global_pos = make_float3(global_pos_x, global_pos_y, global_pos_z);
 
-    printf("LocalPos:(%f,%f,%f) GlobalPos(%f,%f,%f)",
-           local_pos.x,local_pos.y,local_pos.z,
-           global_pos.x,global_pos.y,global_pos.z);
+    //    printf("LocalPos:(%f,%f,%f) GlobalPos(%f,%f,%f)",
+    //           local_pos.x,local_pos.y,local_pos.z,
+    //           global_pos.x,global_pos.y,global_pos.z);
 
     return global_pos;
   }
