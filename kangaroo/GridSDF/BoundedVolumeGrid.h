@@ -909,14 +909,14 @@ public:
     int3 GlobalIndex = m_global_shift;
 
     // for x
-    if(m_local_shift.x>0 && m_local_shift.x<=int(m_nGridRes_w))
+    if(m_local_shift.x>=0 && m_local_shift.x<=static_cast<int>(m_nGridRes_w))
     {
       if(x<m_local_shift.x)
       {
         GlobalIndex.x = m_global_shift.x+1;
       }
     }
-    else if( m_local_shift.x<0 && m_local_shift.x>=-int(m_nGridRes_w) )
+    else if( m_local_shift.x<0 && m_local_shift.x>=-static_cast<int>(m_nGridRes_w) )
     {
       if( x<= abs(m_local_shift.x) )
       {
@@ -925,18 +925,19 @@ public:
     }
     else
     {
-      printf("[GetGlobalIndex] Error! Unknown Global Gird index!\n");
+      printf("[BoundedVolumeGrid/GetGlobalIndex] Error! Unknown local Gird index!\n");
+      exit(-1);
     }
 
     // for y
-    if(m_local_shift.y>0 && m_local_shift.y<= int(m_nGridRes_h))
+    if(m_local_shift.y>=0 && m_local_shift.y<= static_cast<int>(m_nGridRes_h))
     {
       if(y<m_local_shift.y)
       {
         GlobalIndex.y = m_global_shift.y+1;
       }
     }
-    else if(m_local_shift.y<0 && m_local_shift.y>=-int(m_nGridRes_h))
+    else if(m_local_shift.y<0 && m_local_shift.y>=-static_cast<int>(m_nGridRes_h))
     {
       if( y<=abs(m_local_shift.y) )
       {
@@ -945,18 +946,19 @@ public:
     }
     else
     {
-      printf("[GetGlobalIndex] Error! Unknown Global Gird index!\n");
+      printf("[BoundedVolumeGrid/GetGlobalIndex] Error! Unknown local Gird index!\n");
+      exit(-1);
     }
 
     // for z
-    if(m_local_shift.z>0 && m_local_shift.z<=int(m_nGridRes_d) )
+    if(m_local_shift.z>=0 && m_local_shift.z<=static_cast<int>(m_nGridRes_d) )
     {
       if(z<m_local_shift.z)
       {
         GlobalIndex.z = m_global_shift.z+1;
       }
     }
-    else if(m_local_shift.z<0 && m_local_shift.z>=-int(m_nGridRes_d))
+    else if(m_local_shift.z<0 && m_local_shift.z>=-static_cast<int>(m_nGridRes_d))
     {
       if( z<=abs(m_local_shift.z) )
       {
@@ -965,7 +967,8 @@ public:
     }
     else
     {
-      printf("[GetGlobalIndex] Error! Unknown Global Gird index!\n");
+      printf("[BoundedVolumeGrid/GetGlobalIndex] Error! Unknown local Gird index!\n");
+      exit(-1);
     }
 
     return  GlobalIndex;
