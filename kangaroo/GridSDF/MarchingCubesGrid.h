@@ -164,11 +164,11 @@ inline void SaveMeshGridToFile(
                                (sFilename + "."+sFormat.c_str()).c_str(), 0);
   if(res == 0)
   {
-    std::cout << "Mesh export success: " << res << std::endl;
+    std::cout << "[SaveMeshGridToFile] Mesh export success." <<std::endl;
   }
   else
   {
-    std::cerr << "Mesh export fail: " << res << std::endl;
+    std::cerr << "[SaveMeshGridToFile] Mesh export fail." << std::endl;
   }
 }
 
