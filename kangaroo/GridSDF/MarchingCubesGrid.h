@@ -99,7 +99,7 @@ aiMesh* GetMeshGrid(
       {
         if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)) == true)
         {
-          GenMeshSingleGrid(vol,volColor,i,j,k,verts, norms, faces, colors);
+          GenMeshSingleGrid(vol,volColor,make_int3(i,j,k),verts, norms, faces, colors);
           nNumSave++;
         }
         else
@@ -136,7 +136,7 @@ aiMesh* GetMeshGrid(
 ////////////////////////////////////////////////////////////////////////////////
 // here also support .obj file.
 KANGAROO_EXPORT
-inline void SaveMeshGridToFile(
+inline bool SaveMeshGridToFile(
     std::string                                       sFilename,
     aiMesh*                                           pMesh,
     std::string                                       sFormat ="ply")
@@ -165,10 +165,12 @@ inline void SaveMeshGridToFile(
   if(res == 0)
   {
     std::cout << "[SaveMeshGridToFile] Mesh export success." <<std::endl;
+    return true;
   }
   else
   {
     std::cerr << "[SaveMeshGridToFile] Mesh export fail." << std::endl;
+    return false;
   }
 }
 
@@ -626,7 +628,8 @@ void SaveMeshGrid(
       {
         if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)) == true)
         {
-          GenMeshSingleGrid(vol,volColor,i,j,k,ObjMesh.verts,
+
+          GenMeshSingleGrid(vol,volColor, make_int3(i, j, k), ObjMesh.verts,
                             ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
           nNumSave++;
         }
@@ -652,7 +655,7 @@ template<typename T, typename TColor>
 void SaveMeshSingleGridGlobal(
     BoundedVolumeGrid<T, TargetHost, Manage>&         vol,
     BoundedVolumeGrid<TColor, TargetHost, Manage>&    volColor,
-    int i,   int j,   int k, // local index
+    int3&                                             CurLocalIndex,
     int3&                                             CurGlobal,
     int3&                                             MaxGlobal,
     int3&                                             MinGlobal,
@@ -667,13 +670,18 @@ void SaveMeshSingleGridGlobal(
     {
       for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
       {
-        // get voxel index for each grid.
-        roo::vMarchCubeGridGlobal(vol, volColor,
-                                  i*vol.m_nVolumeGridRes + x,
-                                  j*vol.m_nVolumeGridRes + y,
-                                  k*vol.m_nVolumeGridRes + z,
-                                  CurGlobal, MaxGlobal, MinGlobal,
-                                  verts, norms, faces, colors);
+        if(vol.CheckIfVoxelExist(CurLocalIndex.x * vol.m_nVolumeGridRes + x,
+                                 CurLocalIndex.y * vol.m_nVolumeGridRes + y,
+                                 CurLocalIndex.z * vol.m_nVolumeGridRes + z) == true)
+        {
+          // get voxel index for each grid.
+          roo::vMarchCubeGridGlobal(vol, volColor,
+                                    CurLocalIndex.x * vol.m_nVolumeGridRes + x,
+                                    CurLocalIndex.y * vol.m_nVolumeGridRes + y,
+                                    CurLocalIndex.z * vol.m_nVolumeGridRes + z,
+                                    CurGlobal, MaxGlobal, MinGlobal,
+                                    verts, norms, faces, colors);
+        }
       }
     }
   }
@@ -687,7 +695,7 @@ template<typename T, typename TColor>
 void GenMeshSingleGrid(
     BoundedVolumeGrid<T, TargetHost, Manage>&         vol,
     BoundedVolumeGrid<TColor, TargetHost, Manage>&    volColor,
-    int i,int j,int k,
+    int3                                              CurLocalIndex,
     std::vector<aiVector3D>&                          verts,
     std::vector<aiVector3D>&                          norms,
     std::vector<aiFace>&                              faces,
@@ -700,14 +708,14 @@ void GenMeshSingleGrid(
     {
       for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
       {
-        if(vol.CheckIfVoxelExist(i*vol.m_nVolumeGridRes + x,
-                                 j*vol.m_nVolumeGridRes + y,
-                                 k*vol.m_nVolumeGridRes + z) == true)
+        if(vol.CheckIfVoxelExist(CurLocalIndex.x * vol.m_nVolumeGridRes + x,
+                                 CurLocalIndex.y * vol.m_nVolumeGridRes + y,
+                                 CurLocalIndex.z * vol.m_nVolumeGridRes + z) == true)
         {
           roo::vMarchCubeGrid(vol, volColor,
-                              i*vol.m_nVolumeGridRes + x,
-                              j*vol.m_nVolumeGridRes + y,
-                              k*vol.m_nVolumeGridRes + z,
+                              CurLocalIndex.x * vol.m_nVolumeGridRes + x,
+                              CurLocalIndex.y * vol.m_nVolumeGridRes + y,
+                              CurLocalIndex.z * vol.m_nVolumeGridRes + z,
                               verts, norms, faces, colors);
         }
       }
