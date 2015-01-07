@@ -109,7 +109,7 @@ std::vector<SingleVolume> GetFilesNeedSaving(
 }
 
 // ================================================================================
-// get max and min global index that we works with
+// get max and min global index of current system
 void GetMaxMinGlobalIndex(
     std::string                sDirName,
     std::string                sBBFileName,

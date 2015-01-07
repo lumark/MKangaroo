@@ -356,14 +356,14 @@ void vMarchCubeGridGlobal(
   float afCubeValue[8];
   for(int iVertex = 0; iVertex < 8; iVertex++)
   {
-    if(vol.CheckIfVoxelExist(int(x+a2fVertexOffset[iVertex][0]),
-                             int(y+a2fVertexOffset[iVertex][1]),
-                             int(z+a2fVertexOffset[iVertex][2])) == true)
+    if(vol.CheckIfVoxelExist(static_cast<int>(x+a2fVertexOffset[iVertex][0]),
+                             static_cast<int>(y+a2fVertexOffset[iVertex][1]),
+                             static_cast<int>(z+a2fVertexOffset[iVertex][2])) == true)
     {
       afCubeValue[iVertex] =
-          vol(int(x+a2fVertexOffset[iVertex][0]),
-          int(y+a2fVertexOffset[iVertex][1]),
-          int(z+a2fVertexOffset[iVertex][2]));
+          vol(static_cast<int>(x+a2fVertexOffset[iVertex][0]),
+          static_cast<int>(y+a2fVertexOffset[iVertex][1]),
+          static_cast<int>(z+a2fVertexOffset[iVertex][2]));
     }
 
     if(!std::isfinite(afCubeValue[iVertex])) return;
@@ -655,7 +655,7 @@ template<typename T, typename TColor>
 void SaveMeshSingleGridGlobal(
     BoundedVolumeGrid<T, TargetHost, Manage>&         vol,
     BoundedVolumeGrid<TColor, TargetHost, Manage>&    volColor,
-    int3&                                             CurLocalIndex,
+    int3&                                             CurLocal,
     int3&                                             CurGlobal,
     int3&                                             MaxGlobal,
     int3&                                             MinGlobal,
@@ -670,15 +670,15 @@ void SaveMeshSingleGridGlobal(
     {
       for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
       {
-        if(vol.CheckIfVoxelExist(CurLocalIndex.x * vol.m_nVolumeGridRes + x,
-                                 CurLocalIndex.y * vol.m_nVolumeGridRes + y,
-                                 CurLocalIndex.z * vol.m_nVolumeGridRes + z) == true)
+        if(vol.CheckIfVoxelExist(CurLocal.x * vol.m_nVolumeGridRes + x,
+                                 CurLocal.y * vol.m_nVolumeGridRes + y,
+                                 CurLocal.z * vol.m_nVolumeGridRes + z) == true)
         {
           // get voxel index for each grid.
           roo::vMarchCubeGridGlobal(vol, volColor,
-                                    CurLocalIndex.x * vol.m_nVolumeGridRes + x,
-                                    CurLocalIndex.y * vol.m_nVolumeGridRes + y,
-                                    CurLocalIndex.z * vol.m_nVolumeGridRes + z,
+                                    CurLocal.x * vol.m_nVolumeGridRes + x,
+                                    CurLocal.y * vol.m_nVolumeGridRes + y,
+                                    CurLocal.z * vol.m_nVolumeGridRes + z,
                                     CurGlobal, MaxGlobal, MinGlobal,
                                     verts, norms, faces, colors);
         }
