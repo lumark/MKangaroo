@@ -170,7 +170,7 @@ void GetMaxMinGlobalIndex(
 // Generate one single mesh from several ppm files.
 bool GenMeshFromPPM(
     std::string                sDirName,
-    std::string                sBBFileName,
+    std::string                sBBFileHead,
     int3                       nVolRes,
     int                        nGridRes,
     std::vector<std::string>   vfilename,
@@ -206,17 +206,19 @@ bool GenMeshFromPPM(
   // Get max and min global index
   int3 MaxGlobalIndex = make_int3(-999999999, -999999999, -999999999);
   int3 MinGlobalIndex = make_int3(999999999, 999999999, 999999999);
-  GetMaxMinGlobalIndex(sDirName, sBBFileName, vVolumes, MaxGlobalIndex, MinGlobalIndex);
+  GetMaxMinGlobalIndex(sDirName, sBBFileHead, vVolumes, MaxGlobalIndex, MinGlobalIndex);
 
   // ---------------------------------------------------------------------------
-  // For each global volume
+  // For each global volume we have, gen mesh with it
   int nNum = 0;
 
   for(unsigned int i=0; i!=vVolumes.size(); i++)
   {
     // load the corresponding bounding box
-    std::string sBBFile = sDirName + sBBFileName + std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
+    std::string sBBFile = sDirName + sBBFileHead + std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
         std::to_string(vVolumes[i].GlobalIndex.y) + "-" + std::to_string(vVolumes[i].GlobalIndex.z);
+
+    std::cout<<"load bb file "<<sBBFile<<std::endl;
 
     if( CheckIfBBfileExist(sBBFile) )
     {
@@ -244,9 +246,11 @@ bool GenMeshFromPPM(
         {
           if(hvol.CheckIfBasicSDFActive(nRealIndex) == true)
           {
-            SaveMeshSingleGridGlobal(
-                  hvol, hvolcolor, CurLocalIndex, CurGlobalIndex,
-                  MaxGlobalIndex, MinGlobalIndex, verts, norms, faces, colors);
+//            SaveMeshSingleGridGlobal(
+//                  hvol, hvolcolor, CurLocalIndex, CurGlobalIndex,
+//                  MaxGlobalIndex, MinGlobalIndex, verts, norms, faces, colors);
+
+            GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex, verts, norms, faces, colors);
             nNum++;
           }
           else

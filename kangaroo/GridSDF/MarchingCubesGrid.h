@@ -352,8 +352,8 @@ void vMarchCubeGridGlobal(
 {
   // get voxel position
   const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z,CurGlobal,MaxGlobal,MinGlobal);
-    const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
-//  const float3 fScale = vol.VoxelSizeUnits();
+//    const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
+  const float3 fScale = vol.VoxelSizeUnits();
 
   //Make a local copy of the values at the cube's corners
   float afCubeValue[8];
@@ -729,7 +729,7 @@ void GenMeshSingleGrid(
 KANGAROO_EXPORT
 bool GenMeshFromPPM(
     std::string                                       sDirName,
-    std::string                                       sBBFileName,
+    std::string                                       sBBFileHead,
     int3                                              nVolRes,
     int                                               nGridRes,
     std::vector<std::string>                          vfilename,

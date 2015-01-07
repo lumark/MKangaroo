@@ -309,12 +309,12 @@ bool LoadPXMSingleGrid(
 }
 
 KANGAROO_EXPORT
-inline roo::BoundingBox LoadPXMBoundingBox(std::string     filename)
+inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
 {
   std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
   if(bFile.fail()==true)
   {
-    std::cerr<<"fatal error! file "<<filename<<" does not exist."<<std::endl;
+    std::cerr<<"Fatal error! file "<<filename<<" does not exist."<<std::endl;
     exit(-1);
   }
 
@@ -329,7 +329,10 @@ inline roo::BoundingBox LoadPXMBoundingBox(std::string     filename)
   bFile >> BBox.boxmax.z;
   bFile.ignore(1,'\n');
 
-  printf("load BB success. Min_x:%f,Max_x: %f\n",BBox.boxmin.x,BBox.boxmax.x);
+  printf("Load BB success. BBMin:(%f,%f,%f), BBMax:(%f,%f,%f) \n",
+         BBox.boxmin.x, BBox.boxmin.y,BBox.boxmin.z,
+         BBox.boxmax.x, BBox.boxmax.y, BBox.boxmax.z);
+
   bFile.close();
   return BBox;
 }
