@@ -379,8 +379,8 @@ public:
   }
 
 
-  // use in marching cubes
-  inline __device__ __host__
+  // use in the marching cubes algorithm
+  inline __host__
   float3 VoxelPositionInUnitsGlobal(
       int x, int y, int z,
       int3 cur_global, int3 max_global, int3 min_global) const
@@ -391,22 +391,58 @@ public:
              x,y,z,static_cast<int>(m_w),static_cast<int>(m_h),static_cast<int>(m_d));
     }
 
-    const float3 vol_size = m_bbox.Size();
-
     float3 local_pos =  make_float3(
-          m_bbox.Min().x + vol_size.x * static_cast<float>(x)/static_cast<float>(m_w-1),
-          m_bbox.Min().y + vol_size.y * static_cast<float>(y)/static_cast<float>(m_h-1),
-          m_bbox.Min().z + vol_size.z * static_cast<float>(z)/static_cast<float>(m_d-1)
+          m_bbox.Min().x + m_bbox.Size().x * static_cast<float>(x)/static_cast<float>(m_w-1),
+          m_bbox.Min().y + m_bbox.Size().y * static_cast<float>(y)/static_cast<float>(m_h-1),
+          m_bbox.Min().z + m_bbox.Size().z * static_cast<float>(z)/static_cast<float>(m_d-1)
           );
 
-    float global_pos_x = (static_cast<float>(cur_global.x-min_global.x) + local_pos.x)/
-        static_cast<float>(max_global.x-min_global.x);
-    float global_pos_y = (static_cast<float>(cur_global.y-min_global.y) + local_pos.y)/
-        static_cast<float>(max_global.y-min_global.y);
-    float global_pos_z = (static_cast<float>(cur_global.z-min_global.z) + local_pos.z)/
-        static_cast<float>(max_global.z-min_global.z);
+    // ------------------------------------------------------------------------
+    float3 global_pos = make_float3(0,0,0);
 
-    float3 global_pos = make_float3(global_pos_x, global_pos_y, global_pos_z);
+    // there is a case when max_global index and min global index equals to 0;
+    // this check helps avoid inf global pos
+    if(max_global.x != min_global.x)
+    {
+      global_pos.x = ( static_cast<float>(cur_global.x-min_global.x) + local_pos.x) /
+          static_cast<float>(max_global.x-min_global.x);
+    }
+    else
+    {
+       if(max_global.x + min_global.x !=0)
+       {
+         std::cerr<<"[VoxelPositionInUnitsGlobal] Fatal error!"<<std::endl;
+         exit(-1);
+       }
+    }
+
+    if(max_global.y != min_global.y)
+    {
+     global_pos.y = (static_cast<float>(cur_global.y-min_global.y) + local_pos.y)/
+        static_cast<float>(max_global.y-min_global.y);
+    }
+    else
+    {
+       if(max_global.y + min_global.y !=0)
+       {
+         std::cerr<<"[VoxelPositionInUnitsGlobal] Fatal error!"<<std::endl;
+         exit(-1);
+       }
+    }
+
+    if(max_global.z != min_global.z)
+    {
+      global_pos.z = (static_cast<float>(cur_global.z-min_global.z) + local_pos.z)/
+          static_cast<float>(max_global.z-min_global.z);
+    }
+    else
+    {
+       if(max_global.z + min_global.z !=0)
+       {
+         std::cerr<<"[VoxelPositionInUnitsGlobal] Fatal error!"<<std::endl;
+         exit(-1);
+       }
+    }
 
     //    printf("LocalPos:(%f,%f,%f) GlobalPos(%f,%f,%f)",
     //           local_pos.x,local_pos.y,local_pos.z,
