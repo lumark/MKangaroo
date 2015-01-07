@@ -84,7 +84,7 @@ std::vector<SingleVolume> GetFilesNeedSaving(
       bool bFlag = false;
       for(unsigned int i=0;i!=vVolumes.size();i++)
       {
-        if(vVolumes[i].GlobalIndex.x ==GlobalIndex.x &&
+        if(vVolumes[i].GlobalIndex.x == GlobalIndex.x &&
            vVolumes[i].GlobalIndex.y == GlobalIndex.y &&
            vVolumes[i].GlobalIndex.z == GlobalIndex.z)
         {
@@ -178,53 +178,53 @@ bool GenMeshFromPPM(
 {
   printf("[Kangaroo/GenMeshFromPPM] Start.\n");
 
-  // read all grid sdf and sort them into volumes
+  // read all grid sdf and sort them into volumes. vVolume index is global index
   std::vector<SingleVolume>  vVolumes = GetFilesNeedSaving(vfilename);
 
-  if(vVolumes.size()==0)
+  if(vVolumes.size()<=0)
   {
-    printf("cannot find any files for generating mesh\n");
+    printf("Cannot find any files for generating mesh\n");
     return false;
   }
 
-  // load each single volume into BBVolume.
-  std::vector<aiVector3D>   verts;
-  std::vector<aiVector3D>   norms;
+  // ---------------------------------------------------------------------------
+  // Load each single volume into the BBVolume.
+  std::vector<aiVector3D>   verts, norms;
   std::vector<aiFace>       faces;
   std::vector<aiColor4D>    colors;
 
-  // load mesh configure
-  // to load it from disk, we need to use host volume
+  // Load mesh configure
   roo::BoundingBox BBox;
 
+  // To load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
   hvol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
   roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
   hvolcolor.Init(1,1,1, nGridRes, BBox);
 
-  // get max and min global index
+  // Get max and min global index
   int3 MaxGlobalIndex = make_int3(-999999999, -999999999, -999999999);
   int3 MinGlobalIndex = make_int3(999999999, 999999999, 999999999);
   GetMaxMinGlobalIndex(sDirName, sBBFileName, vVolumes, MaxGlobalIndex, MinGlobalIndex);
 
-  // for each global volume
+  // ---------------------------------------------------------------------------
+  // For each global volume
   int nNum = 0;
-  int nNumSkip = 0;
 
   for(unsigned int i=0; i!=vVolumes.size(); i++)
   {
     // load the corresponding bounding box
-    std::string sBBFile = sDirName + sBBFileName+std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
+    std::string sBBFile = sDirName + sBBFileName + std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
         std::to_string(vVolumes[i].GlobalIndex.y) + "-" + std::to_string(vVolumes[i].GlobalIndex.z);
 
-    if(CheckIfBBfileExist(sBBFile) == true)
+    if( CheckIfBBfileExist(sBBFile) )
     {
       hvol.m_bbox      = LoadPXMBoundingBox(sBBFile);
       hvolcolor.m_bbox = hvol.m_bbox;
 
       // for each single local grid volume, load it
-      for(unsigned int j=0;j!=vVolumes[i].vLocalIndex.size();j++)
+      for(unsigned int j=0; j!=vVolumes[i].vLocalIndex.size(); j++)
       {
         int3 CurLocalIndex = vVolumes[i].vLocalIndex[j];
         int3 CurGlobalIndex = vVolumes[i].GlobalIndex;
@@ -233,9 +233,9 @@ bool GenMeshFromPPM(
                                                            CurLocalIndex.y,
                                                            CurLocalIndex.z);
 
-        std::string sFile = sDirName+vVolumes[i].vFileName[j];
+        std::string sPXMFile = sDirName + vVolumes[i].vFileName[j];
 
-        if(LoadPXMSingleGrid(sFile, hvol.m_GridVolumes[nRealIndex])==false)
+        if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) == false)
         {
           printf("[Kangaroo/GenMeshFromPPM] Error! load file fail.. exit\n");
           exit(-1);
@@ -247,35 +247,33 @@ bool GenMeshFromPPM(
             SaveMeshSingleGridGlobal(
                   hvol, hvolcolor, CurLocalIndex, CurGlobalIndex,
                   MaxGlobalIndex, MinGlobalIndex, verts, norms, faces, colors);
-
-            //            GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex,
-            //                              verts, norms, faces, colors);
             nNum++;
           }
           else
           {
-            std::cerr<<"[Kangaroo/GenMeshFromPPM] Warnning! skip saving mesh."<<std::endl;
-            nNumSkip++;
+            std::cerr<<"[Kangaroo/GenMeshFromPPM] Error! mesh inactive!"<<std::endl;
+            exit(-1);
           }
         }
       }
     }
     else
     {
-      std::cerr<<"[Kangaroo/GenMeshFromPPM] Warnning! cannot load bbox "<<sBBFile<<
-                 ". Skip!"<<std::endl;
-
-      nNumSkip = nNumSkip +vVolumes[i].vLocalIndex.size();
+      std::cerr<<"[Kangaroo/GenMeshFromPPM] Error! Fail loading bbox "<<sBBFile<<std::endl;
+      exit(-1);
     }
 
-    // reset previous grid
+    // reset all previous grid
     SdfReset(hvol);
     hvol.ResetAllGridVol();
+
+    std::cout<<"Finish save vol "<<i<<";"<<std::endl;
   }
 
-  printf("[Kangaroo/GenMeshFromPPM] Finish marching cube for %d Grids. Skip %d\n",nNum, nNumSkip);
+  printf("[Kangaroo/GenMeshFromPPM] Finish marching cube for %d Grids.\n",nNum);
 
-  // save the mesh in memory to mesh in hard disk
+  // ---------------------------------------------------------------------------
+  // Save mesh from memory to hard disk
   aiMesh* mesh = MeshFromLists(verts, norms, faces, colors);
   return SaveMeshGridToFile(sMeshFileName, mesh);
 }

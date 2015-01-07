@@ -193,6 +193,8 @@ inline float fGetOffset(
 //////////////////////////////////////////
 // save grid mesh
 //////////////////////////////////////////
+/// \brief The SingleVolume class
+/// a single volume in a global pos, may contain several grids
 class SingleVolume
 {
 public:
@@ -350,7 +352,8 @@ void vMarchCubeGridGlobal(
 {
   // get voxel position
   const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z,CurGlobal,MaxGlobal,MinGlobal);
-  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
+    const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
+//  const float3 fScale = vol.VoxelSizeUnits();
 
   //Make a local copy of the values at the cube's corners
   float afCubeValue[8];
@@ -649,16 +652,16 @@ void SaveMeshGrid(
   SaveMeshGridToFile(filename, mesh, "obj");
 }
 
-KANGAROO_EXPORT
 // save mesh of grid SDF in global index
+KANGAROO_EXPORT
 template<typename T, typename TColor>
 void SaveMeshSingleGridGlobal(
     BoundedVolumeGrid<T, TargetHost, Manage>&         vol,
     BoundedVolumeGrid<TColor, TargetHost, Manage>&    volColor,
-    int3&                                             CurLocal,
-    int3&                                             CurGlobal,
-    int3&                                             MaxGlobal,
-    int3&                                             MinGlobal,
+    int3&                                             CurLocalIndex,
+    int3&                                             CurGlobalIndex,
+    int3&                                             MaxGlobalIndex,
+    int3&                                             MinGlobalIndex,
     std::vector<aiVector3D>&                          verts,
     std::vector<aiVector3D>&                          norms,
     std::vector<aiFace>&                              faces,
@@ -670,16 +673,16 @@ void SaveMeshSingleGridGlobal(
     {
       for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
       {
-        if(vol.CheckIfVoxelExist(CurLocal.x * vol.m_nVolumeGridRes + x,
-                                 CurLocal.y * vol.m_nVolumeGridRes + y,
-                                 CurLocal.z * vol.m_nVolumeGridRes + z) == true)
+        if(vol.CheckIfVoxelExist(CurLocalIndex.x * vol.m_nVolumeGridRes + x,
+                                 CurLocalIndex.y * vol.m_nVolumeGridRes + y,
+                                 CurLocalIndex.z * vol.m_nVolumeGridRes + z) == true)
         {
           // get voxel index for each grid.
           roo::vMarchCubeGridGlobal(vol, volColor,
-                                    CurLocal.x * vol.m_nVolumeGridRes + x,
-                                    CurLocal.y * vol.m_nVolumeGridRes + y,
-                                    CurLocal.z * vol.m_nVolumeGridRes + z,
-                                    CurGlobal, MaxGlobal, MinGlobal,
+                                    CurLocalIndex.x * vol.m_nVolumeGridRes + x,
+                                    CurLocalIndex.y * vol.m_nVolumeGridRes + y,
+                                    CurLocalIndex.z * vol.m_nVolumeGridRes + z,
+                                    CurGlobalIndex, MaxGlobalIndex, MinGlobalIndex,
                                     verts, norms, faces, colors);
         }
       }
