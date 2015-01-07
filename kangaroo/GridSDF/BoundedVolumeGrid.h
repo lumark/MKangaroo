@@ -31,10 +31,10 @@ public:
   // ===========================================================================
   inline __host__
   void Init(
-      unsigned int n_w,
-      unsigned int n_h,
-      unsigned int n_d,
-      unsigned int n_res,
+      unsigned int       n_w,   // num of voxels of the volume in width
+      unsigned int       n_h,   // num of voxels of the volume in height
+      unsigned int       n_d,   // num of voxels of the volume in depth
+      unsigned int       n_res, // resolution of a single grid volume
       const BoundingBox& r_bbox)
   {
     m_w = n_w; m_h = n_h; m_d = n_d;
@@ -155,9 +155,9 @@ public:
   inline __device__ __host__
   float3 VoxelSizeUnitsGlobal(int3 max_global, int3 min_global) const
   {
-    return m_bbox.Size() / make_float3( (max_global.x-min_global.x)*(m_w-1),
-                                        (max_global.y-min_global.y)*(m_h-1),
-                                        (max_global.z-min_global.z)*(m_d-1) );
+    return m_bbox.Size() / make_float3( (max_global.x-min_global.x + 1)*(m_w-1),
+                                        (max_global.y-min_global.y + 1)*(m_h-1),
+                                        (max_global.z-min_global.z + 1)*(m_d-1) );
   }
 
   //////////////////////////////////////////////////////
@@ -1011,9 +1011,9 @@ public:
   }
 
 public:
-  size_t        m_w;
-  size_t        m_h;
-  size_t        m_d;
+  size_t        m_w;               // value usually 128, 256
+  size_t        m_h;               // value usually 128, 256
+  size_t        m_d;               // value usually 128, 256
 
   // The acculmate local shift; cur_local_shift = pre_local_shift + cur_shift
   // we can compute the real index based on the local shift, its val range: 1 ~ 8
