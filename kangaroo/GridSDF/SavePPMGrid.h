@@ -146,6 +146,8 @@ void CheckifSaveBB(
   }
 }
 
+
+// file name format ObjID-GlobalIndex-LocalIndex or ObjID-LocalIndex
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SavePXMGridDesire(
@@ -155,14 +157,15 @@ void SavePXMGridDesire(
     int                                                    pFlagY[],
     int                                                    pFlagZ[],
     roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
-    bool                                                   bSaveGlobalPose = false,
-    bool                                                   bSaveBBox = false,
+    bool                                                   bSaveGlobalPose,
+    bool                                                   bSaveBBox,
     std::string                                            ppm_type = "P5",
     int                                                    num_colors = 255)
 {
   if(rDVol.GetActiveGridVolNum()==0)
   {
-    std::cerr<<"[Kangaroo/SavePXMGrid] Cannot save model for void volume. Empty vol."<<std::endl;
+    std::cerr<<"[Kangaroo/SavePXMGridDesire] Cannot save PXM for void volume."<<std::endl;
+    exit(-1);
   }
   else
   {
@@ -184,7 +187,7 @@ void SavePXMGridDesire(
           int nGridIndex =i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
 
           // --- save vol if necessary
-          if(pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex)==true)
+          if( pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex) )
           {
             std::string sGridFileName;
 
@@ -210,10 +213,10 @@ void SavePXMGridDesire(
             // local index does not change under global index
             int3 LocalIndex  = make_int3(i,j,k);
 
-            // save without rolling
-            if(bSaveGlobalPose==false)
+            // Save without rolling grid sdf
+            if(bSaveGlobalPose == false)
             {
-              // only save local grid
+              // only save the local grid
               sGridFileName = sPathName+"-"+std::to_string(LocalIndex.x)+"-"+
                   std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
             }
@@ -240,8 +243,15 @@ void SavePXMGridDesire(
         }
       }
     }
-    printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf.\n", nSaveGridNum);
 
+    if(bSaveGlobalPose)
+    {
+      printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf in Global Pose.\n", nSaveGridNum);
+    }
+    else
+    {
+      printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf in local Pose.\n", nSaveGridNum);
+    }
   }
 
 }
