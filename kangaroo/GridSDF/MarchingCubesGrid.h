@@ -733,7 +733,7 @@ void GenMeshSingleGrid(
 }
 
 KANGAROO_EXPORT
-bool GenMeshFromPPM(
+bool SaveMeshFromPPMs(
     std::string                                       sDirName,
     std::string                                       sBBFileHead,
     int3                                              nVolRes,

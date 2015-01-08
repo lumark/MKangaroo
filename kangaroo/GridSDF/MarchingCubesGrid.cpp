@@ -168,7 +168,7 @@ void GetMaxMinGlobalIndex(
 
 // ================================================================================
 // Generate one single mesh from several ppm files.
-bool GenMeshFromPPM(
+bool SaveMeshFromPPMs(
     std::string                sDirName,
     std::string                sBBFileHead,
     int3                       nVolRes,

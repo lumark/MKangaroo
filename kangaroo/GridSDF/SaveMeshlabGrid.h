@@ -185,7 +185,7 @@ inline void SaveMeshlabGrid(
 
 KANGAROO_EXPORT
 // generate a single mesh from several PPMs
-inline void GenMeshlabFromPPM(
+inline void SaveMeshlabFromPPMs(
     std::string                 sDirName,
     std::string                 sBBFileHead,
     int3                        VolRes,
@@ -208,7 +208,7 @@ inline void GenMeshlabFromPPM(
 
   of << " <MeshGroup>" << std::endl;
 
-  roo::GenMeshFromPPM(sDirName, sBBFileHead, VolRes, nGridRes, vfilename, sFinalMeshFileName);
+  roo::SaveMeshFromPPMs(sDirName, sBBFileHead, VolRes, nGridRes, vfilename, sFinalMeshFileName);
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
   of << "   <MLMatrix44>" << std::endl;
