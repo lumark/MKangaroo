@@ -62,7 +62,6 @@ list(APPEND SRC_H
 )
 
 list(APPEND SRC_CU
-#    GridSDF/BoundedVolumeGrid.cu
     GridSDF/cu_sdffusion_grid.cu
     GridSDF/cu_sdffusion_extra.cu
     GridSDF/cu_raycast_grid.cu
