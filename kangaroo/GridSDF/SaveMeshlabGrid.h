@@ -191,7 +191,7 @@ inline void GenMeshlabFromPPM(
     int3                        VolRes,
     int                         nGridRes,
     std::vector<std::string>    vfilename,
-    std::string                 sMeshFileName)
+    std::string                 sFinalMeshFileName)
 {
   Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
   Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
@@ -208,7 +208,7 @@ inline void GenMeshlabFromPPM(
 
   of << " <MeshGroup>" << std::endl;
 
-  roo::GenMeshFromPPM(sDirName, sBBFileHead, VolRes, nGridRes, vfilename, sMeshFileName);
+  roo::GenMeshFromPPM(sDirName, sBBFileHead, VolRes, nGridRes, vfilename, sFinalMeshFileName);
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
   of << "   <MLMatrix44>" << std::endl;

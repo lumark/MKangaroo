@@ -160,11 +160,12 @@ inline bool SaveMeshGridToFile(
   scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
   scene.mMaterials[0] = material;
 
+  sFilename = sFilename + "." + sFormat;
   aiReturn res = aiExportScene(&scene, sFormat.c_str(),
-                               (sFilename + "."+sFormat.c_str()).c_str(), 0);
+                               (sFilename).c_str(), 0);
   if(res == 0)
   {
-    std::cout << "[SaveMeshGridToFile] Mesh export success." <<std::endl;
+    std::cout << "[SaveMeshGridToFile] Mesh export success. File Name "<< sFilename <<std::endl;
     return true;
   }
   else
@@ -643,7 +644,7 @@ void SaveMeshGrid(
       }
     }
   }
-  printf("Finish march cube grid sdf. Save %d grids. Skip %d grids. Use time %f; \n",
+  printf("[SaveMeshGrid] Finish marching cube grid sdf. Save %d grids. Skip %d grids. Use time %f; \n",
          nNumSave, nNumSkip, _Toc(dTime));
 
   aiMesh* mesh = MeshFromLists(ObjMesh.verts,ObjMesh.norms,

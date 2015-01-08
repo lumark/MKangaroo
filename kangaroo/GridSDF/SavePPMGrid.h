@@ -329,9 +329,9 @@ inline roo::BoundingBox LoadPXMBoundingBox(std::string filename)
   bFile >> BBox.boxmax.z;
   bFile.ignore(1,'\n');
 
-  printf("Load BB success. BBMin:(%f,%f,%f), BBMax:(%f,%f,%f) \n",
-         BBox.boxmin.x, BBox.boxmin.y,BBox.boxmin.z,
-         BBox.boxmax.x, BBox.boxmax.y, BBox.boxmax.z);
+  //  printf("Load BB success. BBMin:(%f,%f,%f), BBMax:(%f,%f,%f) \n",
+  //         BBox.boxmin.x, BBox.boxmin.y,BBox.boxmin.z,
+  //         BBox.boxmax.x, BBox.boxmax.y, BBox.boxmax.z);
 
   bFile.close();
   return BBox;

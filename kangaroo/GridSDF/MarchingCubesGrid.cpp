@@ -218,7 +218,7 @@ bool GenMeshFromPPM(
     std::string sBBFile = sDirName + sBBFileHead + std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
         std::to_string(vVolumes[i].GlobalIndex.y) + "-" + std::to_string(vVolumes[i].GlobalIndex.z);
 
-    std::cout<<"load bb file "<<sBBFile<<std::endl;
+    std::cout<<"Load bb file "<<sBBFile<<std::endl;
 
     if( CheckIfBBfileExist(sBBFile) )
     {
@@ -279,7 +279,7 @@ bool GenMeshFromPPM(
   // ---------------------------------------------------------------------------
   // Save mesh from memory to hard disk
   aiMesh* mesh = MeshFromLists(verts, norms, faces, colors);
-  return SaveMeshGridToFile(sMeshFileName, mesh);
+  return SaveMeshGridToFile(sMeshFileName, mesh, "obj");
 }
 
 template void SaveMeshGrid<roo::SDF_t_Smart, float, Manage>
