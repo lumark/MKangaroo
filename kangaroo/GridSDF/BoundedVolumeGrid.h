@@ -382,9 +382,10 @@ public:
   // use in the marching cubes algorithm
   inline __host__
   float3 VoxelPositionInUnitsGlobal(
-      int x, int y, int z,
-      int3 cur_global, int3 max_global, int3 min_global) const
+      int x, int y, int z, int3 cur_global, int3 min_global) const
   {
+    // ------------------------------------------------------------------------
+    // comute the local pose
     if(x>=m_w || y>= m_h || z>=m_d)
     {
       printf("[VoxelPositionInUnitsGlobal] Index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
@@ -398,51 +399,11 @@ public:
           );
 
     // ------------------------------------------------------------------------
-    float3 global_pos = make_float3(0,0,0);
-
-    // there is a case when max_global index and min global index equals to 0;
-    // this check helps avoid inf global pos
-    if(max_global.x != min_global.x)
-    {
-      global_pos.x = ( static_cast<float>(cur_global.x-min_global.x) + local_pos.x) /
-          static_cast<float>(max_global.x-min_global.x);
-    }
-    else
-    {
-       if(max_global.x + min_global.x !=0)
-       {
-         std::cerr<<"[VoxelPositionInUnitsGlobal] Fatal error!"<<std::endl;
-         exit(-1);
-       }
-    }
-
-    if(max_global.y != min_global.y)
-    {
-     global_pos.y = (static_cast<float>(cur_global.y-min_global.y) + local_pos.y)/
-        static_cast<float>(max_global.y-min_global.y);
-    }
-    else
-    {
-       if(max_global.y + min_global.y !=0)
-       {
-         std::cerr<<"[VoxelPositionInUnitsGlobal] Fatal error!"<<std::endl;
-         exit(-1);
-       }
-    }
-
-    if(max_global.z != min_global.z)
-    {
-      global_pos.z = (static_cast<float>(cur_global.z-min_global.z) + local_pos.z)/
-          static_cast<float>(max_global.z-min_global.z);
-    }
-    else
-    {
-       if(max_global.z + min_global.z !=0)
-       {
-         std::cerr<<"[VoxelPositionInUnitsGlobal] Fatal error!"<<std::endl;
-         exit(-1);
-       }
-    }
+    // compute the global pose
+    float3 global_pos = make_float3(
+          static_cast<float>((cur_global.x - min_global.x)) * m_bbox.Size().x + local_pos.x,
+          static_cast<float>((cur_global.y - min_global.y)) * m_bbox.Size().y + local_pos.y,
+          static_cast<float>((cur_global.z - min_global.z)) * m_bbox.Size().z + local_pos.z);
 
     //    printf("LocalPos:(%f,%f,%f) GlobalPos(%f,%f,%f)",
     //           local_pos.x,local_pos.y,local_pos.z,
