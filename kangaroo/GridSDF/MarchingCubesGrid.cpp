@@ -176,7 +176,7 @@ bool SaveMeshFromPPMs(
     std::vector<std::string>   vfilename,
     std::string                sMeshFileName)
 {
-  printf("---- [Kangaroo/GenMeshFromPPM] Start.\n");
+  printf("\n---- [Kangaroo/SaveMeshFromPPMs] Start.\n");
 
   // read all grid sdf and sort them into volumes. vVolume index is global index
   std::vector<SingleVolume>  vVolumes = GetFilesNeedSaving(vfilename);
@@ -250,9 +250,12 @@ bool SaveMeshFromPPMs(
           if(hvol.CheckIfBasicSDFActive(nRealIndex) == true)
           {
             SaveMeshSingleGridGlobal(
-                  hvol, hvolcolor, CurLocalIndex, CurGlobalIndex,
-                  MaxGlobalIndex, MinGlobalIndex, verts, norms, faces, colors);
+                  hvol, hvolcolor,
+                  CurLocalIndex, CurGlobalIndex, MaxGlobalIndex, MinGlobalIndex,
+                  verts, norms, faces, colors);
 
+            //            GenMeshSingleGrid( hvol, hvolcolor, CurLocalIndex,
+            //                               verts, norms, faces, colors);
             nNum++;
           }
           else
@@ -276,7 +279,7 @@ bool SaveMeshFromPPMs(
     std::cout<<"Finish save vol "<<i<<";"<<std::endl;
   }
 
-  printf("[Kangaroo/GenMeshFromPPM] Finish marching cube for %d Grids.\n",nNum);
+  std::cout<<"[Kangaroo/GenMeshFromPPM] Finish marching cube for " << nNum<< "Grids.\n";
 
   // ---------------------------------------------------------------------------
   // Save mesh from memory to hard disk
