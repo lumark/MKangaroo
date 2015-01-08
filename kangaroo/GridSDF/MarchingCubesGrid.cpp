@@ -176,7 +176,7 @@ bool GenMeshFromPPM(
     std::vector<std::string>   vfilename,
     std::string                sMeshFileName)
 {
-  printf("[Kangaroo/GenMeshFromPPM] Start.\n");
+  printf("---- [Kangaroo/GenMeshFromPPM] Start.\n");
 
   // read all grid sdf and sort them into volumes. vVolume index is global index
   std::vector<SingleVolume>  vVolumes = GetFilesNeedSaving(vfilename);
@@ -215,8 +215,11 @@ bool GenMeshFromPPM(
   for(unsigned int i=0; i!=vVolumes.size(); i++)
   {
     // load the corresponding bounding box
-    std::string sBBFile = sDirName + sBBFileHead + std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
-        std::to_string(vVolumes[i].GlobalIndex.y) + "-" + std::to_string(vVolumes[i].GlobalIndex.z);
+    std::string sBBFile =
+        sDirName + sBBFileHead +
+        std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
+        std::to_string(vVolumes[i].GlobalIndex.y) + "-" +
+        std::to_string(vVolumes[i].GlobalIndex.z);
 
     std::cout<<"Load bb file "<<sBBFile<<std::endl;
 
@@ -246,11 +249,10 @@ bool GenMeshFromPPM(
         {
           if(hvol.CheckIfBasicSDFActive(nRealIndex) == true)
           {
-//            SaveMeshSingleGridGlobal(
-//                  hvol, hvolcolor, CurLocalIndex, CurGlobalIndex,
-//                  MaxGlobalIndex, MinGlobalIndex, verts, norms, faces, colors);
+            SaveMeshSingleGridGlobal(
+                  hvol, hvolcolor, CurLocalIndex, CurGlobalIndex,
+                  MaxGlobalIndex, MinGlobalIndex, verts, norms, faces, colors);
 
-            GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex, verts, norms, faces, colors);
             nNum++;
           }
           else

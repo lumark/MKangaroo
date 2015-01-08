@@ -134,7 +134,7 @@ aiMesh* GetMeshGrid(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// here also support .obj file.
+// here also support .obj file (strongly suuggest use .obj instead of using .ply).
 KANGAROO_EXPORT
 inline bool SaveMeshGridToFile(
     std::string                                       sFilename,
@@ -161,8 +161,7 @@ inline bool SaveMeshGridToFile(
   scene.mMaterials[0] = material;
 
   sFilename = sFilename + "." + sFormat;
-  aiReturn res = aiExportScene(&scene, sFormat.c_str(),
-                               (sFilename).c_str(), 0);
+  aiReturn res = aiExportScene(&scene, sFormat.c_str(), sFilename.c_str(), 0);
   if(res == 0)
   {
     std::cout << "[SaveMeshGridToFile] Mesh export success. File Name "<< sFilename <<std::endl;
@@ -299,7 +298,7 @@ void vMarchCubeGrid(
     }
   }
 
-
+  // ----------------------------------------------------------------------------
   // Draw the triangles that were found.  There can be up to five per cube
   for(int iTriangle = 0; iTriangle < 5; iTriangle++)
   {
@@ -334,8 +333,9 @@ void vMarchCubeGrid(
   }
 }
 
+
+// --------------------------------------------------------------------------
 //vMarchCube performs the Marching Cubes algorithm on a single cube
-/// USER SHOULD MAKE SURE VOXEL EXIST!
 template<typename T, typename TColor>
 void vMarchCubeGridGlobal(
     BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
@@ -353,8 +353,7 @@ void vMarchCubeGridGlobal(
 {
   // get voxel position
   const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z,CurGlobal,MaxGlobal,MinGlobal);
-//    const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
-  const float3 fScale = vol.VoxelSizeUnits();
+  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
 
   //Make a local copy of the values at the cube's corners
   float afCubeValue[8];
@@ -373,6 +372,7 @@ void vMarchCubeGridGlobal(
     if(!std::isfinite(afCubeValue[iVertex])) return;
   }
 
+  // --------------------------------------------------------------------------
   //Find which vertices are inside of the surface and which are outside
   int iFlagIndex = 0;
   for(int iVertexTest = 0; iVertexTest < 8; iVertexTest++) {
@@ -383,11 +383,13 @@ void vMarchCubeGridGlobal(
   //Find which edges are intersected by the surface
   int iEdgeFlags = aiCubeEdgeFlags[iFlagIndex];
 
-  //If the cube is entirely inside or outside of the surface, then there will be no intersections
+  //If the cube is entirely inside or outside of the surface, then there will be
+  // no intersections
   if(iEdgeFlags == 0) {
     return;
   }
 
+  // --------------------------------------------------------------------------
   //Find the point of intersection of the surface with each edge
   //Then find the normal to the surface at those points
   float3 asEdgeVertex[12];
@@ -410,12 +412,16 @@ void vMarchCubeGridGlobal(
       const float3 deriv = vol.GetUnitsBackwardDiffDxDyDz( asEdgeVertex[iEdge] );
       asEdgeNorm[iEdge] = deriv / length(deriv);
 
-      if( !std::isfinite(asEdgeNorm[iEdge].x) || !std::isfinite(asEdgeNorm[iEdge].y) || !std::isfinite(asEdgeNorm[iEdge].z) ) {
+      if( !std::isfinite(asEdgeNorm[iEdge].x) ||
+          !std::isfinite(asEdgeNorm[iEdge].y) ||
+          !std::isfinite(asEdgeNorm[iEdge].z) )
+      {
         asEdgeNorm[iEdge] = make_float3(0,0,0);
       }
     }
   }
 
+  // --------------------------------------------------------------------------
   //Draw the triangles that were found.  There can be up to five per cube
   for(int iTriangle = 0; iTriangle < 5; iTriangle++)
   {
@@ -439,7 +445,6 @@ void vMarchCubeGridGlobal(
         float3 sColor = roo::ConvertPixel<float3,TColor>(c);
         colors.push_back(aiColor4D(sColor.x, sColor.y, sColor.z, 1.0f));
       }
-
     }
 
     faces.push_back(face);
