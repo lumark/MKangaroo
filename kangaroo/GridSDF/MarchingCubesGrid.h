@@ -348,107 +348,17 @@ void vMarchCubeGridGlobal(
     std::vector<aiVector3D>&                            norms,
     std::vector<aiFace>&                                faces,
     std::vector<aiColor4D>&                             colors,
-    float fTargetValue                                  = 0.0f
+    float                                               fTargetValue = 0.0f
     )
 {
   // get voxel position
-  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z,CurGlobal,MaxGlobal,MinGlobal);
-  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal,MinGlobal);
+  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z, CurGlobal, MinGlobal);
+  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal, MinGlobal);
 
-  //Make a local copy of the values at the cube's corners
-  float afCubeValue[8];
-  for(int iVertex = 0; iVertex < 8; iVertex++)
-  {
-    if(vol.CheckIfVoxelExist(static_cast<int>(x+a2fVertexOffset[iVertex][0]),
-                             static_cast<int>(y+a2fVertexOffset[iVertex][1]),
-                             static_cast<int>(z+a2fVertexOffset[iVertex][2])) == true)
-    {
-      afCubeValue[iVertex] =
-          vol(static_cast<int>(x+a2fVertexOffset[iVertex][0]),
-          static_cast<int>(y+a2fVertexOffset[iVertex][1]),
-          static_cast<int>(z+a2fVertexOffset[iVertex][2]));
-    }
+  //  const float3 p = vol.VoxelPositionInUnits(x,y,z);
+  //  const float3 fScale = vol.VoxelSizeUnits();
 
-    if(!std::isfinite(afCubeValue[iVertex])) return;
-  }
-
-  // --------------------------------------------------------------------------
-  //Find which vertices are inside of the surface and which are outside
-  int iFlagIndex = 0;
-  for(int iVertexTest = 0; iVertexTest < 8; iVertexTest++) {
-    if(afCubeValue[iVertexTest] <= fTargetValue)
-      iFlagIndex |= 1<<iVertexTest;
-  }
-
-  //Find which edges are intersected by the surface
-  int iEdgeFlags = aiCubeEdgeFlags[iFlagIndex];
-
-  //If the cube is entirely inside or outside of the surface, then there will be
-  // no intersections
-  if(iEdgeFlags == 0) {
-    return;
-  }
-
-  // --------------------------------------------------------------------------
-  //Find the point of intersection of the surface with each edge
-  //Then find the normal to the surface at those points
-  float3 asEdgeVertex[12];
-  float3 asEdgeNorm[12];
-
-  for(int iEdge = 0; iEdge < 12; iEdge++)
-  {
-    //if there is an intersection on this edge
-    if(iEdgeFlags & (1<<iEdge))
-    {
-      float fOffset = fGetOffset(afCubeValue[ a2iEdgeConnection[iEdge][0] ],
-          afCubeValue[ a2iEdgeConnection[iEdge][1] ], fTargetValue);
-
-      asEdgeVertex[iEdge] = make_float3(
-            p.x + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][0]  +  fOffset * a2fEdgeDirection[iEdge][0]) * fScale.x,
-          p.y + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][1]  +  fOffset * a2fEdgeDirection[iEdge][1]) * fScale.y,
-          p.z + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][2]  +  fOffset * a2fEdgeDirection[iEdge][2]) * fScale.z
-          );
-
-      const float3 deriv = vol.GetUnitsBackwardDiffDxDyDz( asEdgeVertex[iEdge] );
-      asEdgeNorm[iEdge] = deriv / length(deriv);
-
-      if( !std::isfinite(asEdgeNorm[iEdge].x) ||
-          !std::isfinite(asEdgeNorm[iEdge].y) ||
-          !std::isfinite(asEdgeNorm[iEdge].z) )
-      {
-        asEdgeNorm[iEdge] = make_float3(0,0,0);
-      }
-    }
-  }
-
-  // --------------------------------------------------------------------------
-  //Draw the triangles that were found.  There can be up to five per cube
-  for(int iTriangle = 0; iTriangle < 5; iTriangle++)
-  {
-    if(a2iTriangleConnectionTable[iFlagIndex][3*iTriangle] < 0)
-      break;
-
-    aiFace face;
-    face.mNumIndices = 3;
-    face.mIndices = new unsigned int[face.mNumIndices];
-
-    for(int iCorner = 0; iCorner < 3; iCorner++)
-    {
-      int iVertex = a2iTriangleConnectionTable[iFlagIndex][3*iTriangle+iCorner];
-
-      face.mIndices[iCorner] = verts.size();
-      verts.push_back(aiVector3D(asEdgeVertex[iVertex].x, asEdgeVertex[iVertex].y, asEdgeVertex[iVertex].z) );
-      norms.push_back(aiVector3D(asEdgeNorm[iVertex].x,   asEdgeNorm[iVertex].y,   asEdgeNorm[iVertex].z) );
-
-      if(volColor.IsValid()) {
-        const TColor c = volColor.GetUnitsTrilinearClamped(asEdgeVertex[iVertex]);
-        float3 sColor = roo::ConvertPixel<float3,TColor>(c);
-        colors.push_back(aiColor4D(sColor.x, sColor.y, sColor.z, 1.0f));
-      }
-    }
-
-    faces.push_back(face);
-  }
+  vMarchCubeGrid(vol, volColor, p, fScale, x,y,z,verts,norms,faces,colors,fTargetValue);
 }
 
 //vMarchCube performs the Marching Cubes algorithm on a single cube
