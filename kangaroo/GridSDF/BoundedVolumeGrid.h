@@ -363,12 +363,10 @@ public:
   inline __device__ __host__
   float3 VoxelPositionInUnits(int x, int y, int z) const
   {
-    const float3 vol_size = m_bbox.Size();
-
     return make_float3(
-          m_bbox.Min().x + vol_size.x * static_cast<float>(x)/static_cast<float>(m_w-1),
-          m_bbox.Min().y + vol_size.y * static_cast<float>(y)/static_cast<float>(m_h-1),
-          m_bbox.Min().z + vol_size.z * static_cast<float>(z)/static_cast<float>(m_d-1)
+          m_bbox.Min().x + m_bbox.Size().x * static_cast<float>(x)/static_cast<float>(m_w-1),
+          m_bbox.Min().y + m_bbox.Size().y * static_cast<float>(y)/static_cast<float>(m_h-1),
+          m_bbox.Min().z + m_bbox.Size().z * static_cast<float>(z)/static_cast<float>(m_d-1)
           );
   }
 
