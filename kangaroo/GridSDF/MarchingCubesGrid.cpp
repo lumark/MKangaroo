@@ -249,13 +249,11 @@ bool SaveMeshFromPPMs(
         {
           if(hvol.CheckIfBasicSDFActive(nRealIndex) == true)
           {
-            SaveMeshSingleGridGlobal(
-                  hvol, hvolcolor,
-                  CurLocalIndex, CurGlobalIndex, MaxGlobalIndex, MinGlobalIndex,
-                  verts, norms, faces, colors);
+            SaveMeshSingleGridGlobal( hvol, hvolcolor,
+                                      CurLocalIndex, CurGlobalIndex,
+                                      MaxGlobalIndex, MinGlobalIndex,
+                                      verts, norms, faces, colors);
 
-            //            GenMeshSingleGrid( hvol, hvolcolor, CurLocalIndex,
-            //                               verts, norms, faces, colors);
             nNum++;
           }
           else

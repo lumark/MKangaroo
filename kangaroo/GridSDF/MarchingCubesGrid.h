@@ -352,11 +352,11 @@ void vMarchCubeGridGlobal(
     )
 {
   // get voxel position
-  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z, CurGlobal, MinGlobal);
-  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal, MinGlobal);
+//  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z, CurGlobal, MinGlobal);
+//  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal, MinGlobal);
 
-  //  const float3 p = vol.VoxelPositionInUnits(x,y,z);
-  //  const float3 fScale = vol.VoxelSizeUnits();
+  const float3 p = vol.VoxelPositionInUnits(x,y,z);
+  const float3 fScale = vol.VoxelSizeUnits();
 
   vMarchCubeGrid(vol, volColor, p, fScale, x,y,z,verts,norms,faces,colors,fTargetValue);
 }
