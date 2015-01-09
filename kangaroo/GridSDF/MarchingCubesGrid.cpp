@@ -168,7 +168,7 @@ void GetMaxMinGlobalIndex(
 
 // ================================================================================
 // Generate one single mesh from several ppm files.
-bool SaveMeshFromPPMs(
+bool SaveMeshFromPXMs(
     std::string                sDirName,
     std::string                sBBFileHead,
     int3                       nVolRes,
@@ -176,14 +176,14 @@ bool SaveMeshFromPPMs(
     std::vector<std::string>   vfilename,
     std::string                sMeshFileName)
 {
-  printf("\n---- [Kangaroo/SaveMeshFromPPMs] Start.\n");
+  printf("\n---- [Kangaroo/SaveMeshFromPXMs] Start.\n");
 
   // read all grid sdf and sort them into volumes. vVolume index is global index
   std::vector<SingleVolume>  vVolumes = GetFilesNeedSaving(vfilename);
 
   if(vVolumes.size()<=0)
   {
-    printf("Cannot find any files for generating mesh\n");
+    printf("[Kangaroo/SaveMeshFromPXMs] Cannot find any files for generating mesh!\n");
     return false;
   }
 
@@ -210,10 +210,11 @@ bool SaveMeshFromPPMs(
 
   // ---------------------------------------------------------------------------
   // For each global volume we have, gen mesh with it
-  int nNum = 0;
+  int nTotalSaveGridNum = 0;
 
   for(unsigned int i=0; i!=vVolumes.size(); i++)
   {
+    int nSingleLoopSaveGridNum = 0;
     // load the corresponding bounding box
     std::string sBBFile =
         sDirName + sBBFileHead +
@@ -221,14 +222,19 @@ bool SaveMeshFromPPMs(
         std::to_string(vVolumes[i].GlobalIndex.y) + "-" +
         std::to_string(vVolumes[i].GlobalIndex.z);
 
-    std::cout<<"Load bb file "<<sBBFile<<std::endl;
+    std::cout<<"[Kangaroo/SaveMeshFromPXMs] Merging grids in global bb area ("<<
+               std::to_string(vVolumes[i].GlobalIndex.x)<<","<<
+               std::to_string(vVolumes[i].GlobalIndex.y)<<","<<
+               std::to_string(vVolumes[i].GlobalIndex.z)<<")"<< std::endl;
 
     if( CheckIfBBfileExist(sBBFile) )
     {
+      // load the bounxing box of the sdf.
+      // Notice that this is the global bounding box, not the local one
       hvol.m_bbox      = LoadPXMBoundingBox(sBBFile);
       hvolcolor.m_bbox = hvol.m_bbox;
 
-      // for each single local grid volume, load it
+      // for each single grid volume
       for(unsigned int j=0; j!=vVolumes[i].vLocalIndex.size(); j++)
       {
         int3 CurLocalIndex = vVolumes[i].vLocalIndex[j];
@@ -242,7 +248,7 @@ bool SaveMeshFromPPMs(
 
         if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) == false)
         {
-          printf("[Kangaroo/GenMeshFromPPM] Error! load file fail.. exit\n");
+          printf("[Kangaroo/SaveMeshFromPXMs] Error! load file fail.. exit.\n");
           exit(-1);
         }
         else
@@ -254,11 +260,12 @@ bool SaveMeshFromPPMs(
                                       MaxGlobalIndex, MinGlobalIndex,
                                       verts, norms, faces, colors);
 
-            nNum++;
+            nTotalSaveGridNum++;
+            nSingleLoopSaveGridNum ++;
           }
           else
           {
-            std::cerr<<"[Kangaroo/GenMeshFromPPM] Error! mesh inactive!"<<std::endl;
+            std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! mesh inactive!"<<std::endl;
             exit(-1);
           }
         }
@@ -266,7 +273,7 @@ bool SaveMeshFromPPMs(
     }
     else
     {
-      std::cerr<<"[Kangaroo/GenMeshFromPPM] Error! Fail loading bbox "<<sBBFile<<std::endl;
+      std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! Fail loading bbox "<<sBBFile<<std::endl;
       exit(-1);
     }
 
@@ -274,10 +281,10 @@ bool SaveMeshFromPPMs(
     SdfReset(hvol);
     hvol.ResetAllGridVol();
 
-    std::cout<<"Finish save vol "<<i<<";"<<std::endl;
+    std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish merge "<<nSingleLoopSaveGridNum<<" grids."<<std::endl;
   }
 
-  std::cout<<"[Kangaroo/GenMeshFromPPM] Finish marching cube for " << nNum<< "Grids.\n";
+  std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish marching cube for " << nTotalSaveGridNum<< " Grids.\n";
 
   // ---------------------------------------------------------------------------
   // Save mesh from memory to hard disk
