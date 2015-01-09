@@ -7,15 +7,6 @@
 
 namespace roo {
 
-class NextResetSDF
-{
-public:
-  int  m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
-  int  m_x[MAX_SUPPORT_GRID_NUM];
-  int  m_y[MAX_SUPPORT_GRID_NUM];
-  int  m_z[MAX_SUPPORT_GRID_NUM];
-};
-
 class RollingGridSDF
 {
 public:
@@ -44,7 +35,9 @@ public:
     /// -------------------------------------------------------------------------
     if(shift_index.x!=0)
     {
-      float new_x = static_cast<float>(shift_index.x) * BBSize.x / static_cast<float>(pVol->m_nGridRes_w);
+      float new_x = static_cast<float>(shift_index.x) * BBSize.x /
+          static_cast<float>(pVol->m_nGridRes_w);
+
       pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x + new_x;
       pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x + new_x;
 
@@ -57,7 +50,9 @@ public:
 
     if(shift_index.y!=0)
     {
-      float new_y = static_cast<float>(shift_index.y) * BBSize.y / static_cast<float>(pVol->m_nGridRes_h);
+      float new_y = static_cast<float>(shift_index.y) * BBSize.y /
+          static_cast<float>(pVol->m_nGridRes_h);
+
       pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y + new_y;
       pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y + new_y;
 
@@ -70,7 +65,9 @@ public:
 
     if(shift_index.z!=0)
     {
-      float new_z = static_cast<float>(shift_index.z) * BBSize.z / static_cast<float>(pVol->m_nGridRes_d);
+      float new_z = static_cast<float>(shift_index.z) * BBSize.z /
+          static_cast<float>(pVol->m_nGridRes_d);
+
       pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z + new_z;
       pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z + new_z;
 
@@ -89,8 +86,6 @@ public:
       pVol->UpdateLocalAndGlobalShift(shift_index);
     }
   }
-
-
 
 
   // ===========================================================================
@@ -192,7 +187,7 @@ public:
           if(bReset == true)
           {
             nResetNum ++;
-            m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 1;
+            m_nNextResetSDFs[nGridIndex] = 1;
 
             if(pVol->CheckIfBasicSDFActive(nGridIndex))
             {
@@ -201,7 +196,7 @@ public:
           }
           else
           {
-            m_nNextResetSDFs.m_nNextResetSDFs[nGridIndex] = 0;
+            m_nNextResetSDFs[nGridIndex] = 0;
           }
         }
       }
@@ -219,7 +214,7 @@ public:
   {
     for(unsigned int i=0; i!=pVol->GetTotalGridNum(); i++)
     {
-      if(m_nNextResetSDFs.m_nNextResetSDFs[i] == 1 &&
+      if(m_nNextResetSDFs[i] == 1 &&
          pVol->CheckIfBasicSDFActive(i) == true)
       {
         roo::SdfReset(pVol->m_GridVolumes[i]);
@@ -232,7 +227,8 @@ public:
   }
 
 public:
-  NextResetSDF  m_nNextResetSDFs;
+  int  m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
+
 };
 
 }
