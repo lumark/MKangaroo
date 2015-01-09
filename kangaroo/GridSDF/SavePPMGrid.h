@@ -153,11 +153,7 @@ template<typename T, typename Manage>
 void SavePXMGridDesire(
     const std::string                                      sPathName,
     int                                                    pGridNeedSave[],
-    int                                                    pFlagX[],
-    int                                                    pFlagY[],
-    int                                                    pFlagZ[],
     roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
-    bool                                                   bSaveGlobalPose,
     bool                                                   bSaveBBox,
     std::string                                            ppm_type = "P5",
     int                                                    num_colors = 255)
@@ -178,80 +174,46 @@ void SavePXMGridDesire(
     // save each active volume in BoundedVolumeGrid to HardDisk
     int nSaveGridNum =0;
 
-    for(int i=0;i!=int(rDVol.m_nGridRes_w);i++)
+    for(int i=0;i!=static_cast<int>(rDVol.m_nGridRes_w);i++)
     {
-      for(int j=0;j!=int(rDVol.m_nGridRes_h);j++)
+      for(int j=0;j!=static_cast<int>(rDVol.m_nGridRes_h);j++)
       {
-        for(int k=0;k!=int(rDVol.m_nGridRes_d);k++)
+        for(int k=0;k!=static_cast<int>(rDVol.m_nGridRes_d);k++)
         {
-          int nGridIndex =i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
+          int nGridIndex = i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
 
           // --- save vol if necessary
           if( pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex) )
           {
             std::string sGridFileName;
 
-            // there are two situation for global index
-            // 1, The global index does not change for grid before shift
-            int3 GlobalIndex = rDVol.GetGlobalIndex(i,j,k);
-
-            if (pFlagX[nGridIndex] ==1)
-            {
-              GlobalIndex.x = rDVol.m_global_shift.x;
-            }
-
-            if (pFlagY[nGridIndex] ==1)
-            {
-              GlobalIndex.y = rDVol.m_global_shift.y;
-            }
-
-            if (pFlagZ[nGridIndex] ==1)
-            {
-              GlobalIndex.z = rDVol.m_global_shift.z;
-            }
-
-            // local index does not change under global index
+            int3 GlobalIndex = rDVol.m_global_shift;
             int3 LocalIndex  = make_int3(i,j,k);
 
-            // Save without rolling grid sdf
-            if(bSaveGlobalPose == false)
-            {
-              // only save the local grid
-              sGridFileName = sPathName+"-"+std::to_string(LocalIndex.x)+"-"+
-                  std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
-            }
-            else
-            {
-              // save grid in global index (with rolling)
-              sGridFileName = sPathName+"-"+
-                  std::to_string(GlobalIndex.x)+"-"+std::to_string(GlobalIndex.y)+"-"+
-                  std::to_string(GlobalIndex.z)+"-"+std::to_string(LocalIndex.x)+"-"+
-                  std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
-            }
+            sGridFileName = sPathName+"-"+
+                std::to_string(GlobalIndex.x)+"-"+std::to_string(GlobalIndex.y)+"-"+
+                std::to_string(GlobalIndex.z)+"-"+std::to_string(LocalIndex.x)+"-"+
+                std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
 
             std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
             SavePXM<T,Manage>(bFile, hvol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
             nSaveGridNum++;
 
             // --- save bounding box if necessary ------------------------------
-            // scan the disk and see if we need to save bb
+            // scan the disk and see if we need to save bb (in global pose)
             if(bSaveBBox == true)
             {
               CheckifSaveBB(sPathName, GlobalIndex, rDVol);
             }
+
           }
         }
       }
     }
 
-    if(bSaveGlobalPose)
-    {
+
       printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf in Global Pose.\n", nSaveGridNum);
-    }
-    else
-    {
-      printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf in local Pose.\n", nSaveGridNum);
-    }
+
   }
 
 }
