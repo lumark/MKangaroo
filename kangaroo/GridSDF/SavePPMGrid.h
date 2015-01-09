@@ -166,10 +166,10 @@ void SavePXMGridDesire(
   else
   {
     // load data from device to host
-    roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hvol;
-    hvol.Init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
-    hvol.CopyAndInitFrom(rDVol);
-    hvol.m_global_shift = rDVol.m_global_shift;
+    roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hVol;
+    hVol.Init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
+    hVol.CopyAndInitFrom(rDVol);
+    hVol.m_global_shift = rDVol.m_global_shift;
 
     // save each active volume in BoundedVolumeGrid to HardDisk
     int nSaveGridNum =0;
@@ -183,24 +183,23 @@ void SavePXMGridDesire(
           int nGridIndex = i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
 
           // --- save vol if necessary
-          if( pGridNeedSave[nGridIndex]==1 && hvol.CheckIfBasicSDFActive(nGridIndex) )
+          if( pGridNeedSave[nGridIndex]==1 && hVol.CheckIfBasicSDFActive(nGridIndex) )
           {
-            std::string sGridFileName;
-
             int3 GlobalIndex = rDVol.m_global_shift;
+
+            // the actual lcoal index of the grid
             int3 LocalIndex  = make_int3(i,j,k);
 
-            sGridFileName = sPathName+"-"+
+            std::string sGridFileName = sPathName+"-"+
                 std::to_string(GlobalIndex.x)+"-"+std::to_string(GlobalIndex.y)+"-"+
                 std::to_string(GlobalIndex.z)+"-"+std::to_string(LocalIndex.x)+"-"+
                 std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
 
             std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
-            SavePXM<T,Manage>(bFile, hvol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
+            SavePXM<T,Manage>(bFile, hVol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
             nSaveGridNum++;
 
-            // --- save bounding box if necessary ------------------------------
-            // scan the disk and see if we need to save bb (in global pose)
+            // scan the disk and see if we need to save the bb (in global pose)
             if(bSaveBBox == true)
             {
               CheckifSaveBB(sPathName, GlobalIndex, rDVol);
