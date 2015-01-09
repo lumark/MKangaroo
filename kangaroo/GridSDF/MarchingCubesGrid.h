@@ -73,6 +73,8 @@ inline aiMesh* MeshFromLists(
     }
   }
 
+  //  std::cout<<"color num: "<<colors.size()<<std::endl;
+
   return mesh;
 }
 
@@ -215,8 +217,8 @@ template<typename T, typename TColor>
 void vMarchCubeGrid(
     BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
     BoundedVolumeGrid<TColor,roo::TargetHost, Manage>&  volColor,
-    const float3&                                             p,
-    const float3&                                             fScale,
+    const float3&                                       p,
+    const float3&                                       fScale,
     int x, int y, int z,
     std::vector<aiVector3D>&                            verts,
     std::vector<aiVector3D>&                            norms,
@@ -352,13 +354,14 @@ void vMarchCubeGridGlobal(
     )
 {
   // get voxel position
-//  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z, CurGlobal, MinGlobal);
-//  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal, MinGlobal);
+  //  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z, CurGlobal, MinGlobal);
+  //  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal, MinGlobal);
 
   const float3 p = vol.VoxelPositionInUnits(x,y,z);
   const float3 fScale = vol.VoxelSizeUnits();
 
-  vMarchCubeGrid(vol, volColor, p, fScale, x,y,z,verts,norms,faces,colors,fTargetValue);
+  vMarchCubeGrid(vol, volColor, p, fScale, x, y, z,
+                 verts, norms, faces, colors, fTargetValue);
 }
 
 //vMarchCube performs the Marching Cubes algorithm on a single cube
@@ -539,15 +542,15 @@ void SaveMeshGrid(
 
   MarchingCUBERst ObjMesh;
   int nNumSkip =0; int nNumSave =0;
+
   for(int i=0;i!=vol.m_nGridRes_w;i++)
   {
     for(int j=0;j!=vol.m_nGridRes_h;j++)
     {
       for(int k=0;k!=vol.m_nGridRes_d;k++)
       {
-        if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)) == true)
+        if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)))
         {
-
           GenMeshSingleGrid(vol,volColor, make_int3(i, j, k), ObjMesh.verts,
                             ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
           nNumSave++;
@@ -559,7 +562,9 @@ void SaveMeshGrid(
       }
     }
   }
-  printf("[SaveMeshGrid] Finish marching cube grid sdf. Save %d grids. Skip %d grids. Use time %f; \n",
+
+  printf("[SaveMeshGrid] Finish marching cube grid sdf."
+         " Save %d grids. Skip %d grids. Use time %f; \n",
          nNumSave, nNumSkip, _Toc(dTime));
 
   aiMesh* mesh = MeshFromLists(ObjMesh.verts,ObjMesh.norms,
@@ -592,9 +597,9 @@ void SaveMeshSingleGridGlobal(
         // get voxel index for each grid.
         roo::vMarchCubeGridGlobal(
               vol, volColor,
-              CurLocalIndex.x * vol.m_nVolumeGridRes + x,
-              CurLocalIndex.y * vol.m_nVolumeGridRes + y,
-              CurLocalIndex.z * vol.m_nVolumeGridRes + z,
+              CurLocalIndex.x * static_cast<int>(vol.m_nVolumeGridRes) + x,
+              CurLocalIndex.y * static_cast<int>(vol.m_nVolumeGridRes) + y,
+              CurLocalIndex.z * static_cast<int>(vol.m_nVolumeGridRes) + z,
               CurGlobalIndex, MaxGlobalIndex, MinGlobalIndex,
               verts, norms, faces, colors);
 
@@ -636,11 +641,12 @@ void GenMeshSingleGrid(
 
           const float3 fScale = vol.VoxelSizeUnits();
 
-          roo::vMarchCubeGrid(vol, volColor, p, fScale,
-                              CurLocalIndex.x * vol.m_nVolumeGridRes + x,
-                              CurLocalIndex.y * vol.m_nVolumeGridRes + y,
-                              CurLocalIndex.z * vol.m_nVolumeGridRes + z,
-                              verts, norms, faces, colors);
+          roo::vMarchCubeGrid(
+                vol, volColor, p, fScale,
+                CurLocalIndex.x * static_cast<int>(vol.m_nVolumeGridRes) + x,
+                CurLocalIndex.y * static_cast<int>(vol.m_nVolumeGridRes) + y,
+                CurLocalIndex.z * static_cast<int>(vol.m_nVolumeGridRes) + z,
+                verts, norms, faces, colors);
         }
       }
     }

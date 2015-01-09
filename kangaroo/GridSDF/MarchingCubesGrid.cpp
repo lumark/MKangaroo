@@ -212,6 +212,8 @@ bool SaveMeshFromPXMs(
   roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
   hvol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
+
+  /// TODO: SUPPORT COLOR MESH
   roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
   hvolcolor.Init(1,1,1, nGridRes, BBox);
 
@@ -226,7 +228,13 @@ bool SaveMeshFromPXMs(
 
   for(unsigned int i=0; i!=vVolumes.size(); i++)
   {
+    std::cout<<"[Kangaroo/SaveMeshFromPXMs] Merging grids in global bb area ("<<
+               std::to_string(vVolumes[i].GlobalIndex.x)<<","<<
+               std::to_string(vVolumes[i].GlobalIndex.y)<<","<<
+               std::to_string(vVolumes[i].GlobalIndex.z)<<")"<< std::endl;
+
     int nSingleLoopSaveGridNum = 0;
+
     // load the corresponding bounding box
     std::string sBBFile =
         sDirName + sBBFileHead +
@@ -234,15 +242,10 @@ bool SaveMeshFromPXMs(
         std::to_string(vVolumes[i].GlobalIndex.y) + "#" +
         std::to_string(vVolumes[i].GlobalIndex.z);
 
-    std::cout<<"[Kangaroo/SaveMeshFromPXMs] Merging grids in global bb area ("<<
-               std::to_string(vVolumes[i].GlobalIndex.x)<<","<<
-               std::to_string(vVolumes[i].GlobalIndex.y)<<","<<
-               std::to_string(vVolumes[i].GlobalIndex.z)<<")"<< std::endl;
-
     if( CheckIfBBfileExist(sBBFile) )
     {
       // load the bounxing box of the sdf.
-      // Notice that this is the global bounding box, not the local one
+      // Notice that this is the global bounding box, not the local one.
       hvol.m_bbox      = LoadPXMBoundingBox(sBBFile);
       hvolcolor.m_bbox = hvol.m_bbox;
 
@@ -258,28 +261,23 @@ bool SaveMeshFromPXMs(
 
         std::string sPXMFile = sDirName + vVolumes[i].vFileName[j];
 
-        if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) == false)
+        // load the grid volume
+        if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) )
         {
-          printf("[Kangaroo/SaveMeshFromPXMs] Error! load file fail.. exit.\n");
-          exit(-1);
+          //            SaveMeshSingleGridGlobal( hvol, hvolcolor,
+          //                                      CurLocalIndex, CurGlobalIndex,
+          //                                      MaxGlobalIndex, MinGlobalIndex,
+          //                                      verts, norms, faces, colors);
+
+          GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex, verts, norms, faces, colors);
+
+          nTotalSaveGridNum++;
+          nSingleLoopSaveGridNum ++;
         }
         else
         {
-          if(hvol.CheckIfBasicSDFActive(nRealIndex) == true)
-          {
-            SaveMeshSingleGridGlobal( hvol, hvolcolor,
-                                      CurLocalIndex, CurGlobalIndex,
-                                      MaxGlobalIndex, MinGlobalIndex,
-                                      verts, norms, faces, colors);
-
-            nTotalSaveGridNum++;
-            nSingleLoopSaveGridNum ++;
-          }
-          else
-          {
-            std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! mesh inactive!"<<std::endl;
-            exit(-1);
-          }
+          printf("[Kangaroo/SaveMeshFromPXMs] Error! load file fail.. exit.\n");
+          exit(-1);
         }
       }
     }
