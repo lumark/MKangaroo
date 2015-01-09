@@ -165,12 +165,14 @@ void SavePXMGridDesire(
   }
   else
   {
+    // ------------------------------------------------------------------------
     // load data from device to host
     roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> hVol;
     hVol.Init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
     hVol.CopyAndInitFrom(rDVol);
     hVol.m_global_shift = rDVol.m_global_shift;
 
+    // ------------------------------------------------------------------------
     // save each active volume in BoundedVolumeGrid to HardDisk
     int nSaveGridNum =0;
 
@@ -198,6 +200,8 @@ void SavePXMGridDesire(
             std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
             SavePXM<T,Manage>(bFile, hVol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
             nSaveGridNum++;
+
+            //            std::cout<<"finish save mesh "<<sGridFileName<<std::endl;
 
             // scan the disk and see if we need to save the bb (in global pose)
             if(bSaveBBox == true)
@@ -329,7 +333,7 @@ bool LoadPXMGrid(
 
       if(LoadPXMSingleGrid(sDirName+ sFileName, hvol.m_GridVolumes[nIndex]) == false)
       {
-        std::cout<<"[LoadPXMGrid] Fatal error! cannot read single volume grid "<<
+        std::cout<<"[LoadPXMGrid] Error! cannot read single volume grid "<<
                    sFileName<< " with index "<<nIndex<<" from hard disk."<<std::endl;
         exit(-1);
       }

@@ -96,7 +96,8 @@ inline void SaveMeshlabGrid(
 KANGAROO_EXPORT
 inline void SaveMeshlabGrid(
     roo::BoundedVolumeGrid<roo::SDF_t, roo::TargetDevice, roo::Manage>& vol,
-    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>& GreyVol)
+    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>& GreyVol,
+    std::string                                                    sFileName = "mesh")
 {
   Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
   Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
@@ -105,7 +106,7 @@ inline void SaveMeshlabGrid(
   Eigen::Matrix4d T_ml_vis = Eigen::Matrix4d::Identity();
   T_ml_vis.block<3,3>(0,0) = RDFmeshlab.transpose() * RDFvision;
 
-  std::string mesh_filename = "mesh";
+  std::string mesh_filename = sFileName;
   std::ofstream of("project.mlp");
 
   of << "<!DOCTYPE MeshLabDocument>" << std::endl;
@@ -140,7 +141,8 @@ inline void SaveMeshlabGrid(
 KANGAROO_EXPORT
 inline void SaveMeshlabGrid(
     roo::BoundedVolumeGrid<roo::SDF_t_Smart, roo::TargetDevice, roo::Manage>& vol,
-    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>& GreyVol)
+    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>& GrayVol,
+    std::string                                                    sFileName = "mesh")
 {
   Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
   Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;
@@ -149,7 +151,7 @@ inline void SaveMeshlabGrid(
   Eigen::Matrix4d T_ml_vis = Eigen::Matrix4d::Identity();
   T_ml_vis.block<3,3>(0,0) = RDFmeshlab.transpose() * RDFvision;
 
-  std::string mesh_filename = "mesh";
+  std::string mesh_filename = sFileName;
   std::ofstream of("project.mlp");
 
   of << "<!DOCTYPE MeshLabDocument>" << std::endl;
@@ -158,7 +160,7 @@ inline void SaveMeshlabGrid(
   of << " <MeshGroup>" << std::endl;
 
   double dTime = roo::_Tic();
-  roo::SaveMeshGrid(mesh_filename, vol, GreyVol);
+  roo::SaveMeshGrid(mesh_filename, vol, GrayVol);
   std::cout<<"save model use time "<<roo::_Toc(dTime)<<std::endl;
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename <<
