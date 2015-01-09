@@ -137,8 +137,8 @@ void CheckifSaveBB(
     int3                                                   GlobalIndex,
     roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol)
 {
-  std::string sBBFileName = sFilename +"-BB-"+ std::to_string(GlobalIndex.x) + "-"+
-      std::to_string(GlobalIndex.y) + "-"+ std::to_string(GlobalIndex.z);
+  std::string sBBFileName = sFilename +"-BB#"+ std::to_string(GlobalIndex.x) + "#"+
+      std::to_string(GlobalIndex.y) + "#"+ std::to_string(GlobalIndex.z);
 
   if( CheckIfBBfileExist(sBBFileName) == false)
   {
@@ -190,10 +190,10 @@ void SavePXMGridDesire(
             // the actual lcoal index of the grid
             int3 LocalIndex  = make_int3(i,j,k);
 
-            std::string sGridFileName = sPathName+"-"+
-                std::to_string(GlobalIndex.x)+"-"+std::to_string(GlobalIndex.y)+"-"+
-                std::to_string(GlobalIndex.z)+"-"+std::to_string(LocalIndex.x)+"-"+
-                std::to_string(LocalIndex.y)+"-"+std::to_string(LocalIndex.z);
+            std::string sGridFileName = sPathName+"#"+
+                std::to_string(GlobalIndex.x)+"#"+std::to_string(GlobalIndex.y)+"#"+
+                std::to_string(GlobalIndex.z)+"#"+std::to_string(LocalIndex.x)+"#"+
+                std::to_string(LocalIndex.y)+"#"+std::to_string(LocalIndex.z);
 
             std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
             SavePXM<T,Manage>(bFile, hVol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
@@ -204,15 +204,12 @@ void SavePXMGridDesire(
             {
               CheckifSaveBB(sPathName, GlobalIndex, rDVol);
             }
-
           }
         }
       }
     }
 
-
-      printf("[Kangaroo/SavePXMGridDesire] Save %d grid sdf in Global Pose.\n", nSaveGridNum);
-
+    printf("\n[Kangaroo/SavePXMGridDesire] Save %d grid sdf in Global Pose.\n", nSaveGridNum);
   }
 
 }

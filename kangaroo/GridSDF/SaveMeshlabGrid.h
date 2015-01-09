@@ -208,7 +208,8 @@ inline void SaveMeshlabFromPXMs(
 
   of << " <MeshGroup>" << std::endl;
 
-  roo::SaveMeshFromPXMs(sDirName, sBBFileHead, VolRes, nGridRes, vfilename, sFinalMeshFileName);
+  roo::SaveMeshFromPXMs(sDirName, sBBFileHead, VolRes,
+                        nGridRes, vfilename, sFinalMeshFileName);
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
   of << "   <MLMatrix44>" << std::endl;

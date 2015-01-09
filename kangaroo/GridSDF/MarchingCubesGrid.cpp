@@ -42,26 +42,30 @@ bool GetIndexFromFileName(
 
   for(unsigned int i=0;i!=sTempStr.size();i++)
   {
-    if(sTempStr.substr(i,1) == "-")
+    if(sTempStr.substr(i,1) == "#")
     {
       vIndex.push_back(i);
     }
   }
 
   // now get global index
-  if(vIndex.size()!=7)
+  if(vIndex.size()!=6)
   {
+    std::cerr<<"[GetIndexFromFileName] Error! Index size is "<<vIndex.size()<<", req: 6;\n";
     return false;
   }
   else
   {
-    GlobalIndex.x = std::stoi(sFileName.substr(vIndex[1]+1, vIndex[2]-vIndex[1]-1));
-    GlobalIndex.y = std::stoi(sFileName.substr(vIndex[2]+1, vIndex[3]-vIndex[2]-1));
-    GlobalIndex.z = std::stoi(sFileName.substr(vIndex[3]+1, vIndex[4]-vIndex[3]-1));
+    GlobalIndex.x = std::stoi(sFileName.substr(vIndex[0]+1, vIndex[1]-vIndex[0]-1));
+    GlobalIndex.y = std::stoi(sFileName.substr(vIndex[1]+1, vIndex[2]-vIndex[1]-1));
+    GlobalIndex.z = std::stoi(sFileName.substr(vIndex[2]+1, vIndex[3]-vIndex[2]-1));
 
-    LocalIndex.x = std::stoi(sFileName.substr(vIndex[4]+1, vIndex[5]-vIndex[4]-1));
-    LocalIndex.y = std::stoi(sFileName.substr(vIndex[5]+1, vIndex[6]-vIndex[5]-1));
-    LocalIndex.z = std::stoi(sFileName.substr(vIndex[6]+1, sFileName.size() - vIndex[6]-1));
+    LocalIndex.x = std::stoi(sFileName.substr(vIndex[3]+1, vIndex[4]-vIndex[3]-1));
+    LocalIndex.y = std::stoi(sFileName.substr(vIndex[4]+1, vIndex[5]-vIndex[4]-1));
+    LocalIndex.z = std::stoi(sFileName.substr(vIndex[5]+1, sFileName.size() - vIndex[5]-1));
+
+    //    std::cout<<"sFileName: "<<sFileName;
+    //    printf("; global index (%d,%d,%d);\n", GlobalIndex.x, GlobalIndex.y, GlobalIndex.z);
     return true;
   }
 }
@@ -73,13 +77,14 @@ std::vector<SingleVolume> GetFilesNeedSaving(
 {
   std::vector<SingleVolume>  vVolumes;
 
-  for(unsigned int i=0;i!=vfilename.size();i++)
+  for(unsigned int i=0; i!=vfilename.size(); i++)
   {
     std::string sFileName = vfilename[i];
 
     // get index from file name
     int3 GlobalIndex, LocalIndex;
-    if(GetIndexFromFileName(sFileName, GlobalIndex, LocalIndex)==true)
+
+    if( GetIndexFromFileName(sFileName, GlobalIndex, LocalIndex) )
     {
       bool bFlag = false;
       for(unsigned int i=0;i!=vVolumes.size();i++)
@@ -103,6 +108,11 @@ std::vector<SingleVolume> GetFilesNeedSaving(
         vVolumes.push_back(mSingVolume);
       }
     }
+    else
+    {
+      std::cerr<<"  [Kangaroo/GetFilesNeedSaving]Fatal error! Invaild Files!"<<std::endl;
+      exit(-1);
+    }
   }
 
   return vVolumes;
@@ -120,8 +130,10 @@ void GetMaxMinGlobalIndex(
   for(unsigned int i=0;i!=rvVolumes.size();i++)
   {
     // load bounding box
-    std::string sBBFile = sDirName + sBBFileName+std::to_string(rvVolumes[i].GlobalIndex.x) + "-" +
-        std::to_string(rvVolumes[i].GlobalIndex.y) + "-" + std::to_string(rvVolumes[i].GlobalIndex.z);
+    std::string sBBFile = sDirName + sBBFileName +
+        std::to_string(rvVolumes[i].GlobalIndex.x) + "#" +
+        std::to_string(rvVolumes[i].GlobalIndex.y) + "#" +
+        std::to_string(rvVolumes[i].GlobalIndex.z);
 
     if(CheckIfBBfileExist(sBBFile) == true)
     {
@@ -218,8 +230,8 @@ bool SaveMeshFromPXMs(
     // load the corresponding bounding box
     std::string sBBFile =
         sDirName + sBBFileHead +
-        std::to_string(vVolumes[i].GlobalIndex.x) + "-" +
-        std::to_string(vVolumes[i].GlobalIndex.y) + "-" +
+        std::to_string(vVolumes[i].GlobalIndex.x) + "#" +
+        std::to_string(vVolumes[i].GlobalIndex.y) + "#" +
         std::to_string(vVolumes[i].GlobalIndex.z);
 
     std::cout<<"[Kangaroo/SaveMeshFromPXMs] Merging grids in global bb area ("<<
