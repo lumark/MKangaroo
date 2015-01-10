@@ -46,7 +46,7 @@ public:
     m_nGridRes_h     = m_h/m_nVolumeGridRes;
     m_nGridRes_d     = m_d/m_nVolumeGridRes;
 
-    m_nTotalGridRes = m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;
+    m_nTotalGridRes  = m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;
 
     if(m_nTotalGridRes > MAX_SUPPORT_GRID_NUM)
     {
@@ -58,6 +58,8 @@ public:
 
     // -----------------------------------------------------------------------
     ResetAllGridVol();
+
+    // set shift parameter
     m_local_shift = make_int3(0,0,0);
     m_global_shift = make_int3(0,0,0);
 
@@ -219,12 +221,7 @@ public:
           static_cast<int>(floorf(y/m_nVolumeGridRes)),
           static_cast<int>(floorf(z/m_nVolumeGridRes)) );
 
-    if( CheckIfBasicSDFActive(nIndex) == true)
-    {
-      return true;
-    }
-
-    return false;
+    return CheckIfBasicSDFActive(nIndex);
   }
 
 
