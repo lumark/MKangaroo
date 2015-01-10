@@ -228,14 +228,14 @@ void vMarchCubeGrid(
     float                                               fTargetValue = 0.0f
     )
 {
-  //Make a local copy of the values at the cube's corners
+  // Make a local copy of the values at the cube's corners
   float afCubeValue[8];
   for(int iVertex = 0; iVertex < 8; iVertex++)
   {
     if(vol.CheckIfVoxelExist(
-         static_cast<int>(x+a2fVertexOffset[iVertex][0]),
-         static_cast<int>(y+a2fVertexOffset[iVertex][1]),
-         static_cast<int>(z+a2fVertexOffset[iVertex][2])) == true)
+         static_cast<int>(x + a2fVertexOffset[iVertex][0]),
+         static_cast<int>(y + a2fVertexOffset[iVertex][1]),
+         static_cast<int>(z + a2fVertexOffset[iVertex][2])))
     {
       afCubeValue[iVertex] =
           vol(static_cast<int>(x+a2fVertexOffset[iVertex][0]),
@@ -320,6 +320,8 @@ void vMarchCubeGrid(
       verts.push_back(aiVector3D(asEdgeVertex[iVertex].x,
                                  asEdgeVertex[iVertex].y,
                                  asEdgeVertex[iVertex].z) );
+
+      //      printf("add (%f,%f,%f);",asEdgeVertex[iVertex].x, asEdgeVertex[iVertex].y, asEdgeVertex[iVertex].z);
 
       norms.push_back(aiVector3D(asEdgeNorm[iVertex].x,
                                  asEdgeNorm[iVertex].y,
@@ -552,10 +554,13 @@ void SaveMeshGrid(
       {
         if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)))
         {
-          GenMeshSingleGrid(vol,volColor, make_int3(i, j, k), ObjMesh.verts,
+          int3 CurLocalIndex = make_int3(i,j,k);
+
+          GenMeshSingleGrid(vol,volColor, CurLocalIndex, ObjMesh.verts,
                             ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
 
-          std::cout<<"finish save grid "<<vol.ConvertLocalIndexToRealIndex(i,j,k)<<"; vertes num: "<<ObjMesh.verts.size()<<
+          std::cout<<"Finish save grid "<<vol.ConvertLocalIndexToRealIndex(i,j,k)<<
+                     "("<<i<<","<<j<<","<<k<<")"<<"; vertes num: "<<ObjMesh.verts.size()<<
                      "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
                      "; colors num: "<<ObjMesh.colors.size()<<std::endl;
 
@@ -614,8 +619,6 @@ void SaveMeshSingleGridGlobal(
   }
 }
 
-
-// =============================================================================
 // now do it for each grid instead of each voxel
 KANGAROO_EXPORT
 template<typename T, typename TColor>
@@ -640,6 +643,7 @@ void GenMeshSingleGrid(
               CurLocalIndex.y * static_cast<int>(vol.m_nVolumeGridRes) + y,
               CurLocalIndex.z * static_cast<int>(vol.m_nVolumeGridRes) + z);
 
+        // check if the voxel in the grid sdf is active
         if(vol.CheckIfVoxelExist( Index.x, Index.y, Index.z ))
         {
           const float3 p = vol.VoxelPositionInUnits(Index.x, Index.y, Index.z);

@@ -266,11 +266,13 @@ bool SaveMeshFromPXMs(
           //                                    MaxGlobalIndex, MinGlobalIndex,
           //                                    verts, norms, faces, colors);
 
+          // gen mesh from a single grid
           GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex,
                             ObjMesh.verts, ObjMesh.norms,
                             ObjMesh.faces, ObjMesh.colors);
 
-          std::cout<<"finish save grid "<<nRealIndex<<"; vertes num: "<<ObjMesh.verts.size()<<
+          std::cout<<"Finish save grid "<<nRealIndex<<"("<<CurLocalIndex.x<<","<<
+                     CurLocalIndex.y<<","<<CurLocalIndex.z<<")"<<"; vertes num: "<<ObjMesh.verts.size()<<
                      "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
                      "; colors num: "<<ObjMesh.colors.size()<<std::endl;
 
