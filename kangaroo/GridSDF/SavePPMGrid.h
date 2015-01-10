@@ -224,10 +224,10 @@ void SavePXMGridDesire(
 KANGAROO_EXPORT
 template<typename T>
 bool LoadPXMSingleGrid(
-    const std::string                                      filename,
+    const std::string                                      sFilename,
     roo::VolumeGrid<T,roo::TargetHost,roo::Manage>&        vol)
 {
-  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
+  std::ifstream bFile( sFilename.c_str(), std::ios::in | std::ios::binary );
 
   // Parse header
   std::string ppm_type = "P5";
@@ -243,12 +243,18 @@ bool LoadPXMSingleGrid(
   bFile >> num_colors;
   bFile.ignore(1,'\n');
 
+  //  std::cout<<"real success. ppm_type is:"<<ppm_type<<", num_color:"<<num_colors<<
+  //             ";w:"<<w<<"; h:"<<h<<"; d:"<<d<<std::endl;
+
   bool success = !bFile.fail() && w > 0 && h > 0 && d > 0;
 
-  if(success) {
+  if(success)
+  {
+    // Make sure the vol is empty
+    vol.CleanUp();
+
     // init volume grid
-    vol.InitVolume(w,h,d);
-    GpuCheckErrors();
+    vol.InitVolume(w, h, d);
 
     // Read in data
     for(size_t d=0; d<vol.d; ++d)
@@ -262,12 +268,12 @@ bool LoadPXMSingleGrid(
   }
   else
   {
-    bFile.close();
-    return false;
+    std::cerr<<"fatal error! read PPM File Fail!"<<std::endl;
+    exit(-1);
   }
 
   bFile.close();
-  return true;
+  return success;
 }
 
 KANGAROO_EXPORT
@@ -305,19 +311,16 @@ bool LoadPXMGrid(
     std::string                                               sDirName,
     const std::vector<std::string>&                           vfilename,
     std::string                                               sBBFileName,
-    roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>&  vol)
+    roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>&  Dvol)
 {
   // to load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-
-  roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName+sBBFileName);
+  roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName + sBBFileName);
 
   // init sdf
-  hvol.Init(vol.m_w, vol.m_h,vol.m_d,vol.m_nVolumeGridRes,BBox);
+  hvol.Init(Dvol.m_w, Dvol.m_h, Dvol.m_d, Dvol.m_nVolumeGridRes, BBox);
 
-  // read bb box..
-  int nNum = 0;
-
+  std::cout<<"Finish init sdf. loading model.."<<std::endl;
   // load each single VolumeGrid
   for(int i=0;i!=vfilename.size();i++)
   {
@@ -337,15 +340,11 @@ bool LoadPXMGrid(
                    sFileName<< " with index "<<nIndex<<" from hard disk."<<std::endl;
         exit(-1);
       }
-      else
-      {
-        nNum ++;
-      }
     }
   }
 
   // copy data from host to device
-  vol.CopyAndInitFrom(hvol);
+  Dvol.CopyAndInitFrom(hvol);
   GpuCheckErrors();
 
   return true;

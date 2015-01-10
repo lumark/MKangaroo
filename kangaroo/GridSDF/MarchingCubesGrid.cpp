@@ -201,20 +201,14 @@ bool SaveMeshFromPXMs(
 
   // ---------------------------------------------------------------------------
   // Load each single volume into the BBVolume.
-  std::vector<aiVector3D>   verts, norms;
-  std::vector<aiFace>       faces;
-  std::vector<aiColor4D>    colors;
-
-  // Load mesh configure
   roo::BoundingBox BBox;
 
   // To load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
   hvol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
-
   /// TODO: SUPPORT COLOR MESH
-  roo::BoundedVolumeGrid<float,roo::TargetHost,roo::Manage> hvolcolor;
+  roo::BoundedVolumeGrid<float, roo::TargetHost, roo::Manage> hvolcolor;
   hvolcolor.Init(1,1,1, nGridRes, BBox);
 
   // Get max and min global index
@@ -222,11 +216,14 @@ bool SaveMeshFromPXMs(
   int3 MinGlobalIndex = make_int3(999999999, 999999999, 999999999);
   GetMaxMinGlobalIndex(sDirName, sBBFileHead, vVolumes, MaxGlobalIndex, MinGlobalIndex);
 
+  // prepare data structure for the single mesh
+  MarchingCUBERst ObjMesh;
+
   // ---------------------------------------------------------------------------
   // For each global volume we have, gen mesh with it
   int nTotalSaveGridNum = 0;
 
-  for(unsigned int i=0; i!=vVolumes.size(); i++)
+  for(unsigned int i=0; i!=1; i++)
   {
     std::cout<<"[Kangaroo/SaveMeshFromPXMs] Merging grids in global bb area ("<<
                std::to_string(vVolumes[i].GlobalIndex.x)<<","<<
@@ -255,21 +252,27 @@ bool SaveMeshFromPXMs(
         int3 CurLocalIndex = vVolumes[i].vLocalIndex[j];
         int3 CurGlobalIndex = vVolumes[i].GlobalIndex;
 
-        int nRealIndex = hvol.ConvertLocalIndexToRealIndex(CurLocalIndex.x,
-                                                           CurLocalIndex.y,
-                                                           CurLocalIndex.z);
+        int nRealIndex = CurLocalIndex.x + hvol.m_nGridRes_w*
+            (CurLocalIndex.y+ hvol.m_nGridRes_h* CurLocalIndex.z);
 
         std::string sPXMFile = sDirName + vVolumes[i].vFileName[j];
 
         // load the grid volume
         if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) )
         {
-          //            SaveMeshSingleGridGlobal( hvol, hvolcolor,
-          //                                      CurLocalIndex, CurGlobalIndex,
-          //                                      MaxGlobalIndex, MinGlobalIndex,
-          //                                      verts, norms, faces, colors);
+          // do not use the following function
+          //          SaveMeshSingleGridGlobal( hvol, hvolcolor,
+          //                                    CurLocalIndex, CurGlobalIndex,
+          //                                    MaxGlobalIndex, MinGlobalIndex,
+          //                                    verts, norms, faces, colors);
 
-          GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex, verts, norms, faces, colors);
+          GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex,
+                            ObjMesh.verts, ObjMesh.norms,
+                            ObjMesh.faces, ObjMesh.colors);
+
+          std::cout<<"finish save grid "<<nRealIndex<<"; vertes num: "<<ObjMesh.verts.size()<<
+                     "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
+                     "; colors num: "<<ObjMesh.colors.size()<<std::endl;
 
           nTotalSaveGridNum++;
           nSingleLoopSaveGridNum ++;
@@ -298,7 +301,9 @@ bool SaveMeshFromPXMs(
 
   // ---------------------------------------------------------------------------
   // Save mesh from memory to hard disk
-  aiMesh* mesh = MeshFromLists(verts, norms, faces, colors);
+  aiMesh* mesh = MeshFromLists(ObjMesh.verts, ObjMesh.norms,
+                               ObjMesh.faces, ObjMesh.colors);
+
   return SaveMeshGridToFile(sMeshFileName, mesh, "obj");
 }
 

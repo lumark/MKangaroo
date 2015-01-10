@@ -73,7 +73,8 @@ inline aiMesh* MeshFromLists(
     }
   }
 
-  //  std::cout<<"color num: "<<colors.size()<<std::endl;
+  std::cout<<"[MeshFromLists] Finished. verts num "<<verts.size()<<", norms num: "<<norms.size()<<
+             ", faces num "<<faces.size()<<", color num: "<< colors.size()<<std::endl;
 
   return mesh;
 }
@@ -543,16 +544,21 @@ void SaveMeshGrid(
   MarchingCUBERst ObjMesh;
   int nNumSkip =0; int nNumSave =0;
 
-  for(int i=0;i!=vol.m_nGridRes_w;i++)
+  for(unsigned int i=0;i!=vol.m_nGridRes_w;i++)
   {
-    for(int j=0;j!=vol.m_nGridRes_h;j++)
+    for(unsigned int j=0;j!=vol.m_nGridRes_h;j++)
     {
-      for(int k=0;k!=vol.m_nGridRes_d;k++)
+      for(unsigned int k=0;k!=vol.m_nGridRes_d;k++)
       {
         if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)))
         {
           GenMeshSingleGrid(vol,volColor, make_int3(i, j, k), ObjMesh.verts,
                             ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
+
+          std::cout<<"finish save grid "<<vol.ConvertLocalIndexToRealIndex(i,j,k)<<"; vertes num: "<<ObjMesh.verts.size()<<
+                     "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
+                     "; colors num: "<<ObjMesh.colors.size()<<std::endl;
+
           nNumSave++;
         }
         else
@@ -623,30 +629,25 @@ void GenMeshSingleGrid(
     std::vector<aiColor4D>&                           colors)
 {
   // for each voxel in the grid
-  for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
+  for(int x=0; x!=vol.m_nVolumeGridRes; x++)
   {
-    for(GLint y=0;y!=vol.m_nVolumeGridRes;y++)
+    for(int y=0; y!=vol.m_nVolumeGridRes; y++)
     {
-      for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
+      for(int z=0; z!=vol.m_nVolumeGridRes; z++)
       {
-        if(vol.CheckIfVoxelExist(
-             CurLocalIndex.x * vol.m_nVolumeGridRes + x,
-             CurLocalIndex.y * vol.m_nVolumeGridRes + y,
-             CurLocalIndex.z * vol.m_nVolumeGridRes + z) == true)
-        {
-          const float3 p = vol.VoxelPositionInUnits(
-                CurLocalIndex.x * vol.m_nVolumeGridRes + x,
-                CurLocalIndex.y * vol.m_nVolumeGridRes + y,
-                CurLocalIndex.z * vol.m_nVolumeGridRes + z);
+        int3 Index = make_int3(
+              CurLocalIndex.x * static_cast<int>(vol.m_nVolumeGridRes) + x,
+              CurLocalIndex.y * static_cast<int>(vol.m_nVolumeGridRes) + y,
+              CurLocalIndex.z * static_cast<int>(vol.m_nVolumeGridRes) + z);
 
+        if(vol.CheckIfVoxelExist( Index.x, Index.y, Index.z ))
+        {
+          const float3 p = vol.VoxelPositionInUnits(Index.x, Index.y, Index.z);
           const float3 fScale = vol.VoxelSizeUnits();
 
-          roo::vMarchCubeGrid(
-                vol, volColor, p, fScale,
-                CurLocalIndex.x * static_cast<int>(vol.m_nVolumeGridRes) + x,
-                CurLocalIndex.y * static_cast<int>(vol.m_nVolumeGridRes) + y,
-                CurLocalIndex.z * static_cast<int>(vol.m_nVolumeGridRes) + z,
-                verts, norms, faces, colors);
+          roo::vMarchCubeGrid( vol, volColor, p, fScale,
+                               Index.x, Index.y, Index.z,
+                               verts, norms, faces, colors);
         }
       }
     }

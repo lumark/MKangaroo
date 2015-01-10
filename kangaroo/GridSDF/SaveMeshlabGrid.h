@@ -151,7 +151,6 @@ inline void SaveMeshlabGrid(
   Eigen::Matrix4d T_ml_vis = Eigen::Matrix4d::Identity();
   T_ml_vis.block<3,3>(0,0) = RDFmeshlab.transpose() * RDFvision;
 
-  std::string mesh_filename = sFileName;
   std::ofstream of("project.mlp");
 
   of << "<!DOCTYPE MeshLabDocument>" << std::endl;
@@ -160,10 +159,10 @@ inline void SaveMeshlabGrid(
   of << " <MeshGroup>" << std::endl;
 
   double dTime = roo::_Tic();
-  roo::SaveMeshGrid(mesh_filename, vol, GrayVol);
-  std::cout<<"save model use time "<<roo::_Toc(dTime)<<std::endl;
+  roo::SaveMeshGrid(sFileName, vol, GrayVol);
+  std::cout<<"Save mesh use time "<<roo::_Toc(dTime)<<std::endl;
 
-  of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename <<
+  of << "  <MLMesh label=\"mesh.ply\" filename=\"" << sFileName <<
         ".ply\">" << std::endl;
 
   of << "   <MLMatrix44>" << std::endl;
@@ -202,18 +201,16 @@ inline void SaveMeshlabFromPXMs(
   Eigen::Matrix4d T_ml_vis = Eigen::Matrix4d::Identity();
   T_ml_vis.block<3,3>(0,0) = RDFmeshlab.transpose() * RDFvision;
 
-  std::string mesh_filename = "mesh";
   std::ofstream of("project.mlp");
 
   of << "<!DOCTYPE MeshLabDocument>" << std::endl;
   of << "<MeshLabProject>" << std::endl;
-
   of << " <MeshGroup>" << std::endl;
 
   roo::SaveMeshFromPXMs(sDirName, sBBFileHead, VolRes,
                         nGridRes, vfilename, sFinalMeshFileName);
 
-  of << "  <MLMesh label=\"mesh.ply\" filename=\"" << mesh_filename << ".ply\">" << std::endl;
+  of << "  <MLMesh label=\"mesh.ply\" filename=\"" << sFinalMeshFileName << ".ply\">" << std::endl;
   of << "   <MLMatrix44>" << std::endl;
   of << "1 0 0 0 " << std::endl;
   of << "0 1 0 0 " << std::endl;

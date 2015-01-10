@@ -39,12 +39,11 @@ struct VolumeGrid
   inline __host__
   void InitVolume(unsigned int n_w, unsigned int n_h, unsigned int n_d)
   {
+    Target::template AllocatePitchedMem<T>(&ptr,&pitch,&img_pitch,n_w,n_h,n_d);
+
     w = n_w;
     h = n_h;
     d = n_d;
-
-    //    Management::AllocateCheck();
-    Target::template AllocatePitchedMem<T>(&ptr,&pitch,&img_pitch,w,h,d);
   }
 
 
