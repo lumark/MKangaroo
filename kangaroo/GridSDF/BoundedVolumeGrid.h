@@ -366,40 +366,6 @@ public:
   }
 
 
-  // use in the marching cubes algorithm
-  inline __host__
-  float3 VoxelPositionInUnitsGlobal(
-      int x, int y, int z, int3 cur_global, int3 min_global) const
-  {
-    // ------------------------------------------------------------------------
-    // comute the local pose
-    if(x>=m_w || y>= m_h || z>=m_d)
-    {
-      printf("[VoxelPositionInUnitsGlobal] Index overflow! (%d,%d,%d), dim: (%d,%d,%d)\n",
-             x,y,z,static_cast<int>(m_w),static_cast<int>(m_h),static_cast<int>(m_d));
-    }
-
-    float3 local_pos =  make_float3(
-          m_bbox.Min().x + m_bbox.Size().x * static_cast<float>(x)/static_cast<float>(m_w-1),
-          m_bbox.Min().y + m_bbox.Size().y * static_cast<float>(y)/static_cast<float>(m_h-1),
-          m_bbox.Min().z + m_bbox.Size().z * static_cast<float>(z)/static_cast<float>(m_d-1)
-          );
-
-    // ------------------------------------------------------------------------
-    // compute the global pose
-    float3 global_pos = make_float3(
-          static_cast<float>((cur_global.x - min_global.x)) * m_bbox.Size().x + local_pos.x,
-          static_cast<float>((cur_global.y - min_global.y)) * m_bbox.Size().y + local_pos.y,
-          static_cast<float>((cur_global.z - min_global.z)) * m_bbox.Size().z + local_pos.z);
-
-    //    printf("LocalPos:(%f,%f,%f) GlobalPos(%f,%f,%f)",
-    //           local_pos.x,local_pos.y,local_pos.z,
-    //           global_pos.x,global_pos.y,global_pos.z);
-
-    return global_pos;
-  }
-
-
   //////////////////////////////////////////////////////
   // Copy and Free Memory
   //////////////////////////////////////////////////////
