@@ -408,10 +408,17 @@ public:
             printf("[Kangaroo/BoundedVolumeGrid] Error! Init grid sdf fail!!\n");
             exit(-1);
           }
+          else
+          {
+            m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+            GpuCheckErrors();
+          }
         }
-
-        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
-        GpuCheckErrors();
+        else
+        {
+          m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+          GpuCheckErrors();
+        }
       }
     }
   }
@@ -437,9 +444,17 @@ public:
             printf("[Kangaroo/BoundedVolumeGrid] Error! Init grid sdf fail!!\n");
             exit(-1);
           }
+          else
+          {
+            m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
+            GpuCheckErrors();
+          }
         }
-        m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
-        GpuCheckErrors();
+        else
+        {
+          m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
+          GpuCheckErrors();
+        }
       }
     }
   }
