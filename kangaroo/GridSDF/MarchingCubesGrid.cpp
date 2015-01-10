@@ -243,7 +243,7 @@ bool SaveMeshFromPXMs(
     if( CheckIfBBfileExist(sBBFile) )
     {
       // load the bounxing box of the sdf.
-      // Notice that this is the global bounding box, not the local one.
+      // NOTICE that this is the GLOBAL bounding box, not the local one.
       hvol.m_bbox      = LoadPXMBoundingBox(sBBFile);
       hvolcolor.m_bbox = hvol.m_bbox;
 
@@ -251,7 +251,6 @@ bool SaveMeshFromPXMs(
       for(unsigned int j=0; j!=vVolumes[i].vLocalIndex.size(); j++)
       {
         int3 CurLocalIndex = vVolumes[i].vLocalIndex[j];
-        int3 CurGlobalIndex = vVolumes[i].GlobalIndex;
 
         int nRealIndex = CurLocalIndex.x + hvol.m_nGridRes_w*
             (CurLocalIndex.y+ hvol.m_nGridRes_h* CurLocalIndex.z);
@@ -261,21 +260,16 @@ bool SaveMeshFromPXMs(
         // load the grid volume
         if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) )
         {
-          // do not use the following function
-          //          SaveMeshSingleGridGlobal( hvol, hvolcolor,
-          //                                    CurLocalIndex, CurGlobalIndex,
-          //                                    MaxGlobalIndex, MinGlobalIndex,
-          //                                    verts, norms, faces, colors);
-
           // gen mesh from a single grid
           GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex,
                             ObjMesh.verts, ObjMesh.norms,
                             ObjMesh.faces, ObjMesh.colors);
 
           std::cout<<"Finish save grid "<<nRealIndex<<"("<<CurLocalIndex.x<<","<<
-                     CurLocalIndex.y<<","<<CurLocalIndex.z<<")"<<"; vertes num: "<<ObjMesh.verts.size()<<
-                     "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
-                     "; colors num: "<<ObjMesh.colors.size()<<std::endl;
+                     CurLocalIndex.y<<","<<CurLocalIndex.z<<")"<<"; vertes num: "<<
+                     ObjMesh.verts.size()<< "; norms num: "<<ObjMesh.norms.size()<<
+                     "; faces num: "<<ObjMesh.faces.size()<< "; colors num: "<<
+                     ObjMesh.colors.size()<<std::endl;
 
           nTotalSaveGridNum++;
           nSingleLoopSaveGridNum ++;
