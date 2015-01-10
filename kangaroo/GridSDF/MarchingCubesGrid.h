@@ -584,41 +584,6 @@ void SaveMeshGrid(
   SaveMeshGridToFile(filename, mesh, "obj");
 }
 
-// save mesh of grid SDF in global index
-KANGAROO_EXPORT
-template<typename T, typename TColor>
-void SaveMeshSingleGridGlobal(
-    BoundedVolumeGrid<T, TargetHost, Manage>&         vol,
-    BoundedVolumeGrid<TColor, TargetHost, Manage>&    volColor,
-    int3&                                             CurLocalIndex,
-    int3&                                             CurGlobalIndex,
-    int3&                                             MaxGlobalIndex,
-    int3&                                             MinGlobalIndex,
-    std::vector<aiVector3D>&                          verts,
-    std::vector<aiVector3D>&                          norms,
-    std::vector<aiFace>&                              faces,
-    std::vector<aiColor4D>&                           colors)
-{
-  for(GLint x=0;x!=vol.m_nVolumeGridRes;x++)
-  {
-    for(GLint y=0;y!=vol.m_nVolumeGridRes;y++)
-    {
-      for(GLint z=0;z!=vol.m_nVolumeGridRes;z++)
-      {
-        // get voxel index for each grid.
-        roo::vMarchCubeGridGlobal(
-              vol, volColor,
-              CurLocalIndex.x * static_cast<int>(vol.m_nVolumeGridRes) + x,
-              CurLocalIndex.y * static_cast<int>(vol.m_nVolumeGridRes) + y,
-              CurLocalIndex.z * static_cast<int>(vol.m_nVolumeGridRes) + z,
-              CurGlobalIndex, MaxGlobalIndex, MinGlobalIndex,
-              verts, norms, faces, colors);
-
-      }
-    }
-  }
-}
-
 // now do it for each grid instead of each voxel
 KANGAROO_EXPORT
 template<typename T, typename TColor>
