@@ -23,6 +23,7 @@
 #include <kangaroo/GridSDF/cu_sdffusion_grid.h>
 #include <kangaroo/GridSDF/SdfSmart.h>
 #include <kangaroo/GridSDF/SavePPMGrid.h>
+#include <kangaroo/GridSDF/LoadPPMGrid.h>
 #include <kangaroo/GridSDF/MarchingCubesGrid.h>
 
 namespace roo

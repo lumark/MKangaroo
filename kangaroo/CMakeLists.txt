@@ -79,6 +79,7 @@ if(ASSIMP_FOUND)
         list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
         list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
         list(APPEND SRC_H GridSDF/SavePPMGrid.h)
+        list(APPEND SRC_H GridSDF/LoadPPMGrid.h)
         list(APPEND SRC_CU GridSDF/MarchingCubesGrid.cpp)
 endif()
 

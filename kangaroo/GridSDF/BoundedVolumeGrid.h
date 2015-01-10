@@ -435,9 +435,14 @@ public:
     for(unsigned int i=0;i!= GetTotalGridNum();i++)
     {
       // skip void volum grid
-      if(rVol.CheckIfBasicSDFActive(i) == true)
+      if(rVol.CheckIfBasicSDFActive(i) )
       {
-        if(CheckIfBasicSDFActive(i) == false)
+        if(CheckIfBasicSDFActive(i))
+        {
+          m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
+          GpuCheckErrors();
+        }
+        else
         {
           if(InitSingleBasicSDFWithIndex(i) == false)
           {
@@ -451,9 +456,6 @@ public:
             exit(-1);
           }
         }
-
-        m_GridVolumes[i].CopyFrom(rVol.m_GridVolumes[i]);
-        GpuCheckErrors();
       }
     }
   }
@@ -466,7 +468,7 @@ public:
       // skip void volum grid
       if(rHVol.CheckIfBasicSDFActive(i)== true)
       {
-        if(CheckIfBasicSDFActive(i)==false)
+        if(CheckIfBasicSDFActive(i) == false)
         {
           if(InitSingleBasicSDFWithIndex(i)==false)
           {
