@@ -154,14 +154,6 @@ public:
     return m_bbox.Size() / make_float3( m_w-1, m_h-1, m_d-1 );
   }
 
-  inline __device__ __host__
-  float3 VoxelSizeUnitsGlobal(int3 max_global, int3 min_global) const
-  {
-    return m_bbox.Size() / make_float3( (max_global.x-min_global.x + 1)*(m_w-1),
-                                        (max_global.y-min_global.y + 1)*(m_h-1),
-                                        (max_global.z-min_global.z + 1)*(m_d-1) );
-  }
-
   //////////////////////////////////////////////////////
   // Tools
   //////////////////////////////////////////////////////
