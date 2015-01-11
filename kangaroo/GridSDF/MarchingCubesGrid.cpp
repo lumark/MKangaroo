@@ -110,7 +110,7 @@ bool SaveMeshFromPXMs(
 
   if(vVolumes.size()<=0)
   {
-    printf("[Kangaroo/SaveMeshFromPXMs] Cannot find any files for generating mesh!\n");
+    printf("[Kangaroo/SaveMeshFromPXMs] Cannot find any files for generating the mesh!\n");
     return false;
   }
 
@@ -166,8 +166,8 @@ bool SaveMeshFromPXMs(
         // load the grid volume
         if(LoadPXMSingleGrid(sPXMFile, hVol.m_GridVolumes[nRealIndex]) == false )
         {
-          printf("[Kangaroo/SaveMeshFromPXMs] Error! load file fail.. exit.\n");
-          exit(-1);
+          std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! load file fail.. exit."<<std::endl;
+          return false;
         }
       }
 
@@ -186,11 +186,6 @@ bool SaveMeshFromPXMs(
               GenMeshSingleGrid(hVol, hVolColor, CurLocalIndex, ObjMesh.verts,
                                 ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
 
-              std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish save grid "<<hVol.ConvertLocalIndexToRealIndex(i,j,k)<<
-                         "("<<i<<","<<j<<","<<k<<")"<<"; vertes num: "<<ObjMesh.verts.size()<<
-                         "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
-                         "; colors num: "<<ObjMesh.colors.size()<<std::endl;
-
               nTotalSaveGridNum++;
               nSingleLoopSaveGridNum ++;
             }
@@ -198,21 +193,24 @@ bool SaveMeshFromPXMs(
         }
       }
 
+      // 4, --------------------------------------------------------------------
+      // reset grid
       SdfReset(hVol);
       hVol.ResetAllGridVol();
-
     }
     else
     {
       std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! Fail loading bbox "<<
                  sBBFileName<<std::endl;
-      exit(-1);
+      return false;
     }
 
-    std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish merge "<<nSingleLoopSaveGridNum<<" grids."<<std::endl;
+    std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish merge "<<nSingleLoopSaveGridNum<<
+               " grids."<<std::endl;
   }
 
-  std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish marching cube for " << nTotalSaveGridNum<< " Grids.\n";
+  std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish marching cube for " <<
+             nTotalSaveGridNum<< " Grids.\n";
 
   // ---------------------------------------------------------------------------
   // Save mesh from memory to hard disk
