@@ -169,7 +169,7 @@ bool SaveMeshFromPXMs(
         // load the grid volume
         if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) )
         {
-          // gen mesh from a single grid
+          // Generate mesh from a single grid
           GenMeshSingleGrid(hvol, hvolcolor, LocalIndex,
                             ObjMesh.verts, ObjMesh.norms,
                             ObjMesh.faces, ObjMesh.colors);
