@@ -38,9 +38,6 @@ bool LoadPXMSingleGrid(
   bFile >> num_colors;
   bFile.ignore(1,'\n');
 
-  //  std::cout<<"real success. ppm_type is:"<<ppm_type<<", num_color:"<<num_colors<<
-  //             ";w:"<<w<<"; h:"<<h<<"; d:"<<d<<std::endl;
-
   bool success = !bFile.fail() && w > 0 && h > 0 && d > 0;
 
   if(success)

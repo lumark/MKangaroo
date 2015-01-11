@@ -1,24 +1,3 @@
-// Marching cubes ASSIMP exporter based on Marching Cubes Example Program
-// by Cory Bloyd with additional source from Paul Bourke (public domain)
-// http://paulbourke.net/geometry/polygonise/
-//
-// Marching Cubes Example Program
-// by Cory Bloyd (corysama@yahoo.com)
-//
-// A simple, portable and complete implementation of the Marching Cubes
-// and Marching Tetrahedrons algorithms in a single source file.
-// There are many ways that this code could be made faster, but the
-// intent is for the code to be easy to understand.
-//
-// For a description of the algorithm go to
-// http://astronomy.swin.edu.au/pbourke/modelling/polygonise/
-//
-// This code is public domain.
-//
-
-#include "stdio.h"
-#include "math.h"
-
 #include <kangaroo/Sdf.h>
 #include <kangaroo/GridSDF/cu_sdffusion_grid.h>
 #include <kangaroo/GridSDF/SdfSmart.h>
@@ -64,14 +43,10 @@ bool GetIndexFromFileName(
     LocalIndex.x = std::stoi(sFileName.substr(vIndex[3]+1, vIndex[4]-vIndex[3]-1));
     LocalIndex.y = std::stoi(sFileName.substr(vIndex[4]+1, vIndex[5]-vIndex[4]-1));
     LocalIndex.z = std::stoi(sFileName.substr(vIndex[5]+1, sFileName.size() - vIndex[5]-1));
-
-    //    std::cout<<"sFileName: "<<sFileName;
-    //    printf("; global index (%d,%d,%d);\n", GlobalIndex.x, GlobalIndex.y, GlobalIndex.z);
     return true;
   }
 }
 
-// ================================================================================
 // get files need saving into mesh
 std::vector<SingleVolume> GetFilesNeedSaving(
     std::vector<std::string>&  vfilename)
@@ -119,67 +94,6 @@ std::vector<SingleVolume> GetFilesNeedSaving(
   return vVolumes;
 }
 
-// ================================================================================
-// get max and min global index of current system
-void GetMaxMinGlobalIndex(
-    std::string                sDirName,
-    std::string                sBBFileName,
-    std::vector<SingleVolume>& rvVolumes,
-    int3&                      rMaxGlobal,
-    int3&                      rMinGlobal)
-{
-  for(unsigned int i=0;i!=rvVolumes.size();i++)
-  {
-    // load bounding box
-    std::string sBBFile = sDirName + sBBFileName +
-        std::to_string(rvVolumes[i].GlobalIndex.x) + "#" +
-        std::to_string(rvVolumes[i].GlobalIndex.y) + "#" +
-        std::to_string(rvVolumes[i].GlobalIndex.z);
-
-    if(CheckIfBBfileExist(sBBFile) == true)
-    {
-      int3 CurGlobalIndex = rvVolumes[i].GlobalIndex;
-
-      // for max
-      if(CurGlobalIndex.x>rMaxGlobal.x)
-      {
-        rMaxGlobal.x = CurGlobalIndex.x;
-      }
-
-      if(CurGlobalIndex.y>rMaxGlobal.y)
-      {
-        rMaxGlobal.y = CurGlobalIndex.y;
-      }
-
-      if(CurGlobalIndex.z>rMaxGlobal.z)
-      {
-        rMaxGlobal.z = CurGlobalIndex.z;
-      }
-
-      // for min
-      if(CurGlobalIndex.x<rMinGlobal.x)
-      {
-        rMinGlobal.x = CurGlobalIndex.x;
-      }
-
-      if(CurGlobalIndex.y<rMinGlobal.y)
-      {
-        rMinGlobal.y = CurGlobalIndex.y;
-      }
-
-      if(CurGlobalIndex.z<rMinGlobal.z)
-      {
-        rMinGlobal.z = CurGlobalIndex.z;
-      }
-    }
-  }
-
-  std::cout<<"[Kangaroo/MarchingCubesGrid] Generating mesh in max global index: ("
-          <<rMaxGlobal.x<<","<<rMaxGlobal.y<<","<<rMaxGlobal.z<<")"
-         <<"; min global index: ("<<rMinGlobal.x<<","<<rMinGlobal.y<<","<<rMinGlobal.z<<")"<<std::endl;
-}
-
-// ================================================================================
 // Generate one single mesh from several ppm files.
 bool SaveMeshFromPXMs(
     std::string                sDirName,
@@ -201,7 +115,7 @@ bool SaveMeshFromPXMs(
   }
 
   // ---------------------------------------------------------------------------
-  // Load each single volume into the BBVolume.
+  // Create a empty BBox file
   roo::BoundingBox BBox;
 
   // To load it from disk, we need to use host volume
@@ -211,11 +125,6 @@ bool SaveMeshFromPXMs(
   /// TODO: SUPPORT COLOR MESH
   roo::BoundedVolumeGrid<float, roo::TargetHost, roo::Manage> hvolcolor;
   hvolcolor.Init(1,1,1, nGridRes, BBox);
-
-  // Get max and min global index
-  int3 MaxGlobalIndex = make_int3(-999999999, -999999999, -999999999);
-  int3 MinGlobalIndex = make_int3(999999999, 999999999, 999999999);
-  GetMaxMinGlobalIndex(sDirName, sBBFileHead, vVolumes, MaxGlobalIndex, MinGlobalIndex);
 
   // prepare data structure for the single mesh
   MarchingCUBERst ObjMesh;
@@ -234,26 +143,26 @@ bool SaveMeshFromPXMs(
     int nSingleLoopSaveGridNum = 0;
 
     // load the corresponding bounding box
-    std::string sBBFile =
+    std::string sBBFileName =
         sDirName + sBBFileHead +
         std::to_string(vVolumes[i].GlobalIndex.x) + "#" +
         std::to_string(vVolumes[i].GlobalIndex.y) + "#" +
         std::to_string(vVolumes[i].GlobalIndex.z);
 
-    if( CheckIfBBfileExist(sBBFile) )
+    if( CheckIfBBfileExist(sBBFileName) )
     {
       // load the bounxing box of the sdf.
       // NOTICE that this is the GLOBAL bounding box, not the local one.
-      hvol.m_bbox      = LoadPXMBoundingBox(sBBFile);
+      hvol.m_bbox      = LoadPXMBoundingBox(sBBFileName);
       hvolcolor.m_bbox = hvol.m_bbox;
 
-      // for each single grid volume
+      // for each single grid volume live in the global bounding box
       for(unsigned int j=0; j!=vVolumes[i].vLocalIndex.size(); j++)
       {
-        int3 CurLocalIndex = vVolumes[i].vLocalIndex[j];
+        int3 LocalIndex = vVolumes[i].vLocalIndex[j];
 
-        int nRealIndex = CurLocalIndex.x + hvol.m_nGridRes_w*
-            (CurLocalIndex.y+ hvol.m_nGridRes_h* CurLocalIndex.z);
+        int nRealIndex = hvol.ConvertLocalIndexToRealIndex(
+              LocalIndex.x, LocalIndex.y,LocalIndex.z);
 
         std::string sPXMFile = sDirName + vVolumes[i].vFileName[j];
 
@@ -261,12 +170,12 @@ bool SaveMeshFromPXMs(
         if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) )
         {
           // gen mesh from a single grid
-          GenMeshSingleGrid(hvol, hvolcolor, CurLocalIndex,
+          GenMeshSingleGrid(hvol, hvolcolor, LocalIndex,
                             ObjMesh.verts, ObjMesh.norms,
                             ObjMesh.faces, ObjMesh.colors);
 
-          std::cout<<"Finish save grid "<<nRealIndex<<"("<<CurLocalIndex.x<<","<<
-                     CurLocalIndex.y<<","<<CurLocalIndex.z<<")"<<"; vertes num: "<<
+          std::cout<<"Finish save grid "<<nRealIndex<<"("<<LocalIndex.x<<","<<
+                     LocalIndex.y<<","<<LocalIndex.z<<")"<<"; vertes num: "<<
                      ObjMesh.verts.size()<< "; norms num: "<<ObjMesh.norms.size()<<
                      "; faces num: "<<ObjMesh.faces.size()<< "; colors num: "<<
                      ObjMesh.colors.size()<<std::endl;
@@ -283,7 +192,7 @@ bool SaveMeshFromPXMs(
     }
     else
     {
-      std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! Fail loading bbox "<<sBBFile<<std::endl;
+      std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! Fail loading bbox "<<sBBFileName<<std::endl;
       exit(-1);
     }
 

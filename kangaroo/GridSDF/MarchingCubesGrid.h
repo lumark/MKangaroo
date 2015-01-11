@@ -546,6 +546,7 @@ void SaveMeshGrid(
   MarchingCUBERst ObjMesh;
   int nNumSkip =0; int nNumSave =0;
 
+  // for each grid in the whole volume
   for(unsigned int i=0;i!=vol.m_nGridRes_w;i++)
   {
     for(unsigned int j=0;j!=vol.m_nGridRes_h;j++)
