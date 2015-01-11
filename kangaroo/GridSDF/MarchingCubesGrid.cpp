@@ -198,6 +198,9 @@ bool SaveMeshFromPXMs(
         }
       }
 
+      SdfReset(hVol);
+      hVol.ResetAllGridVol();
+
     }
     else
     {
