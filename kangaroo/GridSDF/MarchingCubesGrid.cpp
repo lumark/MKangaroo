@@ -114,18 +114,6 @@ bool SaveMeshFromPXMs(
     return false;
   }
 
-  // ---------------------------------------------------------------------------
-  // Create a empty BBox file
-  roo::BoundingBox BBox;
-
-  // To load it from disk, we need to use host volume
-  roo::BoundedVolumeGrid<roo::SDF_t,roo::TargetHost,roo::Manage> hvol;
-  hvol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
-
-  /// TODO: SUPPORT COLOR MESH
-  roo::BoundedVolumeGrid<float, roo::TargetHost, roo::Manage> hvolcolor;
-  hvolcolor.Init(1,1,1, nGridRes, BBox);
-
   // prepare data structure for the single mesh
   MarchingCUBERst ObjMesh;
 
@@ -133,7 +121,7 @@ bool SaveMeshFromPXMs(
   // For each global volume we have, gen mesh with it
   int nTotalSaveGridNum = 0;
 
-  for(unsigned int i=0; i!=1; i++)
+  for(unsigned int i=0; i!=vVolumes.size(); i++)
   {
     std::cout<<"[Kangaroo/SaveMeshFromPXMs] Merging grids in global bb area ("<<
                std::to_string(vVolumes[i].GlobalIndex.x)<<","<<
@@ -151,54 +139,72 @@ bool SaveMeshFromPXMs(
 
     if( CheckIfBBfileExist(sBBFileName) )
     {
+      // 1, --------------------------------------------------------------------
       // load the bounxing box of the sdf.
       // NOTICE that this is the GLOBAL bounding box, not the local one.
-      hvol.m_bbox      = LoadPXMBoundingBox(sBBFileName);
-      hvolcolor.m_bbox = hvol.m_bbox;
+      // To load it from disk, we need to use host volume
+      roo::BoundingBox BBox = LoadPXMBoundingBox(sBBFileName);
 
+      roo::BoundedVolumeGrid<roo::SDF_t_Smart,roo::TargetHost,roo::Manage> hVol;
+      hVol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
+
+      /// TODO: SUPPORT COLOR MESH
+      roo::BoundedVolumeGrid<float, roo::TargetHost, roo::Manage> hVolColor;
+      hVolColor.Init(1,1,1, nGridRes, BBox);
+
+      // 2, --------------------------------------------------------------------
       // for each single grid volume live in the global bounding box
       for(unsigned int j=0; j!=vVolumes[i].vLocalIndex.size(); j++)
       {
         int3 LocalIndex = vVolumes[i].vLocalIndex[j];
 
-        int nRealIndex = hvol.ConvertLocalIndexToRealIndex(
+        int nRealIndex = hVol.ConvertLocalIndexToRealIndex(
               LocalIndex.x, LocalIndex.y,LocalIndex.z);
 
         std::string sPXMFile = sDirName + vVolumes[i].vFileName[j];
 
         // load the grid volume
-        if(LoadPXMSingleGrid(sPXMFile, hvol.m_GridVolumes[nRealIndex]) )
-        {
-          // Generate mesh from a single grid
-          GenMeshSingleGrid(hvol, hvolcolor, LocalIndex,
-                            ObjMesh.verts, ObjMesh.norms,
-                            ObjMesh.faces, ObjMesh.colors);
-
-          std::cout<<"Finish save grid "<<nRealIndex<<"("<<LocalIndex.x<<","<<
-                     LocalIndex.y<<","<<LocalIndex.z<<")"<<"; vertes num: "<<
-                     ObjMesh.verts.size()<< "; norms num: "<<ObjMesh.norms.size()<<
-                     "; faces num: "<<ObjMesh.faces.size()<< "; colors num: "<<
-                     ObjMesh.colors.size()<<std::endl;
-
-          nTotalSaveGridNum++;
-          nSingleLoopSaveGridNum ++;
-        }
-        else
+        if(LoadPXMSingleGrid(sPXMFile, hVol.m_GridVolumes[nRealIndex]) == false )
         {
           printf("[Kangaroo/SaveMeshFromPXMs] Error! load file fail.. exit.\n");
           exit(-1);
         }
       }
+
+      // 3, --------------------------------------------------------------------
+      // for each grid in the whole volume
+      for(unsigned int i=0;i!=hVol.m_nGridRes_w;i++)
+      {
+        for(unsigned int j=0;j!=hVol.m_nGridRes_h;j++)
+        {
+          for(unsigned int k=0;k!=hVol.m_nGridRes_d;k++)
+          {
+            if(hVol.CheckIfBasicSDFActive(hVol.ConvertLocalIndexToRealIndex(i,j,k)))
+            {
+              int3 CurLocalIndex = make_int3(i,j,k);
+
+              GenMeshSingleGrid(hVol, hVolColor, CurLocalIndex, ObjMesh.verts,
+                                ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
+
+              std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish save grid "<<hVol.ConvertLocalIndexToRealIndex(i,j,k)<<
+                         "("<<i<<","<<j<<","<<k<<")"<<"; vertes num: "<<ObjMesh.verts.size()<<
+                         "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
+                         "; colors num: "<<ObjMesh.colors.size()<<std::endl;
+
+              nTotalSaveGridNum++;
+              nSingleLoopSaveGridNum ++;
+            }
+          }
+        }
+      }
+
     }
     else
     {
-      std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! Fail loading bbox "<<sBBFileName<<std::endl;
+      std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! Fail loading bbox "<<
+                 sBBFileName<<std::endl;
       exit(-1);
     }
-
-    // reset all previous grid
-    SdfReset(hvol);
-    hvol.ResetAllGridVol();
 
     std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish merge "<<nSingleLoopSaveGridNum<<" grids."<<std::endl;
   }

@@ -141,8 +141,8 @@ inline void SaveMeshlabGrid(
 KANGAROO_EXPORT
 inline void SaveMeshlabGrid(
     roo::BoundedVolumeGrid<roo::SDF_t_Smart, roo::TargetDevice, roo::Manage>& vol,
-    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>& GrayVol,
-    std::string                                                    sFileName = "mesh")
+    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>&            GrayVol,
+    std::string                                                               sFileName = "mesh")
 {
   Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
   Eigen::Matrix3d RDFmeshlab; RDFmeshlab << 1,0,0,  0,-1,0, 0,0,-1;

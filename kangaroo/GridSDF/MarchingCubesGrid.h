@@ -520,6 +520,7 @@ void SaveMeshGrid(
     BoundedVolumeGrid<T,TargetDevice,Manage>&         vol,
     BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
 {
+  // copy data from the device memory to the host memory
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
   hvol.Init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
@@ -530,7 +531,6 @@ void SaveMeshGrid(
 
   hvolcolor.CopyAndInitFrom(volColor);
 
-  // save
   SaveMeshGrid<T,TColor, Manage>(filename, hvol, hvolcolor);
 }
 
@@ -538,8 +538,8 @@ KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMeshGrid(
     std::string                                       filename,
-    BoundedVolumeGrid<T, TargetHost, Manage>          vol,
-    BoundedVolumeGrid<TColor, TargetHost, Manage>     volColor )
+    BoundedVolumeGrid<T, TargetHost, Manage>          hVol,
+    BoundedVolumeGrid<TColor, TargetHost, Manage>     hVolColor )
 {
   double dTime = _Tic();
 
@@ -547,20 +547,20 @@ void SaveMeshGrid(
   int nNumSkip =0; int nNumSave =0;
 
   // for each grid in the whole volume
-  for(unsigned int i=0;i!=vol.m_nGridRes_w;i++)
+  for(unsigned int i=0;i!=hVol.m_nGridRes_w;i++)
   {
-    for(unsigned int j=0;j!=vol.m_nGridRes_h;j++)
+    for(unsigned int j=0;j!=hVol.m_nGridRes_h;j++)
     {
-      for(unsigned int k=0;k!=vol.m_nGridRes_d;k++)
+      for(unsigned int k=0;k!=hVol.m_nGridRes_d;k++)
       {
-        if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)))
+        if(hVol.CheckIfBasicSDFActive(hVol.ConvertLocalIndexToRealIndex(i,j,k)))
         {
           int3 CurLocalIndex = make_int3(i,j,k);
 
-          GenMeshSingleGrid(vol,volColor, CurLocalIndex, ObjMesh.verts,
+          GenMeshSingleGrid(hVol, hVolColor, CurLocalIndex, ObjMesh.verts,
                             ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
 
-          std::cout<<"Finish save grid "<<vol.ConvertLocalIndexToRealIndex(i,j,k)<<
+          std::cout<<"Finish save grid "<<hVol.ConvertLocalIndexToRealIndex(i,j,k)<<
                      "("<<i<<","<<j<<","<<k<<")"<<"; vertes num: "<<ObjMesh.verts.size()<<
                      "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
                      "; colors num: "<<ObjMesh.colors.size()<<std::endl;
