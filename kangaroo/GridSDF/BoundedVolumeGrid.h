@@ -428,8 +428,7 @@ public:
   {
     for(unsigned int i=0; i!= GetTotalGridNum(); i++)
     {
-      // skip void volum grid
-      if(rHVol.CheckIfBasicSDFActive(i)== true)
+      if(rHVol.CheckIfBasicSDFActive(i))
       {
         if(CheckIfBasicSDFActive(i) == false)
         {
@@ -437,6 +436,10 @@ public:
           {
             printf("[Kangaroo/BoundedVolumeGrid] Error! Cannot init grid sdf!!\n");
             exit(-1);
+          }
+          else
+          {
+            printf("[Kangaroo/BoundedVolumeGrid] Finish init Basic SDF.\n");
           }
 
           if(CheckIfBasicSDFActive(i)==false)
@@ -446,17 +449,20 @@ public:
           }
           else
           {
+            printf("[Kangaroo/BoundedVolumeGrid] Basic SDF Active, copy mem directlly [2].\n");
             m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
             GpuCheckErrors();
           }
         }
         else
         {
+          printf("[Kangaroo/BoundedVolumeGrid] Basic SDF Active, copy mem directlly [1].\n");
           m_GridVolumes[i].CopyFrom(rHVol.m_GridVolumes[i]);
           GpuCheckErrors();
         }
       }
     }
+
   }
 
   inline __host__

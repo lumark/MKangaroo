@@ -99,19 +99,20 @@ void SavePXM(
   hvol.Init(vol.m_w,vol.m_h,vol.m_d,vol.m_nVolumeGridRes,vol.m_bbox);
   hvol.CopyAndInitFrom(vol);
 
-  // first save bounding box
+  // first save the bounding box
   std::string sBBFileName = filename+"-BB";
   SavePXMBoundingBox(sBBFileName, vol.m_bbox);
 
   // save each active volume in BoundedVolumeGrid to HardDisk
-  for(int i=0;i!=vol.GetTotalGridNum();i++)
+  for(int i=0; i!=vol.GetTotalGridNum(); i++)
   {
-    if(hvol.CheckIfBasicSDFActive(i)==true)
+    if(hvol.CheckIfBasicSDFActive(i))
     {
       // save
       std::string sFileName = filename + "-" + std::to_string(i);
       std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
       SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i],ppm_type,num_colors);
+      std::cout<<"Fininsh save grid index "<<i<<" to "<<sFileName<<std::endl;
     }
   }
 }
