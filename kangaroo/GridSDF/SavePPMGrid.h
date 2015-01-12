@@ -146,6 +146,7 @@ void CheckifSaveBB(
 
   if( CheckIfBBfileExist(sBBFileName) == false)
   {
+    // noticed that the BB box here is the one after shift is applied
     SavePXMBoundingBox(sBBFileName, rDVol.GetDesireBB(GlobalIndex));
   }
 }
@@ -162,7 +163,7 @@ void SavePXMGridDesire(
     std::string                                            ppm_type = "P5",
     int                                                    num_colors = 255)
 {
-  if(rDVol.GetActiveGridVolNum()==0)
+  if(rDVol.GetActiveGridVolNum() == 0)
   {
     std::cerr<<"[Kangaroo/SavePXMGridDesire] Cannot save PXM for void volume."<<std::endl;
     exit(-1);
@@ -178,7 +179,7 @@ void SavePXMGridDesire(
 
     // ------------------------------------------------------------------------
     // save each active volume in BoundedVolumeGrid to HardDisk
-    int nSaveGridNum =0;
+    int nSavedGridNum =0;
 
     for(int i=0; i!=static_cast<int>(rDVol.m_nGridRes_w); i++)
     {
@@ -186,6 +187,8 @@ void SavePXMGridDesire(
       {
         for(int k=0; k!=static_cast<int>(rDVol.m_nGridRes_d); k++)
         {
+          // here we don't consider any shift as the grid for saving does not
+          // had any shift applied
           int nGridIndex = i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
 
           // --- save vol if necessary
@@ -201,7 +204,7 @@ void SavePXMGridDesire(
 
             std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
             SavePXM<T,Manage>(bFile, HVol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
-            nSaveGridNum++;
+            nSavedGridNum++;
 
             // scan the disk and see if we need to save the bb (in global pose)
             if(bSaveBBox)
@@ -213,7 +216,7 @@ void SavePXMGridDesire(
       }
     }
 
-    printf("\n[Kangaroo/SavePXMGridDesire] Save %d grid sdf in Global Pose.\n", nSaveGridNum);
+    printf("\n[Kangaroo/SavePXMGridDesire] Save %d grid sdf in Global Pose.\n", nSavedGridNum);
   }
 
 }
