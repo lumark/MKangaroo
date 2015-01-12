@@ -265,7 +265,7 @@ __global__ void KernDetectRollingSdfShift(
   {
     if(imgdepth(u,v) > 0)
     {
-      const float3 ray_c = K.Unproject(u,v);
+      const float3 ray_c = K.Unproject(u,v,imgdepth(u,v));
       const float3 ray_w = mulSO3(T_wc, ray_c);
       const float3 T_wc_translate = SE3Translation(T_wc);
 
