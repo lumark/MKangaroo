@@ -87,7 +87,6 @@ public:
     }
   }
 
-
   // ===========================================================================
   // Get index of grid that need to be freed. Only free grid that just "shift"
   // shift value from 1 ~ 8
@@ -95,24 +94,22 @@ public:
   template<typename T>
   inline void GetGridSDFIndexNeedReset(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
-      int3                                                        cur_shift)
+      int3                                                        CurShift)
   {
-    if (cur_shift.x==0 && cur_shift.y==0 && cur_shift.z==0)
+    if (CurShift.x==0 && CurShift.y==0 && CurShift.z==0)
     {
       return;
     }
 
-    int3 local_shift = pVol->m_local_shift + cur_shift;
+    int3 LocalShift = pVol->m_local_shift + CurShift;
 
     // -------------------------------------------------------------------------
-    std::cout<<"  [GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."<<
-               "cur shift ("<<cur_shift.x<<","<<cur_shift.y<<","<< cur_shift.z<<")"<<
-               ";local shift ("<<local_shift.x<<","<<local_shift.y<<
-               ","<<local_shift.z<<")"<<std::endl;
+    printf("[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."
+           "cur shift (%d,%f,%f); local shift(%d,%d,%d)\n",
+           CurShift.x,CurShift.y,CurShift.z,LocalShift.x,LocalShift.y,LocalShift.z);
 
-    int nResetNum = 0;
+    int nReqResetNum = 0;
     int nActualResetNum  = 0;
-    bool bReset = false;
 
     // real index of a grid, from 0 ~ 7
     int3 Index;
@@ -129,7 +126,7 @@ public:
       {
         for(Index.z = 0; Index.z!= GridDim.z; Index.z++)
         {
-          bReset = false;
+          bool bReset = false;
 
           // -------------------------------------------------------------------
           // cur_shift is the shift in current frame.
@@ -138,43 +135,43 @@ public:
           // -------------------------------------------------------------------
 
           //----- for x -----
-          if(bReset == false && cur_shift.x > 0 &&
-             Index.x >= local_shift.x - cur_shift.x &&
-             Index.x < local_shift.x)
+          if(bReset == false && CurShift.x > 0 &&
+             Index.x >= LocalShift.x - CurShift.x &&
+             Index.x < LocalShift.x)
           {
             bReset = true;
           }
-          else if(bReset == false && cur_shift.x < 0 &&
-                  Index.x >= GridDim.x + local_shift.x &&
-                  Index.x < GridDim.x + (local_shift.x - cur_shift.x) )
+          else if(bReset == false && CurShift.x < 0 &&
+                  Index.x >= GridDim.x + LocalShift.x &&
+                  Index.x < GridDim.x + (LocalShift.x - CurShift.x) )
           {
             bReset = true;
           }
 
           //----- for y -----
-          if(bReset == false && cur_shift.y > 0 &&
-             Index.y >= local_shift.y - cur_shift.y &&
-             Index.y < local_shift.y)
+          if(bReset == false && CurShift.y > 0 &&
+             Index.y >= LocalShift.y - CurShift.y &&
+             Index.y < LocalShift.y)
           {
             bReset = true;
           }
-          else if(bReset == false && cur_shift.y < 0 &&
-                  Index.x >= GridDim.y + local_shift.y &&
-                  Index.x < GridDim.y + (local_shift.y - cur_shift.y) )
+          else if(bReset == false && CurShift.y < 0 &&
+                  Index.x >= GridDim.y + LocalShift.y &&
+                  Index.x < GridDim.y + (LocalShift.y - CurShift.y) )
           {
             bReset = true;
           }
 
           //----- for z -----
-          if(bReset == false && cur_shift.z > 0 &&
-             Index.z >= local_shift.z - cur_shift.z &&
-             Index.z < local_shift.z)
+          if(bReset == false && CurShift.z > 0 &&
+             Index.z >= LocalShift.z - CurShift.z &&
+             Index.z < LocalShift.z)
           {
             bReset = true;
           }
-          else if(bReset == false && cur_shift.z < 0 &&
-                  Index.x >= GridDim.z + local_shift.z &&
-                  Index.x < GridDim.z + (local_shift.z - cur_shift.z))
+          else if(bReset == false && CurShift.z < 0 &&
+                  Index.x >= GridDim.z + LocalShift.z &&
+                  Index.x < GridDim.z + (LocalShift.z - CurShift.z))
           {
             bReset = true;
           }
@@ -182,11 +179,11 @@ public:
           // -------------------------------------------------------------------
           // ---------- set flag for grid that need to be freed ----------------
           // -------------------------------------------------------------------
-          int nGridIndex = Index.x + pVol->m_nGridRes_w * (Index.y + pVol->m_nGridRes_h*Index.z);
+          int nGridIndex = Index.x + pVol->m_nGridRes_w * (Index.y + pVol->m_nGridRes_h * Index.z);
 
-          if(bReset == true)
+          if(bReset)
           {
-            nResetNum ++;
+            nReqResetNum ++;
             m_nNextResetSDFs[nGridIndex] = 1;
 
             if(pVol->CheckIfBasicSDFActive(nGridIndex))
@@ -202,9 +199,8 @@ public:
       }
     }
 
-    std::cout<<"  [GetGridSDFIndexNeedFree] Finished. Prepare to Reset "<<
-               nResetNum<<" grid (in theory); Actual (active grids) Need to reset "<<
-               nActualResetNum<<std::endl;
+    std::cout<<"  [GetGridSDFIndexNeedFree] Finished. Req Reset "<< nReqResetNum<<
+               " grid; Actual reset (active grids)"<< nActualResetNum<<std::endl;
   }
 
   // ===========================================================================
@@ -214,8 +210,7 @@ public:
   {
     for(unsigned int i=0; i!=pVol->GetTotalGridNum(); i++)
     {
-      if(m_nNextResetSDFs[i] == 1 &&
-         pVol->CheckIfBasicSDFActive(i) == true)
+      if(m_nNextResetSDFs[i] == 1 && pVol->CheckIfBasicSDFActive(i))
       {
         roo::SdfReset(pVol->m_GridVolumes[i]);
         pVol->FreeMemoryByIndex(i);
