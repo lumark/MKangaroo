@@ -473,7 +473,6 @@ public:
         m_GridVolumes[i].h=0;
         cudaFree( m_GridVolumes[i].ptr );
       }
-
     }
   }
 
@@ -720,34 +719,6 @@ public:
     }
   }
 
-  inline __host__
-  void UpdateLocalShiftOld(int3 shift_index)
-  {
-    m_local_shift = m_local_shift + shift_index;
-
-    if(m_local_shift.x == m_nGridRes_w || m_local_shift.x == -m_nGridRes_w)
-    {
-      m_local_shift.x = 0;
-      printf("[BoundedVolumeGrid] Set shift x back to zero! \n");
-    }
-
-    if(m_local_shift.y == m_nGridRes_h || m_local_shift.y == -m_nGridRes_h)
-    {
-      m_local_shift.y = 0;
-      printf("[BoundedVolumeGrid] Set shift y back to zero! \n");
-    }
-
-    if(m_local_shift.z == m_nGridRes_d || m_local_shift.z == -m_nGridRes_d)
-    {
-      m_local_shift.z = 0;
-      printf("[BoundedVolumeGrid] Set shift z back to zero! \n");
-    }
-
-    printf("[BoundedVolumeGrid] Update Shift success! current shift (%d,%d,%d);"
-           " Max shift (%d,%d,%d) \n", m_local_shift.x, m_local_shift.y, m_local_shift.z,
-           m_nGridRes_w, m_nGridRes_h, m_nGridRes_d);
-  }
-
   // set next sdf that we want to init
   inline __device__
   void SetNextInitSDF(unsigned int x, unsigned int y, unsigned int z)
@@ -840,19 +811,19 @@ public:
   {
     BoundingBox mBBox = m_bbox;
 
-    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * float(m_local_shift.x)/
-        float(m_nGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
-    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * float(m_local_shift.y)/
-        float(m_nGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
-    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * float(m_local_shift.z)/
-        float(m_nGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
+    mBBox.boxmax.x = m_bbox.boxmax.x - m_bbox.Size().x * static_cast<float>(m_local_shift.x)/
+        static_cast<float>(m_nGridRes_w)+ m_bbox.Size().x*(static_cast<float>(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmax.y = m_bbox.boxmax.y - m_bbox.Size().y * static_cast<float>(m_local_shift.y)/
+        static_cast<float>(m_nGridRes_h)+ m_bbox.Size().y*(static_cast<float>(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmax.z = m_bbox.boxmax.z - m_bbox.Size().z * static_cast<float>(m_local_shift.z)/
+        static_cast<float>(m_nGridRes_d)+ m_bbox.Size().z*(static_cast<float>(GlobalIndex.z-m_global_shift.z));
 
-    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * float(m_local_shift.x)/
-        float(m_nGridRes_w)+ m_bbox.Size().x*(float(GlobalIndex.x-m_global_shift.x));
-    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * float(m_local_shift.y)/
-        float(m_nGridRes_h)+ m_bbox.Size().y*(float(GlobalIndex.y-m_global_shift.y));
-    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * float(m_local_shift.z)/
-        float(m_nGridRes_d)+ m_bbox.Size().z*(float(GlobalIndex.z-m_global_shift.z));
+    mBBox.boxmin.x = m_bbox.boxmin.x - m_bbox.Size().x * static_cast<float>(m_local_shift.x)/
+        static_cast<float>(m_nGridRes_w)+ m_bbox.Size().x*(static_cast<float>(GlobalIndex.x-m_global_shift.x));
+    mBBox.boxmin.y = m_bbox.boxmin.y - m_bbox.Size().y * static_cast<float>(m_local_shift.y)/
+        static_cast<float>(m_nGridRes_h)+ m_bbox.Size().y*(static_cast<float>(GlobalIndex.y-m_global_shift.y));
+    mBBox.boxmin.z = m_bbox.boxmin.z - m_bbox.Size().z * static_cast<float>(m_local_shift.z)/
+        static_cast<float>(m_nGridRes_d)+ m_bbox.Size().z*(static_cast<float>(GlobalIndex.z-m_global_shift.z));
 
     return mBBox;
   }
