@@ -79,7 +79,7 @@ public:
     }
 
     // -------------------------------------------------------------------------
-    // update local and global shift
+    // update local and global shift in the bounded volume
     // -------------------------------------------------------------------------
     if(shift_index.x!=0 || shift_index.y!= 0 || shift_index.z!=0)
     {
@@ -101,9 +101,9 @@ public:
       return;
     }
 
+    // -------------------------------------------------------------------------
     int3 LocalShift = pVol->m_local_shift + CurShift;
 
-    // -------------------------------------------------------------------------
     printf("[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."
            "cur shift (%d,%f,%f); local shift(%d,%d,%d)\n",
            CurShift.x, CurShift.y, CurShift.z,
@@ -180,6 +180,8 @@ public:
           // -------------------------------------------------------------------
           // ---------- set flag for grid that need to be freed ----------------
           // -------------------------------------------------------------------
+          // get the index of the voxel, notice that we do not need to apply any
+          // shift here
           int nGridIndex = Index.x + pVol->m_nGridRes_w * (Index.y + pVol->m_nGridRes_h * Index.z);
 
           if(bReset)
