@@ -60,7 +60,7 @@ public:
     ResetAllGridVol();
 
     // set shift parameter
-    m_cur_shift = make_int3((0,0,0);
+    m_cur_shift = make_int3(0,0,0);
     m_local_shift = make_int3(0,0,0);
     m_global_shift = make_int3(0,0,0);
 
@@ -548,6 +548,7 @@ public:
     // ------------------------------------------------------------------------
     // convert the local index to the real index if shift parameter is applied
     // --- for x
+    // 1, both local and cur shift is in the same direction
     if(m_local_shift.x>0 && m_local_shift.x< static_cast<int>(m_nGridRes_w))
     {
       if( x <= static_cast<int>(m_nGridRes_w) - 1 - m_local_shift.x )
@@ -577,6 +578,7 @@ public:
         printf("[BoundedVolumeGrid] Fatal error! Shift in x OverFlow!\n");
       }
     }
+
 
     // --- for y
     if(m_local_shift.y>0 && m_local_shift.y <= static_cast<int>(m_nGridRes_h))
@@ -651,6 +653,7 @@ public:
     // ------------------------------------------------------------------------
     // update the local shift
     // ------------------------------------------------------------------------
+    m_cur_shift = cur_shift;
     m_local_shift = m_local_shift + cur_shift;
 
     // ------------------------------------------------------------------------
