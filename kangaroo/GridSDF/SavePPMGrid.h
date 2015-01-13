@@ -3,6 +3,7 @@
 
 #include "kangaroo/extra/SavePPM.h"
 #include "BoundedVolumeGrid.h"
+#include "RollingGridSDF.h"
 
 // P1	Portable bitmap	ASCII
 // P2	Portable graymap	ASCII
@@ -158,6 +159,9 @@ template<typename T, typename Manage>
 void SavePXMGridDesire(
     const std::string                                      sPathName,
     int                                                    pGridNeedSave[],
+    int                                                    pGlobalIndex_x[],
+    int                                                    pGlobalIndex_y[],
+    int                                                    pGlobalIndex_z[],
     roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&   rDVol,
     bool                                                   bSaveBBox,
     std::string                                            ppm_type = "P5",
@@ -192,9 +196,13 @@ void SavePXMGridDesire(
           int nGridIndex = i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
 
           // --- save vol if necessary
-          if( pGridNeedSave[nGridIndex]==1 && HVol.CheckIfBasicSDFActive(nGridIndex) )
+          if( pGridNeedSave[nGridIndex]==1 &&
+              HVol.CheckIfBasicSDFActive(nGridIndex) )
           {
-            int3 GlobalIndex = rDVol.m_global_shift;
+            int3 GlobalIndex = make_int3(pGlobalIndex_x[nGridIndex],
+                                         pGlobalIndex_y[nGridIndex],
+                                         pGlobalIndex_z[nGridIndex]);
+
             int3 LocalIndex  = make_int3(i,j,k);
 
             std::string sGridFileName = sPathName+"#"+
