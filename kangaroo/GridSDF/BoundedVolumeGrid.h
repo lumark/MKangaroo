@@ -60,6 +60,7 @@ public:
     ResetAllGridVol();
 
     // set shift parameter
+    m_cur_shift = make_int3((0,0,0);
     m_local_shift = make_int3(0,0,0);
     m_global_shift = make_int3(0,0,0);
 
@@ -543,6 +544,7 @@ public:
       return nIndex;
     }
 
+
     // ------------------------------------------------------------------------
     // convert the local index to the real index if shift parameter is applied
     // --- for x
@@ -839,6 +841,7 @@ public:
 
   // The acculmate local shift; cur_local_shift = pre_local_shift + cur_shift
   // we can compute the real index based on the local shift, its val range: 1 ~ 8
+  int3          m_cur_shift;
   int3          m_local_shift;
 
   // global shift of the bounded box; when m_local_shift set to 0, global will ++
