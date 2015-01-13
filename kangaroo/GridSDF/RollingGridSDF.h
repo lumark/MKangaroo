@@ -105,7 +105,7 @@ public:
     int3 LocalShift = pVol->m_local_shift + CurShift;
 
     printf("[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."
-           "cur shift (%d,%f,%f); local shift(%d,%d,%d)\n",
+           "cur shift (%d,%d,%d); local shift(%d,%d,%d)\n",
            CurShift.x, CurShift.y, CurShift.z,
            LocalShift.x, LocalShift.y, LocalShift.z);
 
@@ -135,46 +135,128 @@ public:
           // local_shift = pre_local_shift + cur_shift
           // -------------------------------------------------------------------
 
+          // -------------------------------------------------------------------
           //----- for x -----
-          if(bReset == false && CurShift.x > 0 &&
-             Index.x >= LocalShift.x - CurShift.x &&
-             Index.x < LocalShift.x)
+          if(bReset == false && CurShift.x > 0 && LocalShift.x>0)
           {
-            bReset = true;
+            if(Index.x >= LocalShift.x - CurShift.x && Index.x < LocalShift.x)
+            {
+              bReset = true;
+            }
           }
-          else if(bReset == false && CurShift.x < 0 &&
-                  Index.x >= GridDim.x + LocalShift.x &&
-                  Index.x < GridDim.x + (LocalShift.x - CurShift.x) )
+          else if(bReset == false && CurShift.x >0 && (LocalShift.x-CurShift.x)<0 )
           {
-            bReset = true;
+            if(Index.x >= GridDim.x + (LocalShift.x - CurShift.x) &&
+               Index.x < GridDim.x + LocalShift.x)
+            {
+              bReset = true;
+            }
+          }
+          else if(bReset == false && CurShift.x <0 && LocalShift.x<0 )
+          {
+            if( Index.x >= GridDim.x + LocalShift.x &&
+                Index.x < GridDim.x + (LocalShift.x - CurShift.x))
+            {
+              bReset = true;
+            }
+          }
+          else if(bReset == false && CurShift.x <0 && (LocalShift.x-CurShift.x)>0)
+          {
+            if( Index.x >= LocalShift.x && Index.x < LocalShift.x - CurShift.x )
+            {
+              bReset = true;
+            }
+          }
+          else
+          {
+            if(CurShift.x!=0)
+            {
+              std::cerr<<"Extra condition in x!"<<std::endl;
+              exit(-1);
+            }
           }
 
+
+          // -------------------------------------------------------------------
           //----- for y -----
-          if(bReset == false && CurShift.y > 0 &&
-             Index.y >= LocalShift.y - CurShift.y &&
-             Index.y < LocalShift.y)
+          if(bReset == false && CurShift.y >0 && LocalShift.y>0)
           {
-            bReset = true;
+            if(Index.y >= LocalShift.y - CurShift.y && Index.y < LocalShift.y)
+            {
+              bReset = true;
+            }
           }
-          else if(bReset == false && CurShift.y < 0 &&
-                  Index.y >= GridDim.y + LocalShift.y &&
-                  Index.y < GridDim.y + (LocalShift.y - CurShift.y) )
+          else if(bReset == false && CurShift.y >0 && (LocalShift.y-CurShift.y)<0)
           {
-            bReset = true;
+            if( Index.y >= GridDim.y + (LocalShift.y - CurShift.y) &&
+                Index.y < GridDim.y + LocalShift.y)
+            {
+              bReset = true;
+            }
+          }
+          else if(bReset == false && CurShift.y <0 && LocalShift.y<0 )
+          {
+            if( Index.y >= GridDim.y + LocalShift.y &&
+                Index.y < GridDim.y + (LocalShift.y - CurShift.y))
+            {
+              bReset = true;
+            }
+          }
+          else if(bReset == false && CurShift.y <0 && (LocalShift.y-CurShift.y)>0)
+          {
+            if( Index.y >= LocalShift.y && Index.y < LocalShift.y - CurShift.y )
+            {
+              bReset = true;
+            }
+          }
+          else
+          {
+            if(CurShift.y!=0)
+            {
+              std::cerr<<"Extra condition in y!"<<std::endl;
+              exit(-1);
+            }
           }
 
+          // -------------------------------------------------------------------
           //----- for z -----
-          if(bReset == false && CurShift.z > 0 &&
-             Index.z >= LocalShift.z - CurShift.z &&
-             Index.z < LocalShift.z)
+          if(bReset == false && CurShift.z > 0 && LocalShift.z >0 )
           {
-            bReset = true;
+            if(Index.z >= LocalShift.z - CurShift.z && Index.z < LocalShift.z)
+            {
+              bReset = true;
+            }
           }
-          else if(bReset == false && CurShift.z < 0 &&
-                  Index.z >= GridDim.z + LocalShift.z &&
-                  Index.z < GridDim.z + (LocalShift.z - CurShift.z))
+          else if(bReset == false && CurShift.z >0 && (LocalShift.z-CurShift.z) <0)
           {
-            bReset = true;
+            if( Index.z >= GridDim.z + (LocalShift.z - CurShift.z) &&
+                Index.z < GridDim.z + LocalShift.z)
+            {
+              bReset = true;
+            }
+          }
+          else if(bReset == false && CurShift.z <0 && LocalShift.z< 0)
+          {
+            if( Index.z >= GridDim.z + LocalShift.z &&
+                Index.z < GridDim.z + (LocalShift.z - CurShift.z))
+            {
+              bReset = true;
+            }
+          }
+          else if(bReset == false && CurShift.z <0 && (LocalShift.z-CurShift.z)>0)
+          {
+            if( Index.z >= LocalShift.z && Index.z < LocalShift.z - CurShift.z)
+            {
+              bReset = true;
+            }
+          }
+          else
+          {
+            if(CurShift.z!=0)
+            {
+              std::cerr<<"Extra condition in z! CurShift z:"<<CurShift.z<<std::endl;
+              exit(-1);
+            }
           }
 
           // -------------------------------------------------------------------
