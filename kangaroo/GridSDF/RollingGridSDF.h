@@ -106,7 +106,8 @@ public:
     // -------------------------------------------------------------------------
     printf("[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."
            "cur shift (%d,%f,%f); local shift(%d,%d,%d)\n",
-           CurShift.x,CurShift.y,CurShift.z,LocalShift.x,LocalShift.y,LocalShift.z);
+           CurShift.x, CurShift.y, CurShift.z,
+           LocalShift.x, LocalShift.y, LocalShift.z);
 
     int nReqResetNum = 0;
     int nActualResetNum  = 0;
@@ -131,7 +132,7 @@ public:
           // -------------------------------------------------------------------
           // cur_shift is the shift in current frame.
           // notice that the local shift is the acculmate cur shift. Which means:
-          // cur_local_shift = pre_local_shift + cur_shift
+          // local_shift = pre_local_shift + cur_shift
           // -------------------------------------------------------------------
 
           //----- for x -----
@@ -156,8 +157,8 @@ public:
             bReset = true;
           }
           else if(bReset == false && CurShift.y < 0 &&
-                  Index.x >= GridDim.y + LocalShift.y &&
-                  Index.x < GridDim.y + (LocalShift.y - CurShift.y) )
+                  Index.y >= GridDim.y + LocalShift.y &&
+                  Index.y < GridDim.y + (LocalShift.y - CurShift.y) )
           {
             bReset = true;
           }
@@ -170,8 +171,8 @@ public:
             bReset = true;
           }
           else if(bReset == false && CurShift.z < 0 &&
-                  Index.x >= GridDim.z + LocalShift.z &&
-                  Index.x < GridDim.z + (LocalShift.z - CurShift.z))
+                  Index.z >= GridDim.z + LocalShift.z &&
+                  Index.z < GridDim.z + (LocalShift.z - CurShift.z))
           {
             bReset = true;
           }
