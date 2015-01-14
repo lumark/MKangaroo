@@ -7,16 +7,6 @@
 
 namespace roo {
 
-
-class NextRestSDFs
-{
-public:
-  int m_nNextResetSDFs[MAX_SUPPORT_GRID_NUM];
-  int GlobalIndex_x[MAX_SUPPORT_GRID_NUM];
-  int GlobalIndex_y[MAX_SUPPORT_GRID_NUM];
-  int GlobalIndex_z[MAX_SUPPORT_GRID_NUM];
-};
-
 class RollingGridSDF
 {
 public:
@@ -24,7 +14,7 @@ public:
   // update shift parameters. if true repersent update global shift
   // ===========================================================================
   template<typename T>
-  inline void ApplyShiftToVolume(
+  void ApplyShiftToVolume(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
       int3                                                        shift_index,
       bool                                                        bVerbose = false)
@@ -102,7 +92,7 @@ public:
   // shift value from 1 ~ 8
   // ===========================================================================
   template<typename T>
-  inline void GetGridSDFIndexNeedReset(
+  void GetGridSDFIndexNeedReset(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol,
       int3                                                        CurShift)
   {
@@ -154,7 +144,7 @@ public:
           // -------------------------------------------------------------------
           //----- for x -----
           // case 1
-          if(/*bReset == false &&*/ CurShift.x >0 && PreLocalShift.x >=0)
+          if( CurShift.x >0 && PreLocalShift.x >=0)
           {
             if(Index.x >= PreLocalShift.x && Index.x < CurLocalShift.x)
             {
@@ -163,7 +153,7 @@ public:
             }
           }
           // case 2
-          else if(/*bReset == false &&*/ CurShift.x <0 && PreLocalShift.x <=0 )
+          else if( CurShift.x <0 && PreLocalShift.x <=0 )
           {
             if( Index.x >= GridDim.x + CurLocalShift.x &&
                 Index.x < GridDim.x + PreLocalShift.x)
@@ -173,23 +163,23 @@ public:
             }
           }
           // case 3
-          else if(/*bReset == false &&*/ CurShift.x <0 && PreLocalShift.x >0)
+          else if( CurShift.x <0 && PreLocalShift.x >0)
           {
             if( Index.x >= CurLocalShift.x && Index.x < PreLocalShift.x )
             {
               bReset = true;
-              GlobalIndex.x = pVol->m_global_shift.x + 1 /* * (1+CurShift.x/GridDim.x)*/;
+              GlobalIndex.x = pVol->m_global_shift.x + 1 * (1+CurShift.x/GridDim.x);
               bCheckIfUpdateGlobalIndex_x = true;
             }
           }
           // case 4
-          else if(/*bReset == false &&*/ CurShift.x >0 && PreLocalShift.x <0 )
+          else if( CurShift.x >0 && PreLocalShift.x <0 )
           {
             if(Index.x >= GridDim.x + PreLocalShift.x &&
                Index.x < GridDim.x + CurLocalShift.x)
             {
               bReset = true;
-              GlobalIndex.x = pVol->m_global_shift.x - 1 /** (1+CurShift.x/GridDim.x)*/;
+              GlobalIndex.x = pVol->m_global_shift.x - 1 * (1+CurShift.x/GridDim.x);
               bCheckIfUpdateGlobalIndex_x = true;
             }
           }
@@ -197,7 +187,7 @@ public:
           {
             if(CurShift.x!=0)
             {
-              std::cerr<<"Extra condition in x!"<<std::endl;
+              std::cerr<<"[GetGridSDFIndexNeedFree] unknown condition in x direction!"<<std::endl;
               exit(-1);
             }
           }
@@ -206,7 +196,7 @@ public:
           // -------------------------------------------------------------------
           //----- for y -----
           // case 1
-          if(/*bReset == false &&*/ CurShift.y >0 && PreLocalShift.y >=0)
+          if( CurShift.y >0 && PreLocalShift.y >=0)
           {
             if(Index.y >= PreLocalShift.y && Index.y < CurLocalShift.y)
             {
@@ -215,7 +205,7 @@ public:
             }
           }
           // case 2
-          else if(/*bReset == false &&*/ CurShift.y <0 && PreLocalShift.y <=0 )
+          else if( CurShift.y <0 && PreLocalShift.y <=0 )
           {
             if( Index.y >= GridDim.y + CurLocalShift.y &&
                 Index.y < GridDim.y + PreLocalShift.y)
@@ -225,23 +215,23 @@ public:
             }
           }
           // case 3
-          else if(/*bReset == false &&*/ CurShift.y <0 && PreLocalShift.y >0)
+          else if( CurShift.y <0 && PreLocalShift.y >0)
           {
             if( Index.y >= CurLocalShift.y && Index.y < PreLocalShift.y )
             {
               bReset = true;
-              GlobalIndex.y = pVol->m_global_shift.y + 1 /** (1+CurShift.y/GridDim.y)*/;
+              GlobalIndex.y = pVol->m_global_shift.y + 1 * (1+CurShift.y/GridDim.y);
               bCheckIfUpdateGlobalIndex_y = true;
             }
           }
           // case 4
-          else if(/*bReset == false &&*/ CurShift.y >0 && PreLocalShift.y <0)
+          else if( CurShift.y >0 && PreLocalShift.y <0)
           {
             if( Index.y >= GridDim.y + PreLocalShift.y &&
                 Index.y < GridDim.y + CurLocalShift.y)
             {
               bReset = true;
-              GlobalIndex.y = pVol->m_global_shift.y - 1 /** (1+CurShift.y/GridDim.y)*/;
+              GlobalIndex.y = pVol->m_global_shift.y - 1 * (1+CurShift.y/GridDim.y);
               bCheckIfUpdateGlobalIndex_y = true;
             }
           }
@@ -249,7 +239,7 @@ public:
           {
             if(CurShift.y!=0)
             {
-              std::cerr<<"Extra condition in y!"<<std::endl;
+              std::cerr<<"[GetGridSDFIndexNeedFree] unknown condition in y direction!"<<std::endl;
               exit(-1);
             }
           }
@@ -257,7 +247,7 @@ public:
           // -------------------------------------------------------------------
           //----- for z -----
           // case 1
-          if(/*bReset == false &&*/ CurShift.z >0 && PreLocalShift.z >=0 )
+          if( CurShift.z >0 && PreLocalShift.z >=0 )
           {
             if(Index.z >= PreLocalShift.z && Index.z < CurLocalShift.z)
             {
@@ -266,7 +256,7 @@ public:
             }
           }
           // case 2
-          else if(/*bReset == false &&*/ CurShift.z <0 && PreLocalShift.z <=0)
+          else if( CurShift.z <0 && PreLocalShift.z <=0)
           {
             if( Index.z >= GridDim.z + CurLocalShift.z &&
                 Index.z < GridDim.z + PreLocalShift.z )
@@ -276,23 +266,23 @@ public:
             }
           }
           // case 3
-          else if(/*bReset == false &&*/ CurShift.z <0 && PreLocalShift.z >0)
+          else if( CurShift.z <0 && PreLocalShift.z >0)
           {
             if( Index.z >= CurLocalShift.z && Index.z < PreLocalShift.z)
             {
               bReset = true;
-              GlobalIndex.z = pVol->m_global_shift.z + 1 /* * (1+CurShift.z/GridDim.z)*/;
+              GlobalIndex.z = pVol->m_global_shift.z + 1 * (1+CurShift.z/GridDim.z);
               bCheckIfUpdateGlobalIndex_z = true;
             }
           }
           // case 4
-          else if(/*bReset == false &&*/ CurShift.z >0 && PreLocalShift.z <0)
+          else if( CurShift.z >0 && PreLocalShift.z <0)
           {
             if( Index.z >= GridDim.z + PreLocalShift.z &&
                 Index.z < GridDim.z + CurLocalShift.z )
             {
               bReset = true;
-              GlobalIndex.z = pVol->m_global_shift.z - 1 /* * (1+CurShift.z/GridDim.z)*/;
+              GlobalIndex.z = pVol->m_global_shift.z - 1 * (1+CurShift.z/GridDim.z);
               bCheckIfUpdateGlobalIndex_z = true;
             }
           }
@@ -300,7 +290,7 @@ public:
           {
             if(CurShift.z!=0)
             {
-              std::cerr<<"Extra condition in z! CurShift z:"<<CurShift.z<<std::endl;
+              std::cerr<<"[GetGridSDFIndexNeedFree] unknown condition in z direction!"<<std::endl;
               exit(-1);
             }
           }
@@ -363,9 +353,6 @@ public:
             if(pVol->CheckIfBasicSDFActive(nGridIndex))
             {
               nActualResetNum ++ ;
-
-              printf("save grid. local index(%d,%d,%d), global index(%d,%d,%d)\n",
-                     Index.x, Index.y, Index.z, GlobalIndex.x, GlobalIndex.y, GlobalIndex.z);
             }
           }
           else
@@ -383,7 +370,7 @@ public:
 
   // ===========================================================================
   template<typename T>
-  inline void ResetAndFreeGird(
+  void ResetAndFreeGird(
       roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage>*  pVol)
   {
     for(unsigned int i=0; i!=pVol->GetTotalGridNum(); i++)
