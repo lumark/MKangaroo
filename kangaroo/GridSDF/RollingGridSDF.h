@@ -112,12 +112,13 @@ public:
     }
 
     // -------------------------------------------------------------------------
-    int3 LocalShift = pVol->m_local_shift + CurShift;
+    int3 PreLocalShift = pVol->m_local_shift;
+    int3 CurLocalShift = pVol->m_local_shift + CurShift;
 
     printf("[GetGridSDFIndexNeedFree] Marking Grids that need to be reset.."
            "cur shift (%d,%d,%d); local shift(%d,%d,%d)\n",
            CurShift.x, CurShift.y, CurShift.z,
-           LocalShift.x, LocalShift.y, LocalShift.z);
+           CurLocalShift.x, CurLocalShift.y, CurLocalShift.z);
 
     int nReqResetNum = 0;
     int nActualResetNum  = 0;
@@ -138,6 +139,10 @@ public:
         for(Index.z = 0; Index.z!= GridDim.z; Index.z++)
         {
           bool bReset = false;
+          bool bCheckIfUpdateGlobalIndex_x = false;
+          bool bCheckIfUpdateGlobalIndex_y = false;
+          bool bCheckIfUpdateGlobalIndex_z = false;
+
           int3 GlobalIndex = pVol->m_global_shift;
 
           // -------------------------------------------------------------------
@@ -149,43 +154,43 @@ public:
           // -------------------------------------------------------------------
           //----- for x -----
           // case 1
-          if(/*bReset == false &&*/ CurShift.x > 0 && LocalShift.x>0)
+          if(/*bReset == false &&*/ CurShift.x >0 && PreLocalShift.x >=0)
           {
-            if(Index.x >= LocalShift.x - CurShift.x && Index.x < LocalShift.x)
+            if(Index.x >= PreLocalShift.x && Index.x < CurLocalShift.x)
             {
               bReset = true;
+              bCheckIfUpdateGlobalIndex_x = true;
             }
           }
           // case 2
-          else if(/*bReset == false &&*/ CurShift.x <0 && LocalShift.x<0 )
+          else if(/*bReset == false &&*/ CurShift.x <0 && PreLocalShift.x <=0 )
           {
-            if( Index.x >= GridDim.x + LocalShift.x &&
-                Index.x < GridDim.x + (LocalShift.x - CurShift.x))
+            if( Index.x >= GridDim.x + CurLocalShift.x &&
+                Index.x < GridDim.x + PreLocalShift.x)
             {
               bReset = true;
+              bCheckIfUpdateGlobalIndex_x = true;
             }
           }
           // case 3
-          else if(/*bReset == false &&*/ CurShift.x <0 && (LocalShift.x-CurShift.x)>0)
+          else if(/*bReset == false &&*/ CurShift.x <0 && PreLocalShift.x >0)
           {
-            if( Index.x >= LocalShift.x && Index.x < LocalShift.x - CurShift.x )
+            if( Index.x >= CurLocalShift.x && Index.x < PreLocalShift.x )
             {
               bReset = true;
               GlobalIndex.x = pVol->m_global_shift.x + 1 /* * (1+CurShift.x/GridDim.x)*/;
-              printf("special case x [1]; original global shift: (%d), new global shift (%d)\n",
-                     pVol->m_global_shift.x, GlobalIndex.x );
+              bCheckIfUpdateGlobalIndex_x = true;
             }
           }
           // case 4
-          else if(/*bReset == false &&*/ CurShift.x >0 && (LocalShift.x-CurShift.x)<0 )
+          else if(/*bReset == false &&*/ CurShift.x >0 && PreLocalShift.x <0 )
           {
-            if(Index.x >= GridDim.x + (LocalShift.x - CurShift.x) &&
-               Index.x < GridDim.x + LocalShift.x)
+            if(Index.x >= GridDim.x + PreLocalShift.x &&
+               Index.x < GridDim.x + CurLocalShift.x)
             {
-              GlobalIndex.x = pVol->m_global_shift.x - 1 /** (1+CurShift.x/GridDim.x)*/;
               bReset = true;
-              printf("special case x [2]; original global shift: (%d), new global shift (%d)\n",
-                     pVol->m_global_shift.x, GlobalIndex.x );
+              GlobalIndex.x = pVol->m_global_shift.x - 1 /** (1+CurShift.x/GridDim.x)*/;
+              bCheckIfUpdateGlobalIndex_x = true;
             }
           }
           else
@@ -201,41 +206,43 @@ public:
           // -------------------------------------------------------------------
           //----- for y -----
           // case 1
-          if(/*bReset == false &&*/ CurShift.y >0 && LocalShift.y>0)
+          if(/*bReset == false &&*/ CurShift.y >0 && PreLocalShift.y >=0)
           {
-            if(Index.y >= LocalShift.y - CurShift.y && Index.y < LocalShift.y)
+            if(Index.y >= PreLocalShift.y && Index.y < CurLocalShift.y)
             {
               bReset = true;
+              bCheckIfUpdateGlobalIndex_y = true;
             }
           }
           // case 2
-          else if(/*bReset == false &&*/ CurShift.y <0 && LocalShift.y<0 )
+          else if(/*bReset == false &&*/ CurShift.y <0 && PreLocalShift.y <=0 )
           {
-            if( Index.y >= GridDim.y + LocalShift.y &&
-                Index.y < GridDim.y + (LocalShift.y - CurShift.y))
+            if( Index.y >= GridDim.y + CurLocalShift.y &&
+                Index.y < GridDim.y + PreLocalShift.y)
             {
               bReset = true;
+              bCheckIfUpdateGlobalIndex_y = true;
             }
           }
           // case 3
-          else if(/*bReset == false &&*/ CurShift.y <0 && (LocalShift.y-CurShift.y)>0)
+          else if(/*bReset == false &&*/ CurShift.y <0 && PreLocalShift.y >0)
           {
-            if( Index.y >= LocalShift.y && Index.y < LocalShift.y - CurShift.y )
+            if( Index.y >= CurLocalShift.y && Index.y < PreLocalShift.y )
             {
               bReset = true;
               GlobalIndex.y = pVol->m_global_shift.y + 1 /** (1+CurShift.y/GridDim.y)*/;
-              printf("special case y;\n");
+              bCheckIfUpdateGlobalIndex_y = true;
             }
           }
           // case 4
-          else if(/*bReset == false &&*/ CurShift.y >0 && (LocalShift.y-CurShift.y)<0)
+          else if(/*bReset == false &&*/ CurShift.y >0 && PreLocalShift.y <0)
           {
-            if( Index.y >= GridDim.y + (LocalShift.y - CurShift.y) &&
-                Index.y < GridDim.y + LocalShift.y)
+            if( Index.y >= GridDim.y + PreLocalShift.y &&
+                Index.y < GridDim.y + CurLocalShift.y)
             {
-              GlobalIndex.y = pVol->m_global_shift.y - 1 /** (1+CurShift.y/GridDim.y)*/;
               bReset = true;
-              printf("special case y;\n");
+              GlobalIndex.y = pVol->m_global_shift.y - 1 /** (1+CurShift.y/GridDim.y)*/;
+              bCheckIfUpdateGlobalIndex_y = true;
             }
           }
           else
@@ -250,41 +257,43 @@ public:
           // -------------------------------------------------------------------
           //----- for z -----
           // case 1
-          if(/*bReset == false &&*/ CurShift.z > 0 && LocalShift.z >0 )
+          if(/*bReset == false &&*/ CurShift.z >0 && PreLocalShift.z >=0 )
           {
-            if(Index.z >= LocalShift.z - CurShift.z && Index.z < LocalShift.z)
+            if(Index.z >= PreLocalShift.z && Index.z < CurLocalShift.z)
             {
               bReset = true;
+              bCheckIfUpdateGlobalIndex_z = true;
             }
           }
           // case 2
-          else if(/*bReset == false &&*/ CurShift.z <0 && LocalShift.z< 0)
+          else if(/*bReset == false &&*/ CurShift.z <0 && PreLocalShift.z <=0)
           {
-            if( Index.z >= GridDim.z + LocalShift.z &&
-                Index.z < GridDim.z + (LocalShift.z - CurShift.z))
+            if( Index.z >= GridDim.z + CurLocalShift.z &&
+                Index.z < GridDim.z + PreLocalShift.z )
             {
               bReset = true;
+              bCheckIfUpdateGlobalIndex_z = true;
             }
           }
           // case 3
-          else if(/*bReset == false &&*/ CurShift.z <0 && (LocalShift.z-CurShift.z)>0)
+          else if(/*bReset == false &&*/ CurShift.z <0 && PreLocalShift.z >0)
           {
-            if( Index.z >= LocalShift.z && Index.z < LocalShift.z - CurShift.z)
+            if( Index.z >= CurLocalShift.z && Index.z < PreLocalShift.z)
             {
               bReset = true;
               GlobalIndex.z = pVol->m_global_shift.z + 1 /* * (1+CurShift.z/GridDim.z)*/;
-              printf("special case z;\n");
+              bCheckIfUpdateGlobalIndex_z = true;
             }
           }
           // case 4
-          else if(/*bReset == false &&*/ CurShift.z >0 && (LocalShift.z-CurShift.z) <0)
+          else if(/*bReset == false &&*/ CurShift.z >0 && PreLocalShift.z <0)
           {
-            if( Index.z >= GridDim.z + (LocalShift.z - CurShift.z) &&
-                Index.z < GridDim.z + LocalShift.z)
+            if( Index.z >= GridDim.z + PreLocalShift.z &&
+                Index.z < GridDim.z + CurLocalShift.z )
             {
               bReset = true;
               GlobalIndex.z = pVol->m_global_shift.z - 1 /* * (1+CurShift.z/GridDim.z)*/;
-              printf("special case z;\n");
+              bCheckIfUpdateGlobalIndex_z = true;
             }
           }
           else
@@ -294,6 +303,44 @@ public:
               std::cerr<<"Extra condition in z! CurShift z:"<<CurShift.z<<std::endl;
               exit(-1);
             }
+          }
+
+          // -------------------------------------------------------------------
+          // check if we need to update the global index
+          if(bCheckIfUpdateGlobalIndex_x == false && CurLocalShift.x!=0)
+          {
+             if(CurLocalShift.x>0 && Index.x<=CurLocalShift.x-1)
+             {
+               GlobalIndex.x = pVol->m_global_shift.x +1;
+             }
+             else if(CurLocalShift.x <0 && Index.x >= CurLocalShift.x+GridDim.x)
+             {
+               GlobalIndex.x = pVol->m_global_shift.x -1;
+             }
+          }
+
+          if(bCheckIfUpdateGlobalIndex_y == false && CurLocalShift.y!=0)
+          {
+             if(CurLocalShift.y>0 && Index.y<=CurLocalShift.y-1)
+             {
+               GlobalIndex.y = pVol->m_global_shift.y +1;
+             }
+             else if(CurLocalShift.y <0 && Index.y >= CurLocalShift.y+GridDim.y)
+             {
+               GlobalIndex.y = pVol->m_global_shift.y -1;
+             }
+          }
+
+          if(bCheckIfUpdateGlobalIndex_z == false && CurLocalShift.z!=0)
+          {
+             if(CurLocalShift.z>0 && Index.z<=CurLocalShift.z-1)
+             {
+               GlobalIndex.z = pVol->m_global_shift.z +1;
+             }
+             else if(CurLocalShift.z <0 && Index.z >= CurLocalShift.z+GridDim.z)
+             {
+               GlobalIndex.z = pVol->m_global_shift.z -1;
+             }
           }
 
           // -------------------------------------------------------------------
@@ -316,6 +363,9 @@ public:
             if(pVol->CheckIfBasicSDFActive(nGridIndex))
             {
               nActualResetNum ++ ;
+
+              printf("save grid. local index(%d,%d,%d), global index(%d,%d,%d)\n",
+                     Index.x, Index.y, Index.z, GlobalIndex.x, GlobalIndex.y, GlobalIndex.z);
             }
           }
           else
