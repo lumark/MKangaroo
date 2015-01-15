@@ -159,9 +159,7 @@ inline void SaveMeshlabGrid(
 
   of << " <MeshGroup>" << std::endl;
 
-  double dTime = roo::_Tic();
   roo::SaveMeshGrid(sFileName, vol, GrayVol);
-  std::cout<<"Save mesh use time "<<roo::_Toc(dTime)<<std::endl;
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << sFileName <<
         ".ply\">" << std::endl;

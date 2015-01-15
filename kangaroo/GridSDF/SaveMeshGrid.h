@@ -149,8 +149,6 @@ inline bool SaveMeshGridToFile(
   }
 }
 
-
-
 //////////////////////////////////////////
 /// Save Mesh
 //////////////////////////////////////////
@@ -198,8 +196,6 @@ void SaveMeshGrid(
     BoundedVolumeGrid<T, TargetHost, Manage>          hVol,
     BoundedVolumeGrid<TColor, TargetHost, Manage>     hVolColor )
 {
-  double dTime = _Tic();
-
   MarchingCUBERst ObjMesh;
   int nNumSkip =0; int nNumSave =0;
 
@@ -221,7 +217,6 @@ void SaveMeshGrid(
                      "("<<i<<","<<j<<","<<k<<")"<<"; vertes num: "<<ObjMesh.verts.size()<<
                      "; norms num: "<<ObjMesh.norms.size()<<"; faces num: "<<ObjMesh.faces.size()<<
                      "; colors num: "<<ObjMesh.colors.size()<<std::endl;
-
           nNumSave++;
         }
         else
@@ -231,10 +226,6 @@ void SaveMeshGrid(
       }
     }
   }
-
-  printf("[SaveMeshGrid] Finish marching cube grid sdf."
-         " Save %d grids. Skip %d grids. Use time %f; \n",
-         nNumSave, nNumSkip, _Toc(dTime));
 
   aiMesh* mesh = MeshFromLists(ObjMesh.verts,ObjMesh.norms,
                                ObjMesh.faces,ObjMesh.colors);

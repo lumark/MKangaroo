@@ -82,11 +82,6 @@ inline void SavePXMBoundingBox(
   std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
   bFile << BBox.boxmin.x << " " <<  BBox.boxmin.y << " " << BBox.boxmin.z << std::endl;
   bFile << BBox.boxmax.x << " " <<  BBox.boxmax.y << " " << BBox.boxmax.z << std::endl;
-
-  //  printf("save bb success. BB min(%f,%f,%f), max(%f,%f,%f)\n",
-  //         BBox.boxmin.x, BBox.boxmin.y, BBox.boxmin.z,
-  //         BBox.boxmax.x, BBox.boxmax.y, BBox.boxmax.z);
-
   bFile.close();
 }
 

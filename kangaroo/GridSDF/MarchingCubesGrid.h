@@ -9,21 +9,6 @@
 
 namespace roo {
 
-KANGAROO_EXPORT
-inline double _Tic()
-{
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  return tv.tv_sec  + 1e-6 * (tv.tv_usec);
-}
-
-KANGAROO_EXPORT
-inline double _Toc( double dSec )
-{
-  return _Tic() - dSec;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 class MarchingCUBERst
 {
 public:
@@ -33,8 +18,6 @@ public:
   std::vector<aiColor4D>    colors;
 };
 
-
-// =============================================================================
 // fGetOffset finds the approximate point of intersection of the surface
 // between two points with the values fValue1 and fValue2
 KANGAROO_EXPORT
@@ -50,11 +33,7 @@ inline float fGetOffset(
   return (fValueDesired - fValue1)/fDelta;
 }
 
-//////////////////////////////////////////
-/// Marching Cubes
-//////////////////////////////////////////
-// =============================================================================
-//vMarchCube performs the Marching Cubes algorithm on a single cube
+// vMarchCube performs the Marching Cubes algorithm on a single cube
 // USER SHOULD MAKE SURE VOXEL EXIST!
 KANGAROO_EXPORT
 template<typename T, typename TColor>
@@ -181,8 +160,9 @@ void vMarchCubeGrid(
   }
 }
 
-//vMarchCube performs the Marching Cubes algorithm on a single cube
+// vMarchCube performs the Marching Cubes algorithm on a single cube
 /// USER SHOULD MAKE SURE VOXEL EXIST!
+KANGAROO_EXPORT
 template<typename T, typename TColor>
 void vMarchCubeGridNOTexture(
     BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
@@ -278,9 +258,5 @@ void vMarchCubeGridNOTexture(
     faces.push_back(face);
   }
 }
-
-
-
-
 
 }
