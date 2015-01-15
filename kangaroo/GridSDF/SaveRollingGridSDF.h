@@ -4,6 +4,7 @@
 #include "MarchingCubesGrid.h"
 #include "LoadPPMGrid.h"
 #include "SavePPMGrid.h"
+#include "SaveMeshGrid.h"
 #include "cu_sdf_reset.h"
 
 namespace roo {
