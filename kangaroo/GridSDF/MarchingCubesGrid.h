@@ -194,22 +194,8 @@ inline float fGetOffset(
 }
 
 //////////////////////////////////////////
-// save grid mesh
+/// Marching Cubes
 //////////////////////////////////////////
-/// \brief The SingleVolume class
-/// a single volume in a global pos, may contain several grids
-class SingleVolume
-{
-public:
-  int3                     GlobalIndex;
-  std::vector<int3>        vLocalIndex;
-  std::vector<std::string> vFileName;
-  std::string              sBBoxFileName;
-};
-
-std::vector<SingleVolume> GetFilesNeedSaving(
-    std::vector<std::string>&                         vfilename);
-
 // =============================================================================
 //vMarchCube performs the Marching Cubes algorithm on a single cube
 // USER SHOULD MAKE SURE VOXEL EXIST!
@@ -338,35 +324,6 @@ void vMarchCubeGrid(
   }
 }
 
-
-// --------------------------------------------------------------------------
-//vMarchCube performs the Marching Cubes algorithm on a single cube
-template<typename T, typename TColor>
-void vMarchCubeGridGlobal(
-    BoundedVolumeGrid<T,roo::TargetHost, Manage>&       vol,
-    BoundedVolumeGrid<TColor,roo::TargetHost, Manage>&  volColor,
-    int x, int y, int z,
-    int3&                                               CurGlobal,
-    int3&                                               MaxGlobal,
-    int3&                                               MinGlobal,
-    std::vector<aiVector3D>&                            verts,
-    std::vector<aiVector3D>&                            norms,
-    std::vector<aiFace>&                                faces,
-    std::vector<aiColor4D>&                             colors,
-    float                                               fTargetValue = 0.0f
-    )
-{
-  // get voxel position
-  //  const float3 p = vol.VoxelPositionInUnitsGlobal(x,y,z, CurGlobal, MinGlobal);
-  //  const float3 fScale = vol.VoxelSizeUnitsGlobal(MaxGlobal, MinGlobal);
-
-  const float3 p = vol.VoxelPositionInUnits(x,y,z);
-  const float3 fScale = vol.VoxelSizeUnits();
-
-  vMarchCubeGrid(vol, volColor, p, fScale, x, y, z,
-                 verts, norms, faces, colors, fTargetValue);
-}
-
 //vMarchCube performs the Marching Cubes algorithm on a single cube
 /// USER SHOULD MAKE SURE VOXEL EXIST!
 template<typename T, typename TColor>
@@ -466,37 +423,12 @@ void vMarchCubeGridNOTexture(
 }
 
 
+
+
+
 //////////////////////////////////////////
 /// Save Mesh
 //////////////////////////////////////////
-// =============================================================================
-inline void SaveMeshGrid(
-    std::string                                       filename,
-    aiMesh*                                           mesh)
-{
-  // Create root node which indexes first mesh
-  aiNode* root = new aiNode();
-  root->mNumMeshes = 1;
-  root->mMeshes = new unsigned int[root->mNumMeshes];
-  root->mMeshes[0] = 0;
-  root->mName = "root";
-
-  aiMaterial* material = new aiMaterial();
-
-  // Create scene to contain root node and mesh
-  aiScene scene;
-  scene.mRootNode = root;
-  scene.mNumMeshes = 1;
-  scene.mMeshes = new aiMesh*[scene.mNumMeshes];
-  scene.mMeshes[0] = mesh;
-  scene.mNumMaterials = 1;
-  scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
-  scene.mMaterials[0] = material;
-
-  aiReturn res = aiExportScene(&scene, "ply", (filename + ".ply").c_str(), 0);
-  std::cout << "[Kangaroo/SaveMeshGrid] Finish save mesh. Mesh export result: " << res << std::endl;
-}
-
 KANGAROO_EXPORT
 template<typename T, typename Manage>
 void SaveMeshGrid(
@@ -623,15 +555,6 @@ void GenMeshSingleGrid(
     }
   }
 }
-
-KANGAROO_EXPORT
-bool SaveMeshFromPXMs(
-    std::string                                       sDirName,
-    std::string                                       sBBFileHead,
-    int3                                              nVolRes,
-    int                                               nGridRes,
-    std::vector<std::string>                          vfilename,
-    std::string                                       sMeshFileName);
 
 KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>

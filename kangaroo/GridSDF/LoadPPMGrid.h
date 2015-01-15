@@ -1,6 +1,8 @@
 #ifndef LOADPPMGRID_H
 #define LOADPPMGRID_H
 
+#include <fstream>
+#include <iostream>
 #include <kangaroo/Image.h>
 #include <kangaroo/Volume.h>
 #include <kangaroo/BoundedVolume.h>

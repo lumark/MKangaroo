@@ -4,6 +4,7 @@
 #include <kangaroo/Sdf.h>
 #include <kangaroo/extra/SaveGIL.h>
 #include <kangaroo/GridSDF/MarchingCubesGrid.h>
+#include <kangaroo/GridSDF/SaveRollingGridSDF.h>
 #include <kangaroo/GridSDF/SavePPMGrid.h>
 #include <boost/ptr_container/ptr_vector.hpp>
 

@@ -77,10 +77,13 @@ if(ASSIMP_FOUND)
         list(APPEND SRC_CU MarchingCubes.cu)
 
         list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
+        list(APPEND SRC_H GridSDF/SaveRollingGridSDF.h)
         list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
         list(APPEND SRC_H GridSDF/SavePPMGrid.h)
         list(APPEND SRC_H GridSDF/LoadPPMGrid.h)
         list(APPEND SRC_CU GridSDF/MarchingCubesGrid.cpp)
+        list(APPEND SRC_CU GridSDF/SaveRollingGridSDF.cpp)
+
 endif()
 
 endif()
