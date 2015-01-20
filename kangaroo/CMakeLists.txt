@@ -74,7 +74,6 @@ list(APPEND SRC_CU
 find_package( ASSIMP REQUIRED )
 if(ASSIMP_FOUND)
         list(APPEND SRC_H MarchingCubes.h)
-        list(APPEND SRC_CU MarchingCubes.cu)
         list(APPEND SRC_H RollingGridSDF/RollingGridSDF.h)
         list(APPEND SRC_H RollingGridSDF/MarchingCubesGrid.h)
         list(APPEND SRC_H RollingGridSDF/SaveRollingGridSDF.h)
@@ -82,7 +81,10 @@ if(ASSIMP_FOUND)
         list(APPEND SRC_H RollingGridSDF/SaveMeshGrid.h)
         list(APPEND SRC_H RollingGridSDF/SavePPMGrid.h)
         list(APPEND SRC_H RollingGridSDF/LoadPPMGrid.h)
+
+        list(APPEND SRC_CU MarchingCubes.cu)
         list(APPEND SRC_CU RollingGridSDF/SaveMeshGrid.cpp)
+        list(APPEND SRC_H RollingGridSDF/SaveMeshLabGrid.cpp)
         list(APPEND SRC_CU RollingGridSDF/SaveRollingGridSDF.cpp)
 endif()
 

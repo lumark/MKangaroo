@@ -26,7 +26,7 @@ void SdfFuseColor(BoundedVolume<SDF_t> vol, BoundedVolume<uchar3> colorVol,
     float max_w, float mincostheta, float min_depth);
 
 KANGAROO_EXPORT
-void SdfReset(BoundedVolume<SDF_t,  roo::TargetDevice, roo::Manage> vol, float trunc_dist = 0);
+void SdfReset(BoundedVolume<SDF_t, roo::TargetDevice, roo::Manage> vol, float trunc_dist = 0);
 
 //void SdfReset(BoundedVolume<float> vol);
 

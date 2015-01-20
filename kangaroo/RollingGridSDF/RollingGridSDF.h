@@ -367,7 +367,6 @@ public:
                " grid; Actual reset (active grids)"<< nActualResetNum<<std::endl;
   }
 
-
   // ===========================================================================
   template<typename T>
   void ResetAndFreeGird(
