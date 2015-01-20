@@ -1,4 +1,4 @@
-#include "kangaroo/GridSDF/cu_sdffusion_extra.h"
+#include "cu_sdffusion_extra.h"
 
 #include "kangaroo/MatUtils.h"
 #include "kangaroo/launch_utils.h"

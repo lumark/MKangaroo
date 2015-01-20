@@ -1,9 +1,9 @@
 #ifndef ROLLINGGRIDSDFMesh_H
 #define ROLLINGGRIDSDFMesh_H
 
-#include <kangaroo/GridSDF/cu_sdf_reset.h>
-#include <kangaroo/GridSDF/BoundedVolumeGrid.h>
-#include <kangaroo/GridSDF/SavePPMGrid.h>
+#include "cu_sdf_reset.h"
+#include "BoundedVolumeGrid.h"
+#include "SavePPMGrid.h"
 
 namespace roo {
 

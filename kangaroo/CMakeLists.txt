@@ -49,25 +49,25 @@ if(GRID_SDF_SUPPORT)
 message("GridSDF Support On, Kangaroo will build Grid SDF")
 
 list(APPEND SRC_H
-    GridSDF/VolumeGrid.h
-    GridSDF/cu_raycast_grid.h
-    GridSDF/cu_sdffusion_grid.h
-    GridSDF/cu_sdffusion_extra.h
-    GridSDF/cu_rolling_sdf.h
-    GridSDF/BoundedVolumeGrid.h
-    GridSDF/RollingGridSDF.h
-    GridSDF/cu_model_refinement_extra.h
-    GridSDF/SdfSmart.h
-    GridSDF/cu_sdf_reset.h
+    RollingGridSDF/VolumeGrid.h
+    RollingGridSDF/cu_raycast_grid.h
+    RollingGridSDF/cu_sdffusion_grid.h
+    RollingGridSDF/cu_sdffusion_extra.h
+    RollingGridSDF/cu_rolling_sdf.h
+    RollingGridSDF/cu_model_refinement_extra.h
+    RollingGridSDF/cu_sdf_reset.h
+
+    RollingGridSDF/BoundedVolumeGrid.h
+    RollingGridSDF/SdfSmart.h
 )
 
 list(APPEND SRC_CU
-    GridSDF/cu_sdffusion_grid.cu
-    GridSDF/cu_sdffusion_extra.cu
-    GridSDF/cu_raycast_grid.cu
-    GridSDF/cu_rolling_sdf.cu
-    GridSDF/cu_model_refinement_extra.cu
-    GridSDF/cu_sdf_reset.cu
+    RollingGridSDF/cu_sdffusion_grid.cu
+    RollingGridSDF/cu_sdffusion_extra.cu
+    RollingGridSDF/cu_raycast_grid.cu
+    RollingGridSDF/cu_rolling_sdf.cu
+    RollingGridSDF/cu_model_refinement_extra.cu
+    RollingGridSDF/cu_sdf_reset.cu
 )
 
 
@@ -75,16 +75,15 @@ find_package( ASSIMP REQUIRED )
 if(ASSIMP_FOUND)
         list(APPEND SRC_H MarchingCubes.h)
         list(APPEND SRC_CU MarchingCubes.cu)
-
-        list(APPEND SRC_H GridSDF/MarchingCubesGrid.h)
-        list(APPEND SRC_H GridSDF/SaveRollingGridSDF.h)
-        list(APPEND SRC_H GridSDF/SaveMeshLabGrid.h)
-        list(APPEND SRC_H GridSDF/SaveMeshGrid.h)
-        list(APPEND SRC_H GridSDF/SavePPMGrid.h)
-        list(APPEND SRC_H GridSDF/LoadPPMGrid.h)
-        list(APPEND SRC_CU GridSDF/SaveMeshGrid.cpp)
-        list(APPEND SRC_CU GridSDF/SaveRollingGridSDF.cpp)
-
+        list(APPEND SRC_H RollingGridSDF/RollingGridSDF.h)
+        list(APPEND SRC_H RollingGridSDF/MarchingCubesGrid.h)
+        list(APPEND SRC_H RollingGridSDF/SaveRollingGridSDF.h)
+        list(APPEND SRC_H RollingGridSDF/SaveMeshLabGrid.h)
+        list(APPEND SRC_H RollingGridSDF/SaveMeshGrid.h)
+        list(APPEND SRC_H RollingGridSDF/SavePPMGrid.h)
+        list(APPEND SRC_H RollingGridSDF/LoadPPMGrid.h)
+        list(APPEND SRC_CU RollingGridSDF/SaveMeshGrid.cpp)
+        list(APPEND SRC_CU RollingGridSDF/SaveRollingGridSDF.cpp)
 endif()
 
 endif()

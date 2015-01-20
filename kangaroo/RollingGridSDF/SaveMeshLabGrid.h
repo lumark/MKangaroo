@@ -3,9 +3,9 @@
 #include <sophus/se3.hpp>
 #include <kangaroo/Sdf.h>
 #include <kangaroo/extra/SaveGIL.h>
-#include <kangaroo/GridSDF/MarchingCubesGrid.h>
-#include <kangaroo/GridSDF/SaveRollingGridSDF.h>
-#include <kangaroo/GridSDF/SavePPMGrid.h>
+#include "MarchingCubesGrid.h"
+#include "SaveRollingGridSDF.h"
+#include "SavePPMGrid.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 
 KANGAROO_EXPORT
