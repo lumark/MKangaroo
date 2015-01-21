@@ -22,11 +22,11 @@ __global__ void KernVisualizeGrid()
 
     if(g_vol_grid_smart.CheckIfBasicSDFActive(nIndex))
     {
-      if(x <= 30 || x >= g_vol_grid_smart.m_w -30 ||
-         y <= 30 || y >= g_vol_grid_smart.m_h -30 ||
-         z <= 30 || z >= g_vol_grid_smart.m_d -30 )
+      if(x%g_vol_grid_smart.m_nVolumeGridRes == 0 /*|| x%g_vol_grid_smart.m_nVolumeGridRes == g_vol_grid_smart.m_nGridRes_w*/ ||
+         y%g_vol_grid_smart.m_nVolumeGridRes == 0 /*|| y%g_vol_grid_smart.m_nVolumeGridRes == g_vol_grid_smart.m_nGridRes_h*/ ||
+         z%g_vol_grid_smart.m_nVolumeGridRes == 0 /*|| z%g_vol_grid_smart.m_nVolumeGridRes == g_vol_grid_smart.m_nGridRes_d*/ )
       {
-        g_vol_grid_gray(x,y,z) = 1;
+        g_vol_grid_gray(x,y,z) = 255;
       }
     }
   }

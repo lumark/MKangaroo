@@ -34,7 +34,7 @@ public:
       unsigned int       n_w,   // num of voxels of the volume in width
       unsigned int       n_h,   // num of voxels of the volume in height
       unsigned int       n_d,   // num of voxels of the volume in depth
-      unsigned int       n_res, // resolution of a single grid volume
+      unsigned int       n_res, // resolution of a single grid volume, e.g. 32
       const BoundingBox& r_bbox)
   {
     m_w = n_w; m_h = n_h; m_d = n_d;
@@ -237,7 +237,7 @@ public:
 
     if(CheckIfBasicSDFActive(nIndex) == false)
     {
-      printf("BoundedVolumeGrid] Fatal Error! BasicSDF doesn't exist."
+      printf("[BoundedVolumeGrid] Fatal Error! BasicSDF doesn't exist."
              "shift (%d,%d,%d); index (%d,%d,%d); Max index (%d,%d,%d)\n",
              m_local_shift.x, m_local_shift.y, m_local_shift.z,
              static_cast<int>(floorf(x/m_nVolumeGridRes)),
@@ -832,51 +832,6 @@ public:
     return mBBox;
   }
 
-
-  //////////////////////////////////////////////////////
-  // Visiualize Grids
-  //////////////////////////////////////////////////////
-
-  inline __device__ __host__
-  void VisiualizeGrids()
-  {
-    for(int Index=0;Index!=m_nTotalGridRes;Index++)
-    {
-      if(CheckIfBasicSDFActive(Index))
-      {
-        // visiualize the grid
-        // get the edge of the grid
-        for(int i=0;i!=m_nGridRes_w;i++)
-        {
-          for(int j=0;j!=m_nGridRes_h;j++)
-          {
-            for(int k=0;k!=m_nGridRes_d;k++)
-            {
-              if(i==0)
-              {
-                m_GridVolumes[Index](i,j,k) = 1;
-              }
-
-              if(j==0)
-              {
-                m_GridVolumes[Index](i,j,k) = 1;
-              }
-
-              if(k==0)
-              {
-                m_GridVolumes[Index](i,j,k) = 1;
-              }
-            }
-          }
-        }
-
-        // set pixels value in the edge of the grid to be 255
-      }
-    }
-  }
-
-
-
 public:
   size_t        m_w;               // value usually 128, 256
   size_t        m_h;               // value usually 128, 256
@@ -891,10 +846,10 @@ public:
 
   BoundingBox   m_bbox;            // bounding box of bounded volume grid
 
-  unsigned int  m_nVolumeGridRes;  // resolution the whole sdf in one dim. e.g. 256, 512;
-  unsigned int  m_nGridRes_w;      // resolution of grid in x. e.g. 4, 8, 16
-  unsigned int  m_nGridRes_h;      // resolution of grid in y. e.g. 4, 8, 16
-  unsigned int  m_nGridRes_d;      // resolution of grid in z. e.g. 4, 8, 16
+  unsigned int  m_nVolumeGridRes;  // resolution of grid in general e.g. 4, 8, 16, 32
+  unsigned int  m_nGridRes_w;      // actual resolution of grid in x. e.g. 4, 8, 16, 32
+  unsigned int  m_nGridRes_h;      // actual resolution of grid in y. e.g. 4, 8, 16, 32
+  unsigned int  m_nGridRes_d;      // actual resolution of grid in z. e.g. 4, 8, 16, 32
 
   // total num of grids we use. = m_nGridRes_w * m_nGridRes_h * m_nGridRes_d
   unsigned int  m_nTotalGridRes;
