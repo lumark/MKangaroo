@@ -8,13 +8,6 @@
 #include <kangaroo/BoundedVolume.h>
 #include "BoundedVolumeGrid.h"
 
-// P1	Portable bitmap	ASCII
-// P2	Portable graymap	ASCII
-// P3	Portable pixmap	ASCII
-// P4	Portable bitmap	Binary
-// P5	Portable graymap	Binary
-// P6	Portable pixmap	Binary
-
 KANGAROO_EXPORT
 roo::BoundingBox LoadPXMBoundingBox(std::string filename);
 

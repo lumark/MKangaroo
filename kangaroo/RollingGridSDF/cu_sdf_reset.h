@@ -7,8 +7,7 @@
 
 namespace roo
 {
-
-// -----------------------------------------------------------------------------
+// -----
 KANGAROO_EXPORT
 void SdfReset(VolumeGrid<SDF_t, roo::TargetDevice, roo::Manage> vol);
 

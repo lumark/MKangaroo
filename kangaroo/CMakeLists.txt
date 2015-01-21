@@ -45,11 +45,11 @@ list(APPEND SRC_CU
 option(GRID_SDF_SUPPORT "Grid SDF and color SDF Support" ON)
 
 if(GRID_SDF_SUPPORT)
-
 message("GridSDF Support On, Kangaroo will build Grid SDF")
-
 list(APPEND SRC_H
+    RollingGridSDF/SdfSmart.h
     RollingGridSDF/VolumeGrid.h
+    RollingGridSDF/BoundedVolumeGrid.h
     RollingGridSDF/cu_raycast_grid.h
     RollingGridSDF/cu_sdffusion_grid.h
     RollingGridSDF/cu_sdffusion_extra.h
@@ -57,15 +57,12 @@ list(APPEND SRC_H
     RollingGridSDF/cu_model_refinement_extra.h
     RollingGridSDF/cu_sdf_reset.h
     RollingGridSDF/cu_visualize_grid.h
-
-    RollingGridSDF/BoundedVolumeGrid.h
-    RollingGridSDF/SdfSmart.h
 )
 
 list(APPEND SRC_CU
+    RollingGridSDF/cu_raycast_grid.cu
     RollingGridSDF/cu_sdffusion_grid.cu
     RollingGridSDF/cu_sdffusion_extra.cu
-    RollingGridSDF/cu_raycast_grid.cu
     RollingGridSDF/cu_rolling_sdf.cu
     RollingGridSDF/cu_model_refinement_extra.cu
     RollingGridSDF/cu_sdf_reset.cu
@@ -85,14 +82,12 @@ if(ASSIMP_FOUND)
         list(APPEND SRC_H RollingGridSDF/LoadPPMGrid.h)
 
         list(APPEND SRC_CU MarchingCubes.cu)
-        list(APPEND SRC_H RollingGridSDF/MarchingCubesGrid.cpp)
-        list(APPEND SRC_CU RollingGridSDF/SaveMeshGrid.cpp)
-        list(APPEND SRC_CU RollingGridSDF/SaveMeshLabGrid.cpp)
+        list(APPEND SRC_CU RollingGridSDF/MarchingCubesGrid.cpp)
         list(APPEND SRC_CU RollingGridSDF/SaveRollingGridSDF.cpp)
+        list(APPEND SRC_CU RollingGridSDF/SaveMeshLabGrid.cpp)
+        list(APPEND SRC_CU RollingGridSDF/SaveMeshGrid.cpp)
         list(APPEND SRC_CU RollingGridSDF/LoadPPMGrid.cpp)
-
 endif()
-
 endif()
 
 
