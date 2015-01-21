@@ -832,6 +832,51 @@ public:
     return mBBox;
   }
 
+
+  //////////////////////////////////////////////////////
+  // Visiualize Grids
+  //////////////////////////////////////////////////////
+
+  inline __device__ __host__
+  void VisiualizeGrids()
+  {
+    for(int Index=0;Index!=m_nTotalGridRes;Index++)
+    {
+      if(CheckIfBasicSDFActive(Index))
+      {
+        // visiualize the grid
+        // get the edge of the grid
+        for(int i=0;i!=m_nGridRes_w;i++)
+        {
+          for(int j=0;j!=m_nGridRes_h;j++)
+          {
+            for(int k=0;k!=m_nGridRes_d;k++)
+            {
+              if(i==0)
+              {
+                m_GridVolumes[Index](i,j,k) = 1;
+              }
+
+              if(j==0)
+              {
+                m_GridVolumes[Index](i,j,k) = 1;
+              }
+
+              if(k==0)
+              {
+                m_GridVolumes[Index](i,j,k) = 1;
+              }
+            }
+          }
+        }
+
+        // set pixels value in the edge of the grid to be 255
+      }
+    }
+  }
+
+
+
 public:
   size_t        m_w;               // value usually 128, 256
   size_t        m_h;               // value usually 128, 256

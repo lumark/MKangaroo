@@ -56,6 +56,7 @@ list(APPEND SRC_H
     RollingGridSDF/cu_rolling_sdf.h
     RollingGridSDF/cu_model_refinement_extra.h
     RollingGridSDF/cu_sdf_reset.h
+    RollingGridSDF/cu_visualize_grid.h
 
     RollingGridSDF/BoundedVolumeGrid.h
     RollingGridSDF/SdfSmart.h
@@ -68,6 +69,7 @@ list(APPEND SRC_CU
     RollingGridSDF/cu_rolling_sdf.cu
     RollingGridSDF/cu_model_refinement_extra.cu
     RollingGridSDF/cu_sdf_reset.cu
+    RollingGridSDF/cu_visualize_grid.cu
 )
 
 
@@ -84,8 +86,10 @@ if(ASSIMP_FOUND)
 
         list(APPEND SRC_CU MarchingCubes.cu)
         list(APPEND SRC_CU RollingGridSDF/SaveMeshGrid.cpp)
-        list(APPEND SRC_H RollingGridSDF/SaveMeshLabGrid.cpp)
+        list(APPEND SRC_CU RollingGridSDF/SaveMeshLabGrid.cpp)
         list(APPEND SRC_CU RollingGridSDF/SaveRollingGridSDF.cpp)
+        list(APPEND SRC_CU RollingGridSDF/LoadPPMGrid.cpp)
+
 endif()
 
 endif()
