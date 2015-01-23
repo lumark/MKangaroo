@@ -81,7 +81,7 @@ bool LoadPXMGrid(
 
   // ---------------------------------------------------------------------------
   // load each single VolumeGrid
-  for(int i=0;i!=vfilename.size();i++)
+  for(unsigned int i=0;i!=vfilename.size();i++)
   {
     // get index from file name
     std::string sFileName = vfilename[i];

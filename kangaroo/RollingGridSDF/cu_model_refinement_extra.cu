@@ -65,7 +65,7 @@ void BuildPoseRefinementFromDepthmapSystemESMNormal(
 
       if( bDiscardMaxMin && ( Il == 0 || Il == 255 || Ir == 0 || Ir == 255 ) )
       {
-        dDebug(u, v) = make_float4(1, 1, 0, 1);
+        dDebug(u, v) = make_float4(1, 1, 0, 1); // yellow, max/min gray scale val
       }
       else
       {
@@ -102,13 +102,13 @@ void BuildPoseRefinementFromDepthmapSystemESMNormal(
         lss.sqErr = y * y;
 
         const float debug = ( fabs(y) + 128.0f ) / 255.0f;
-        dDebug(u,v) = make_float4(debug, 0, w, 1);
+        dDebug(u,v) = make_float4(debug, 0, w, 1); // less red, less error
       }
     } else {
-      dDebug(u,v) = make_float4(0, 1, 0, 1);
+      dDebug(u,v) = make_float4(0, 1, 0, 1); // green, out of boundary
     }
   }else{
-    dDebug(u,v) = make_float4(0, 0, 0, 1);
+    dDebug(u,v) = make_float4(1, 0, 0, 1); // invalid depth value, black
   }
 }
 

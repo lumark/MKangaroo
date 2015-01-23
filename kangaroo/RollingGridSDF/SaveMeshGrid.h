@@ -246,11 +246,11 @@ void GenMeshSingleGrid(
     std::vector<aiColor4D>&                           colors)
 {
   // for each voxel in the grid
-  for(int x=0; x!=vol.m_nVolumeGridRes; x++)
+  for(unsigned int x=0; x!=vol.m_nVolumeGridRes; x++)
   {
-    for(int y=0; y!=vol.m_nVolumeGridRes; y++)
+    for(unsigned int y=0; y!=vol.m_nVolumeGridRes; y++)
     {
-      for(int z=0; z!=vol.m_nVolumeGridRes; z++)
+      for(unsigned int z=0; z!=vol.m_nVolumeGridRes; z++)
       {
         int3 Index = make_int3(
               CurLocalIndex.x * static_cast<int>(vol.m_nVolumeGridRes) + x,
