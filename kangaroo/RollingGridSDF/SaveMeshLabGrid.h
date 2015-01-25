@@ -36,3 +36,15 @@ void SaveMeshlabFromPXMs(
     int                         nGridRes,
     std::vector<std::string>    vfilename,
     std::string                 sFinalMeshFileName);
+
+
+KANGAROO_EXPORT
+// generate a single mesh from several PPMs
+void SaveMeshlabFromPXMs(
+    std::string                 sDirName,
+    std::string                 sBBFileHead,
+    int3                        VolRes,
+    int                         nGridRes,
+    std::vector<std::string>    vGridsFilename,
+    std::vector<std::string>    vGridsGrayFilename,
+    std::string                 sFinalMeshFileName);

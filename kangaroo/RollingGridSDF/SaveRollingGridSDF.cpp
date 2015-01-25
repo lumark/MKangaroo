@@ -145,7 +145,6 @@ bool SaveMeshFromPXMs(
         roo::BoundedVolumeGrid<roo::SDF_t_Smart,roo::TargetHost,roo::Manage> hVol;
         hVol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
 
-        /// TODO: SUPPORT COLOR MESH
         roo::BoundedVolumeGrid<float, roo::TargetHost, roo::Manage> hVolColor;
         hVolColor.Init(1,1,1, nGridRes, BBox);
 
@@ -216,5 +215,149 @@ bool SaveMeshFromPXMs(
 
   return SaveMeshGridToFile(sMeshFileName, mesh, "obj");
 }
+
+
+// Generate one single mesh from several ppm files.
+bool SaveMeshFromPXMs(
+    std::string                sDirName,
+    std::string                sBBFileHead,
+    int3                       nVolRes,
+    int                        nGridRes,
+    std::vector<std::string>   vGridsFilename,
+    std::vector<std::string>   vGridsGrayFilename,
+    std::string                sMeshFileName)
+{
+  printf("\n---- [Kangaroo/SaveMeshFromPXMs] Start Color Version.\n");
+
+  // 1 ---------------------------------------------------------------------------
+  // read all grid sdf and sort them into volumes. vVolume index is global index
+  std::vector<SingleVolume>  vGridVolumes = GetFilesNeedSaving(vGridsFilename);
+  std::vector<SingleVolume>  vGridGrayVolumes = GetFilesNeedSaving(vGridsGrayFilename);
+
+  if(vGridVolumes.size()<=0)
+  {
+    printf("[Kangaroo/SaveMeshFromPXMs] Cannot find any files for generating the mesh!\n");
+    return false;
+  }
+
+  if(vGridVolumes.size() != vGridGrayVolumes.size())
+  {
+    printf("[Kangaroo/SaveMeshFromPXMs] Grid and Color Grid Size MisMatch!\n");
+    return false;
+  }
+
+  // prepare data structure for the single mesh
+  MarchingCUBERst ObjMesh;
+
+  // 2 ---------------------------------------------------------------------------
+  // For each global volume we have, gen mesh with it
+  int nTotalSaveGridNum = 0;
+
+  for(unsigned int i=0; i!=vGridVolumes.size(); i++)
+  {
+      std::cout<<"[Kangaroo/SaveMeshFromPXMs] Merging grids in global bb area ("<<
+                 std::to_string(vGridVolumes[i].GlobalIndex.x)<<","<<
+                 std::to_string(vGridVolumes[i].GlobalIndex.y)<<","<<
+                 std::to_string(vGridVolumes[i].GlobalIndex.z)<<")"<< std::endl;
+
+      int nSingleLoopSaveGridNum = 0;
+
+      // load the corresponding bounding box
+      std::string sBBFileName =
+          sDirName + sBBFileHead +
+          std::to_string(vGridVolumes[i].GlobalIndex.x) + "#" +
+          std::to_string(vGridVolumes[i].GlobalIndex.y) + "#" +
+          std::to_string(vGridVolumes[i].GlobalIndex.z);
+
+      if( CheckIfBBfileExist(sBBFileName) )
+      {
+        // 1, --------------------------------------------------------------------
+        // load the bounxing box of the sdf.
+        // NOTICE that this is the GLOBAL bounding box, not the local one.
+        // To load it from disk, we need to use host volume
+        roo::BoundingBox BBox = LoadPXMBoundingBox(sBBFileName);
+
+        roo::BoundedVolumeGrid<roo::SDF_t_Smart,roo::TargetHost,roo::Manage> hVol;
+        hVol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
+
+        roo::BoundedVolumeGrid<float, roo::TargetHost, roo::Manage> hColorVol;
+        hColorVol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
+
+        // 2, --------------------------------------------------------------------
+        // for each single grid volume live in the global bounding box
+        for(unsigned int j=0; j!=vGridVolumes[i].vLocalIndex.size(); j++)
+        {
+          int3 LocalIndex = vGridVolumes[i].vLocalIndex[j];
+
+          int nRealIndex = hVol.ConvertLocalIndexToRealIndex(
+                LocalIndex.x, LocalIndex.y,LocalIndex.z);
+
+          std::string sPXMFile = sDirName + vGridVolumes[i].vFileName[j];
+
+          // load the grid volume
+          if(LoadPXMSingleGrid(sPXMFile, hVol.m_GridVolumes[nRealIndex]) == false )
+          {
+            std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! load "<<sPXMFile<<" fail. exit."<<std::endl;
+            return false;
+          }
+
+          std::string sPXMGrayFile = sDirName + vGridGrayVolumes[i].vFileName[j];
+
+          if(LoadPXMSingleGrid(sPXMGrayFile, hColorVol.m_GridVolumes[nRealIndex]) == false )
+          {
+            std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! load "<<sPXMGrayFile<<" fail. exit."<<std::endl;
+            return false;
+          }
+        }
+
+        // 3, --------------------------------------------------------------------
+        // for each grid in the whole volume
+        for(unsigned int i=0;i!=hVol.m_nGridRes_w;i++)
+        {
+          for(unsigned int j=0;j!=hVol.m_nGridRes_h;j++)
+          {
+            for(unsigned int k=0;k!=hVol.m_nGridRes_d;k++)
+            {
+              if(hVol.CheckIfBasicSDFActive(hVol.ConvertLocalIndexToRealIndex(i,j,k)))
+              {
+                int3 CurLocalIndex = make_int3(i,j,k);
+
+                GenMeshSingleGrid(hVol, hColorVol, CurLocalIndex, ObjMesh.verts,
+                                  ObjMesh.norms, ObjMesh.faces, ObjMesh.colors);
+
+                nTotalSaveGridNum++;
+                nSingleLoopSaveGridNum ++;
+              }
+            }
+          }
+        }
+
+        // 4, --------------------------------------------------------------------
+        // reset grid
+        roo::SdfReset(hVol);
+        hVol.ResetAllGridVol();
+      }
+      else
+      {
+        std::cerr<<"[Kangaroo/SaveMeshFromPXMs] Error! Fail loading bbox "<<
+                   sBBFileName<<std::endl;
+        return false;
+      }
+
+      std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish merge "<<nSingleLoopSaveGridNum<<
+                 " grids."<<std::endl;
+  }
+
+  std::cout<<"[Kangaroo/SaveMeshFromPXMs] Finish marching cube for " <<
+             nTotalSaveGridNum<< " Grids.\n";
+
+  // 3 ---------------------------------------------------------------------------
+  // Save mesh from memory to hard disk
+  aiMesh* mesh = MeshFromListsVector(ObjMesh.verts, ObjMesh.norms,
+                                     ObjMesh.faces, ObjMesh.colors);
+
+  return SaveMeshGridToFile(sMeshFileName, mesh, "obj");
+}
+
 
 }

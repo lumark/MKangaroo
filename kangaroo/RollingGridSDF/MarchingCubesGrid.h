@@ -149,7 +149,7 @@ void vMarchCubeGrid(
       }
       else
       {
-        std::cerr<<"[vMarchCubeGrid] warning! skip saving color."<<std::endl;
+//        std::cerr<<"[vMarchCubeGrid] warning! skip saving color."<<std::endl;
       }
     }
 

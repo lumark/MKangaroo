@@ -36,7 +36,17 @@ bool SaveMeshFromPXMs(
     std::string                   sBBFileHead,
     int3                          nVolRes,
     int                           nGridRes,
-    std::vector<std::string>      vfilename,
+    std::vector<std::string>      vGridsFilename,
+    std::string                   sMeshFileName);
+
+
+bool SaveMeshFromPXMs(
+    std::string                   sDirName,
+    std::string                   sBBFileHead,
+    int3                          nVolRes,
+    int                           nGridRes,
+    std::vector<std::string>      vGridsFilename,
+    std::vector<std::string>      vGridsGrayFilename,
     std::string                   sMeshFileName);
 
 }
