@@ -147,6 +147,10 @@ void vMarchCubeGrid(
         float3 sColor = roo::ConvertPixel<float3,TColor>(c);
         colors.push_back(aiColor4D(sColor.x, sColor.y, sColor.z, 1.0f));
       }
+      else
+      {
+        std::cerr<<"[vMarchCubeGrid] warning! skip saving color."<<std::endl;
+      }
     }
 
     faces.push_back(face);

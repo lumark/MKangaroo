@@ -211,8 +211,8 @@ bool SaveMeshFromPXMs(
 
   // 3 ---------------------------------------------------------------------------
   // Save mesh from memory to hard disk
-  aiMesh* mesh = MeshFromLists(ObjMesh.verts, ObjMesh.norms,
-                               ObjMesh.faces, ObjMesh.colors);
+  aiMesh* mesh = MeshFromListsVector(ObjMesh.verts, ObjMesh.norms,
+                                     ObjMesh.faces, ObjMesh.colors);
 
   return SaveMeshGridToFile(sMeshFileName, mesh, "obj");
 }
