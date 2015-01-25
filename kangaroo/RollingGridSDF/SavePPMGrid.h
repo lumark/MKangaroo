@@ -209,4 +209,98 @@ void SavePXMGridDesire(
 }
 
 
+// file name format ObjID-GlobalIndex-LocalIndex or ObjID-LocalIndex
+KANGAROO_EXPORT
+template<typename T, typename Manage>
+void SavePXMGridDesire(
+    const std::string                                        sPathName,
+    int                                                      pGridNeedSave[],
+    int                                                      pGlobalIndex_x[],
+    int                                                      pGlobalIndex_y[],
+    int                                                      pGlobalIndex_z[],
+    roo::BoundedVolumeGrid<T,roo::TargetDevice, Manage>&     rDVol,
+    roo::BoundedVolumeGrid<float,roo::TargetDevice, Manage>& rDColorVol,
+    bool                                                     bSaveBBox,
+    std::string                                              ppm_type = "P5",
+    int                                                      num_colors = 255)
+{
+  if(rDVol.GetActiveGridVolNum() == 0)
+  {
+    std::cerr<<"[Kangaroo/SavePXMGridDesire] Cannot save PXM for void volume."<<std::endl;
+    exit(-1);
+  }
+  else
+  {
+    // ------------------------------------------------------------------------
+    // load data from device to host
+    roo::BoundedVolumeGrid<T,roo::TargetHost, Manage> HVol;
+    HVol.Init(rDVol.m_w,rDVol.m_h,rDVol.m_d,rDVol.m_nVolumeGridRes,rDVol.m_bbox);
+    HVol.CopyAndInitFrom(rDVol);
+    HVol.m_global_shift = rDVol.m_global_shift;
+
+    // init color sdf
+    roo::BoundedVolumeGrid<float,roo::TargetHost, Manage> HColorVol;
+    HColorVol.Init(rDColorVol.m_w, rDColorVol.m_h, rDColorVol.m_d,
+                   rDColorVol.m_nVolumeGridRes, rDColorVol.m_bbox);
+    HColorVol.CopyAndInitFrom(rDColorVol);
+    HColorVol.m_global_shift = rDColorVol.m_global_shift;
+
+    // ------------------------------------------------------------------------
+    // save each active volume in BoundedVolumeGrid to HardDisk
+    int nSavedGridNum =0;
+
+    for(int i=0; i!=static_cast<int>(rDVol.m_nGridRes_w); i++)
+    {
+      for(int j=0; j!=static_cast<int>(rDVol.m_nGridRes_h); j++)
+      {
+        for(int k=0; k!=static_cast<int>(rDVol.m_nGridRes_d); k++)
+        {
+          // here we don't consider any shift as the grid for saving does not
+          // had any shift applied
+          int nGridIndex = i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
+
+          // --- save vol if necessary
+          if( pGridNeedSave[nGridIndex]==1 &&
+              HVol.CheckIfBasicSDFActive(nGridIndex) )
+          {
+            int3 GlobalIndex = make_int3(pGlobalIndex_x[nGridIndex],
+                                         pGlobalIndex_y[nGridIndex],
+                                         pGlobalIndex_z[nGridIndex]);
+
+            int3 LocalIndex  = make_int3(i,j,k);
+
+            std::string sGridFileName = sPathName+"#"+
+                std::to_string(GlobalIndex.x)+"#"+std::to_string(GlobalIndex.y)+"#"+
+                std::to_string(GlobalIndex.z)+"#"+std::to_string(LocalIndex.x)+"#"+
+                std::to_string(LocalIndex.y)+"#"+std::to_string(LocalIndex.z);
+
+            std::string sColorGridFileName = sPathName+"-Color-"+"#"+
+                std::to_string(GlobalIndex.x)+"#"+std::to_string(GlobalIndex.y)+"#"+
+                std::to_string(GlobalIndex.z)+"#"+std::to_string(LocalIndex.x)+"#"+
+                std::to_string(LocalIndex.y)+"#"+std::to_string(LocalIndex.z);
+
+            std::ofstream bFile( sGridFileName.c_str(), std::ios::out | std::ios::binary );
+            SavePXM<T,Manage>(bFile, HVol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
+
+            std::ofstream bColorFile( sColorGridFileName.c_str(), std::ios::out | std::ios::binary );
+            SavePXM<float,Manage>(bColorFile, HColorVol.m_GridVolumes[nGridIndex], ppm_type, num_colors);
+
+            nSavedGridNum++;
+
+            // scan the disk and see if we need to save the bb (in global pose)
+            if(bSaveBBox)
+            {
+              CheckifSaveBB(sPathName, GlobalIndex, rDVol);
+            }
+          }
+        }
+      }
+    }
+
+    printf("\n[Kangaroo/SavePXMGridDesire] Save %d grid sdf in Global Pose.\n", nSavedGridNum);
+  }
+
+}
+
+
 #endif // SAVEPPMGRID_H
