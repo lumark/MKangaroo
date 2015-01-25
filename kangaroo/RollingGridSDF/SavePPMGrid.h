@@ -75,15 +75,9 @@ void SavePXM(
 }
 
 KANGAROO_EXPORT
-inline void SavePXMBoundingBox(
+void SavePXMBoundingBox(
     const std::string                                      filename,
-    roo::BoundingBox                                       BBox)
-{
-  std::ofstream bFile( filename.c_str(), std::ios::out | std::ios::binary );
-  bFile << BBox.boxmin.x << " " <<  BBox.boxmin.y << " " << BBox.boxmin.z << std::endl;
-  bFile << BBox.boxmax.x << " " <<  BBox.boxmax.y << " " << BBox.boxmax.z << std::endl;
-  bFile.close();
-}
+    roo::BoundingBox                                       BBox);
 
 KANGAROO_EXPORT
 template<typename T, typename Manage>
@@ -118,17 +112,7 @@ void SavePXM(
 
 ///============================= Save Grid SDFs ================================
 KANGAROO_EXPORT
-inline bool CheckIfBBfileExist(std::string filename)
-{
-  std::ifstream bFile( filename.c_str(), std::ios::in | std::ios::binary );
-  if(bFile.fail()==true)
-  {
-    return false;
-  }
-
-  bFile.close();
-  return true;
-}
+bool CheckIfBBfileExist(std::string filename);
 
 KANGAROO_EXPORT
 template<typename T, typename Manage>

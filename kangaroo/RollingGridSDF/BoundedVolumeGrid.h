@@ -741,15 +741,15 @@ public:
   // Access sub-regions
   //////////////////////////////////////////////////////
   inline __device__ __host__
-  void SubBoundingVolume( const BoundingBox& region)
+  void SubBoundingVolume( const BoundingBox& TargetRegion)
   {
-    const float3 min_fv = (region.Min() - m_bbox.Min()) / (m_bbox.Size());
-    const float3 max_fv = (region.Max() - m_bbox.Min()) / (m_bbox.Size());
+    const float3 min_fv = (TargetRegion.Min() - m_bbox.Min()) / (m_bbox.Size());
+    const float3 max_fv = (TargetRegion.Max() - m_bbox.Min()) / (m_bbox.Size());
 
     const int3 min_v = make_int3(
-          fmaxf((m_w-1)*min_fv.x, 0),
-          fmaxf((m_h-1)*min_fv.y, 0),
-          fmaxf((m_d-1)*min_fv.z, 0)
+          fmaxf((m_w-1) *min_fv.x, 0),
+          fmaxf((m_h-1) *min_fv.y, 0),
+          fmaxf((m_d-1) *min_fv.z, 0)
           );
     const int3 max_v = make_int3(
           fminf(ceilf((m_w-1)*max_fv.x), m_w-1),
@@ -764,12 +764,12 @@ public:
           VoxelPositionInUnits(max_v)
           );
 
-    printf("min_v: x%d,y%d,z%d\n",min_v.x,min_v.y,min_v.z);
-    printf("size_v: x%d,y%d,z%d\n",size_v.x,size_v.y,size_v.z);
+    printf("min_v: x%d,y%d,z%d\n", min_v.x, min_v.y, min_v.z);
+    printf("size_v: x%d,y%d,z%d\n", size_v.x, size_v.y, size_v.z);
 
-    // now get subvol for rVol
+    // now get the subvol for rVol
     //    BoundedVolumeGrid<T, Target, Management> rVol;
-    //    rVol.init();
+    //    rVol.Init();
     //    for(int i=0;i!= m_nGridRes_w * m_nGridRes_h * m_nGridRes_d;i++)
     //    {
     //      // skip void volum grid
@@ -788,14 +788,6 @@ public:
     //      }
     //    }
 
-    //    BoundedVolumeGrid<T,Target,DontManage> testBB;
-    //    testBB.CopyAndInitFrom();
-    //    return BoundedVolumeGrid<T,Target,DontManage>();
-
-    //    return BoundedVolumeGrid<T,Target,DontManage>(
-    //          Volume<T,Target,Management>::SubVolume(min_v, size_v),
-    //          nbbox
-    //          );
   }
 
   inline __device__ __host__
