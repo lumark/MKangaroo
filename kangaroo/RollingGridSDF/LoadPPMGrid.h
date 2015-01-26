@@ -38,10 +38,12 @@ bool LoadPXMSingleGrid(
   if(success)
   {
     // Make sure the vol is empty
-    vol.CleanUp();
+    //    roo::Manage::Cleanup<T,roo::TargetHost>(vol.ptr);
+    GpuCheckErrors();
 
     // init volume grid
     vol.InitVolume(w, h, d);
+    GpuCheckErrors();
 
     // Read in data
     for(size_t d=0; d<vol.d; ++d)
@@ -55,7 +57,7 @@ bool LoadPXMSingleGrid(
   }
   else
   {
-    std::cerr<<"fatal error! read PPM File Fail!"<<std::endl;
+    std::cerr<<"[LoadPXMSingleGrid] Error! Read "<<sFilename<<" Fail!"<<std::endl;
     exit(-1);
   }
 
@@ -71,10 +73,12 @@ bool LoadPXMGrid(
     std::string                                               sBBFileName,
     roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage>&  rDVol)
 {
+  // ---------------------------------------------------------------------------
   // to load it from disk, we need to use host volume
   roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hVol;
   roo::BoundingBox BBox = LoadPXMBoundingBox(sDirName + sBBFileName);
 
+  // ---------------------------------------------------------------------------
   // init sdf
   hVol.Init(rDVol.m_w, rDVol.m_h, rDVol.m_d, rDVol.m_nVolumeGridRes, BBox);
   std::cout<<"[LoadPXMGrid] Finish init sdf. loading model files from the hard disk."<<std::endl;
@@ -103,16 +107,17 @@ bool LoadPXMGrid(
     }
   }
 
-  // ---------------------------------------------------------------------------
-  std::cout<<"[LoadPXMGrid]  Copying data from host to device memory.."<<std::endl;
+  std::cout<<"[LoadPXMGrid] Copying data from the host memory to the device memory."<<std::endl;
 
+  // ---------------------------------------------------------------------------
   // copy data from host to device.
   /// somehow we need to copy the host data to a empty target device vol first, and
   /// copy data from the temp device vol to the target device vol
-  roo::BoundedVolumeGrid<T,roo::TargetDevice,roo::Manage> NewDVol;
+  roo::BoundedVolumeGrid<T, roo::TargetDevice, roo::Manage> NewDVol;
   NewDVol.Init(rDVol.m_w, rDVol.m_h, rDVol.m_d, rDVol.m_nVolumeGridRes, BBox);
   NewDVol.CopyAndInitFrom(hVol);
 
+  std::cout<<"copying data to the device memory.."<<std::endl;
   // copy data from device to device
   rDVol.CopyAndInitFrom(NewDVol);
   std::cout<<"[LoadPXMGrid] Finish Copy data from host to device."<<std::endl;

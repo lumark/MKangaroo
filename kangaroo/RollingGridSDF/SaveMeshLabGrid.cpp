@@ -134,7 +134,7 @@ void SaveMeshlabGrid(
 KANGAROO_EXPORT
 void SaveMeshlabGrid(
     roo::BoundedVolumeGrid<roo::SDF_t_Smart, roo::TargetDevice, roo::Manage>& vol,
-    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>&            GrayVol,
+    roo::BoundedVolumeGrid<float, roo::TargetDevice, roo::Manage>&            volGray,
     std::string                                                               sFileName)
 {
   Eigen::Matrix3d RDFvision;  RDFvision  << 1,0,0,  0,1,0,  0,0,1;
@@ -151,7 +151,7 @@ void SaveMeshlabGrid(
 
   of << " <MeshGroup>" << std::endl;
 
-  roo::SaveMeshGrid(sFileName, vol, GrayVol);
+  roo::SaveMeshGrid(sFileName, vol, volGray);
 
   of << "  <MLMesh label=\"mesh.ply\" filename=\"" << sFileName <<
         ".ply\">" << std::endl;

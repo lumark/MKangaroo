@@ -164,15 +164,15 @@ void SavePXMGridDesire(
     // save each active volume in BoundedVolumeGrid to HardDisk
     int nSavedGridNum =0;
 
-    for(int i=0; i!=static_cast<int>(rDVol.m_nGridRes_w); i++)
+    for(int i=0; i!=static_cast<int>(rDVol.m_nGridNum_w); i++)
     {
-      for(int j=0; j!=static_cast<int>(rDVol.m_nGridRes_h); j++)
+      for(int j=0; j!=static_cast<int>(rDVol.m_nGridNum_h); j++)
       {
-        for(int k=0; k!=static_cast<int>(rDVol.m_nGridRes_d); k++)
+        for(int k=0; k!=static_cast<int>(rDVol.m_nGridNum_d); k++)
         {
           // here we don't consider any shift as the grid for saving does not
           // had any shift applied
-          int nGridIndex = i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
+          int nGridIndex = i + rDVol.m_nGridNum_w* (j+ rDVol.m_nGridNum_h* k);
 
           // --- save vol if necessary
           if( pGridNeedSave[nGridIndex]==1 &&
@@ -249,15 +249,15 @@ void SavePXMGridDesire(
     // save each active volume in BoundedVolumeGrid to HardDisk
     int nSavedGridNum =0;
 
-    for(int i=0; i!=static_cast<int>(rDVol.m_nGridRes_w); i++)
+    for(int i=0; i!=static_cast<int>(rDVol.m_nGridNum_w); i++)
     {
-      for(int j=0; j!=static_cast<int>(rDVol.m_nGridRes_h); j++)
+      for(int j=0; j!=static_cast<int>(rDVol.m_nGridNum_h); j++)
       {
-        for(int k=0; k!=static_cast<int>(rDVol.m_nGridRes_d); k++)
+        for(int k=0; k!=static_cast<int>(rDVol.m_nGridNum_d); k++)
         {
           // here we don't consider any shift as the grid for saving does not
           // had any shift applied
-          int nGridIndex = i + rDVol.m_nGridRes_w* (j+ rDVol.m_nGridRes_h* k);
+          int nGridIndex = i + rDVol.m_nGridNum_w* (j+ rDVol.m_nGridNum_h* k);
 
           // --- save vol if necessary
           if( pGridNeedSave[nGridIndex]==1 &&

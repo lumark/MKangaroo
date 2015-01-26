@@ -98,8 +98,8 @@ __global__ void KernRollingGridSdf(
 
       // get the index of grid sdf that need to be reseted
       int nIndex = static_cast<int>(floorf(x/g_vol.m_nVolumeGridRes)) +
-          g_vol.m_nGridRes_w * ( static_cast<int>(floorf(y/g_vol.m_nVolumeGridRes)) +
-                                 g_vol.m_nGridRes_h * static_cast<int>(floorf(z/g_vol.m_nVolumeGridRes)) );
+          g_vol.m_nGridNum_w * ( static_cast<int>(floorf(y/g_vol.m_nVolumeGridRes)) +
+                                 g_vol.m_nGridNum_h * static_cast<int>(floorf(z/g_vol.m_nVolumeGridRes)) );
 
       // save index of sdf that need to be reset later
       g_NextResetSDFs[nIndex] = 1;
@@ -128,20 +128,20 @@ void RollingGridSdfCuda(
 
   if(shift.x!=0)
   {
-    bb_min.x = bb_min.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridRes_w);
-    bb_max.x = bb_max.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridRes_w);
+    bb_min.x = bb_min.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridNum_w);
+    bb_max.x = bb_max.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridNum_w);
   }
 
   if(shift.y!=0)
   {
-    bb_min.y = bb_min.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridRes_h);
-    bb_max.y = bb_max.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridRes_h);
+    bb_min.y = bb_min.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridNum_h);
+    bb_max.y = bb_max.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridNum_h);
   }
 
   if(shift.z!=0)
   {
-    bb_min.z = bb_min.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridRes_d);
-    bb_max.z = bb_max.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridRes_d);
+    bb_min.z = bb_min.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridNum_d);
+    bb_max.z = bb_max.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridNum_d);
   }
 
   // save shift params in grid sdf data struct
@@ -195,20 +195,20 @@ void RollingGridSdfCuda(
 
   if(shift.x!=0)
   {
-    bb_min.x = bb_min.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridRes_w);
-    bb_max.x = bb_max.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridRes_w);
+    bb_min.x = bb_min.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridNum_w);
+    bb_max.x = bb_max.x + shift.x * vol.m_bbox.Size().x/float(vol.m_nGridNum_w);
   }
 
   if(shift.y!=0)
   {
-    bb_min.y = bb_min.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridRes_h);
-    bb_max.y = bb_max.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridRes_h);
+    bb_min.y = bb_min.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridNum_h);
+    bb_max.y = bb_max.y + shift.y * vol.m_bbox.Size().y/float(vol.m_nGridNum_h);
   }
 
   if(shift.z!=0)
   {
-    bb_min.z = bb_min.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridRes_d);
-    bb_max.z = bb_max.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridRes_d);
+    bb_min.z = bb_min.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridNum_d);
+    bb_max.z = bb_max.z + shift.z * vol.m_bbox.Size().z/float(vol.m_nGridNum_d);
   }
 
   // save shift params in grid sdf data struct

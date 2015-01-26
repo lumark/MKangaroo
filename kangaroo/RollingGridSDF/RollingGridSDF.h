@@ -36,7 +36,7 @@ public:
     if(shift_index.x!=0)
     {
       float new_x = static_cast<float>(shift_index.x) * BBSize.x /
-          static_cast<float>(pVol->m_nGridRes_w);
+          static_cast<float>(pVol->m_nGridNum_w);
 
       pVol->m_bbox.boxmin.x = pVol->m_bbox.boxmin.x + new_x;
       pVol->m_bbox.boxmax.x = pVol->m_bbox.boxmax.x + new_x;
@@ -51,7 +51,7 @@ public:
     if(shift_index.y!=0)
     {
       float new_y = static_cast<float>(shift_index.y) * BBSize.y /
-          static_cast<float>(pVol->m_nGridRes_h);
+          static_cast<float>(pVol->m_nGridNum_h);
 
       pVol->m_bbox.boxmin.y = pVol->m_bbox.boxmin.y + new_y;
       pVol->m_bbox.boxmax.y = pVol->m_bbox.boxmax.y + new_y;
@@ -66,7 +66,7 @@ public:
     if(shift_index.z!=0)
     {
       float new_z = static_cast<float>(shift_index.z) * BBSize.z /
-          static_cast<float>(pVol->m_nGridRes_d);
+          static_cast<float>(pVol->m_nGridNum_d);
 
       pVol->m_bbox.boxmin.z = pVol->m_bbox.boxmin.z + new_z;
       pVol->m_bbox.boxmax.z = pVol->m_bbox.boxmax.z + new_z;
@@ -117,9 +117,9 @@ public:
     int3 Index;
 
     // dimision of a grid, usually 8, 16 etc
-    int3 GridDim = make_int3(static_cast<int>(pVol->m_nGridRes_w),
-                             static_cast<int>(pVol->m_nGridRes_h),
-                             static_cast<int>(pVol->m_nGridRes_d));
+    int3 GridDim = make_int3(static_cast<int>(pVol->m_nGridNum_w),
+                             static_cast<int>(pVol->m_nGridNum_h),
+                             static_cast<int>(pVol->m_nGridNum_d));
 
     // for each grid sdf in the volume
     for(Index.x = 0; Index.x!= GridDim.x; Index.x++)
@@ -339,7 +339,7 @@ public:
           // get the index of the voxel, notice that we do not need to apply any
           // shift here
           int nGridIndex =
-              Index.x + pVol->m_nGridRes_w * (Index.y + pVol->m_nGridRes_h * Index.z);
+              Index.x + pVol->m_nGridNum_w * (Index.y + pVol->m_nGridNum_h * Index.z);
 
           m_nGlobalIndex_x[nGridIndex] = GlobalIndex.x;
           m_nGlobalIndex_y[nGridIndex] = GlobalIndex.y;

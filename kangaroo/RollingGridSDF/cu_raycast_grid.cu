@@ -426,6 +426,7 @@ void RaycastSdf(
     const Mat<float,3,4> T_wc, ImageIntrinsics K, float near, float far,
     float trunc_dist, bool subpix )
 {
+  GpuCheckErrors();
   // load vol val to golbal memory
   cudaMemcpyToSymbol(g_vol_smart, &vol, sizeof(vol), size_t(0), cudaMemcpyHostToDevice);
   cudaMemcpyToSymbol(g_grayVol, &grayVol, sizeof(grayVol), size_t(0), cudaMemcpyHostToDevice);

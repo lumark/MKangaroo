@@ -169,11 +169,11 @@ bool SaveMeshFromPXMs(
 
         // 3, --------------------------------------------------------------------
         // for each grid in the whole volume
-        for(unsigned int i=0;i!=hVol.m_nGridRes_w;i++)
+        for(unsigned int i=0;i!=hVol.m_nGridNum_w;i++)
         {
-          for(unsigned int j=0;j!=hVol.m_nGridRes_h;j++)
+          for(unsigned int j=0;j!=hVol.m_nGridNum_h;j++)
           {
-            for(unsigned int k=0;k!=hVol.m_nGridRes_d;k++)
+            for(unsigned int k=0;k!=hVol.m_nGridNum_d;k++)
             {
               if(hVol.CheckIfBasicSDFActive(hVol.ConvertLocalIndexToRealIndex(i,j,k)))
               {
@@ -276,13 +276,13 @@ bool SaveMeshFromPXMs(
         // NOTICE that this is the GLOBAL bounding box, not the local one.
         // To load it from disk, we need to use host volume
         roo::BoundingBox BBox = LoadPXMBoundingBox(sBBFileName);
-
+        GpuCheckErrors();
         roo::BoundedVolumeGrid<roo::SDF_t_Smart,roo::TargetHost,roo::Manage> hVol;
         hVol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
-
+        GpuCheckErrors();
         roo::BoundedVolumeGrid<float, roo::TargetHost, roo::Manage> hColorVol;
         hColorVol.Init(nVolRes.x, nVolRes.y, nVolRes.z, nGridRes, BBox);
-
+        GpuCheckErrors();
         // 2, --------------------------------------------------------------------
         // for each single grid volume live in the global bounding box
         for(unsigned int j=0; j!=vGridVolumes[i].vLocalIndex.size(); j++)
@@ -312,11 +312,11 @@ bool SaveMeshFromPXMs(
 
         // 3, --------------------------------------------------------------------
         // for each grid in the whole volume
-        for(unsigned int i=0;i!=hVol.m_nGridRes_w;i++)
+        for(unsigned int i=0;i!=hVol.m_nGridNum_w;i++)
         {
-          for(unsigned int j=0;j!=hVol.m_nGridRes_h;j++)
+          for(unsigned int j=0;j!=hVol.m_nGridNum_h;j++)
           {
-            for(unsigned int k=0;k!=hVol.m_nGridRes_d;k++)
+            for(unsigned int k=0;k!=hVol.m_nGridNum_d;k++)
             {
               if(hVol.CheckIfBasicSDFActive(hVol.ConvertLocalIndexToRealIndex(i,j,k)))
               {
@@ -334,8 +334,14 @@ bool SaveMeshFromPXMs(
 
         // 4, --------------------------------------------------------------------
         // reset grid
+        GpuCheckErrors();
         roo::SdfReset(hVol);
         hVol.ResetAllGridVol();
+
+        roo::SdfReset(hColorVol);
+        hColorVol.ResetAllGridVol();
+
+        GpuCheckErrors();
       }
       else
       {

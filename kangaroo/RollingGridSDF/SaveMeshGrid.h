@@ -35,11 +35,11 @@ aiMesh* GetMeshGrid(
   int nNumSkip =0;
   int nNumSave =0;
 
-  for(int i=0;i!=vol.m_nGridRes_w;i++)
+  for(int i=0;i!=vol.m_nGridNum_w;i++)
   {
-    for(int j=0;j!=vol.m_nGridRes_h;j++)
+    for(int j=0;j!=vol.m_nGridNum_h;j++)
     {
-      for(int k=0;k!=vol.m_nGridRes_d;k++)
+      for(int k=0;k!=vol.m_nGridNum_d;k++)
       {
         if(vol.CheckIfBasicSDFActive(vol.ConvertLocalIndexToRealIndex(i,j,k)) == true)
         {
@@ -101,21 +101,20 @@ KANGAROO_EXPORT
 template<typename T, typename TColor, typename Manage>
 void SaveMeshGrid(
     std::string                                       filename,
-    BoundedVolumeGrid<T,TargetDevice,Manage>&         vol,
-    BoundedVolumeGrid<TColor,TargetDevice,Manage>&    volColor )
+    BoundedVolumeGrid<T,TargetDevice,Manage>&         DVol,
+    BoundedVolumeGrid<TColor,TargetDevice,Manage>&    DVolColor )
 {
   // copy data from the device memory to the host memory
-  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hvol;
-  hvol.Init(vol.m_w, vol.m_h, vol.m_d, vol.m_nVolumeGridRes,vol.m_bbox);
-  hvol.CopyAndInitFrom(vol);
+  roo::BoundedVolumeGrid<T,roo::TargetHost,roo::Manage> hVol;
+  hVol.Init(DVol.m_w, DVol.m_h, DVol.m_d, DVol.m_nVolumeGridRes,DVol.m_bbox);
+  hVol.CopyAndInitFrom(DVol);
 
-  roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hvolcolor;
-  hvolcolor.Init(volColor.m_w, volColor.m_h, volColor.m_d,
-                 volColor.m_nVolumeGridRes,volColor.m_bbox);
+  roo::BoundedVolumeGrid<TColor,roo::TargetHost,roo::Manage> hVolColor;
+  hVolColor.Init(DVolColor.m_w, DVolColor.m_h, DVolColor.m_d,
+                 DVolColor.m_nVolumeGridRes, DVolColor.m_bbox);
+  hVolColor.CopyAndInitFrom(DVolColor);
 
-  hvolcolor.CopyAndInitFrom(volColor);
-
-  SaveMeshGrid<T,TColor, Manage>(filename, hvol, hvolcolor);
+  SaveMeshGrid<T,TColor, Manage>(filename, hVol, hVolColor);
 }
 
 KANGAROO_EXPORT
@@ -129,11 +128,11 @@ void SaveMeshGrid(
   int nNumSkip =0; int nNumSave =0;
 
   // for each grid in the whole volume
-  for(unsigned int i=0;i!=hVol.m_nGridRes_w;i++)
+  for(unsigned int i=0;i!=hVol.m_nGridNum_w;i++)
   {
-    for(unsigned int j=0;j!=hVol.m_nGridRes_h;j++)
+    for(unsigned int j=0;j!=hVol.m_nGridNum_h;j++)
     {
-      for(unsigned int k=0;k!=hVol.m_nGridRes_d;k++)
+      for(unsigned int k=0;k!=hVol.m_nGridNum_d;k++)
       {
         if(hVol.CheckIfBasicSDFActive(hVol.ConvertLocalIndexToRealIndex(i,j,k)))
         {
