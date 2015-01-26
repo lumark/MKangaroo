@@ -71,10 +71,7 @@ bool SaveMeshGridToFile(
   scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
   scene.mMaterials[0] = material;
 
-  std::cout<<"[SaveMeshGridToFile] mesh has vertex color: "<< pMesh->HasVertexColors(0)<<
-             "mColor.size()="<<pMesh->mColors[0]<<std::endl;
   std::cout<<"[SaveMeshGridToFile] scene has vertex color: "<< scene.mMeshes[0]->HasVertexColors(0)<<std::endl;
-
 
   sFilename = sFilename + "." + sFormat;
   aiReturn res = aiExportScene(&scene, sFormat.c_str(), sFilename.c_str(), 0);
