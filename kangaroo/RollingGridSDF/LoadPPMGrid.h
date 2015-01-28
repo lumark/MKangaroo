@@ -38,6 +38,7 @@ bool LoadPXMSingleGrid(
   if(success)
   {
     // Make sure the vol is empty
+    // do not use this here as the grid sdf ususally not init yet
     //    roo::Manage::Cleanup<T,roo::TargetHost>(vol.ptr);
     GpuCheckErrors();
 
@@ -118,7 +119,7 @@ bool LoadPXMGrid(
   NewDVol.CopyAndInitFrom(hVol);
 
   std::cout<<"copying data to the device memory.."<<std::endl;
-  // copy data from device to device
+  // copy data from device to device.
   rDVol.CopyAndInitFrom(NewDVol);
   std::cout<<"[LoadPXMGrid] Finish Copy data from host to device."<<std::endl;
   return true;

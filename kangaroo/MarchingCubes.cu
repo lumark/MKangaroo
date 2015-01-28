@@ -26,7 +26,7 @@
 #ifdef HAVE_ASSIMP
 #include <assimp/cexport.h>
 #include <assimp/scene.h>
-#include "extra/AssimpMissing.h"
+//#include "extra/AssimpMissing.h"
 #endif // HAVE_ASSIMP
 
 namespace roo

@@ -1,4 +1,7 @@
 #include "SaveMeshGrid.h"
+#include "assimp/PlyExporter.h"
+#include "boost/scoped_ptr.hpp"
+#include "assimp/IOStream.hpp"
 
 namespace roo
 {
@@ -73,8 +76,20 @@ bool SaveMeshGridToFile(
 
   std::cout<<"[SaveMeshGridToFile] scene has vertex color: "<< scene.mMeshes[0]->HasVertexColors(0)<<std::endl;
 
+  // try with PlyMeshExploer
+  // invoke the exporter
+//  Assimp::IOSystem* pIOSystem = new Assimp::FileSystemFilter(sFilename, NULL);
+
+//  Assimp::ExportScenePly(sFilename.c_str(), pIOSystem, &scene);
+
+//  std::cout<<"sFinish ave mesh to "<<sFilename.c_str()<<std::endl;
+
+
   sFilename = sFilename + "." + sFormat;
   aiReturn res = aiExportScene(&scene, sFormat.c_str(), sFilename.c_str(), 0);
+
+  //  Assimp::Exporter mExp;
+  //  aiReturn res = mExp.Export(&scene, sFormat.c_str(), sFilename.c_str(), 0);
   if(res == 0)
   {
     std::cout << "[SaveMeshGridToFile] Mesh export success. File Name "<< sFilename <<std::endl;
@@ -85,6 +100,8 @@ bool SaveMeshGridToFile(
     std::cerr << "[SaveMeshGridToFile] Mesh export fail." << std::endl;
     return false;
   }
+
+  return true;
 }
 
 template void SaveMeshGrid<roo::SDF_t_Smart, float, Manage>

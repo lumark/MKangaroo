@@ -105,9 +105,10 @@ void SavePXM(
       std::string sFileName = filename + "-" + std::to_string(i);
       std::ofstream bFile( sFileName.c_str(), std::ios::out | std::ios::binary );
       SavePXM<T,Manage>(bFile,hvol.m_GridVolumes[i],ppm_type,num_colors);
-      std::cout<<"Fininsh save grid index "<<i<<" to "<<sFileName<<std::endl;
     }
   }
+
+  std::cout<<"[SavePPMGrid.h] Fininsh save grid SDF. "<<std::endl;
 }
 
 ///============================= Save Grid SDFs ================================
