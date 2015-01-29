@@ -213,7 +213,7 @@ bool SaveMeshFromPXMs(
   aiMesh* mesh = MeshFromListsVector(ObjMesh.verts, ObjMesh.norms,
                                      ObjMesh.faces, ObjMesh.colors);
 
-  return SaveMeshGridToFile(sMeshFileName, mesh, "obj");
+  return SaveMeshGridToFileAssimp(sMeshFileName, mesh, "obj");
 }
 
 
@@ -363,7 +363,7 @@ bool SaveMeshFromPXMs(
                                      ObjMesh.faces, ObjMesh.colors);
 
   // to keep color for the mesh, we have to save it as ply format
-  return SaveMeshGridToFile(sMeshFileName, mesh, "ply");
+  return SaveMeshGridToFileAssimp(sMeshFileName, mesh, "ply");
 }
 
 

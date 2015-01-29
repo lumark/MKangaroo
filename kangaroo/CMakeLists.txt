@@ -68,50 +68,33 @@ list(APPEND SRC_CU
     RollingGridSDF/cu_sdf_reset.cu
     RollingGridSDF/cu_visualize_grid.cu
 )
+endif()
 
-
-find_package( ASSIMP REQUIRED )
+find_package( ASSIMP QUIET )
 if(ASSIMP_FOUND)
-        list(APPEND SRC_H MarchingCubes.h)
-        list(APPEND SRC_H RollingGridSDF/RollingGridSDF.h)
-        list(APPEND SRC_H RollingGridSDF/MarchingCubesGrid.h)
-        list(APPEND SRC_H RollingGridSDF/SaveRollingGridSDF.h)
-        list(APPEND SRC_H RollingGridSDF/SaveMeshLabGrid.h)
-        list(APPEND SRC_H RollingGridSDF/SaveMeshGrid.h)
-        list(APPEND SRC_H RollingGridSDF/SavePPMGrid.h)
-        list(APPEND SRC_H RollingGridSDF/LoadPPMGrid.h)
+list(APPEND SRC_H MarchingCubes.h)
+list(APPEND SRC_H RollingGridSDF/RollingGridSDF.h)
+list(APPEND SRC_H RollingGridSDF/MarchingCubesGrid.h)
+list(APPEND SRC_H RollingGridSDF/SaveRollingGridSDF.h)
+list(APPEND SRC_H RollingGridSDF/SaveMeshLabGrid.h)
+list(APPEND SRC_H RollingGridSDF/SaveMeshGrid.h)
+list(APPEND SRC_H RollingGridSDF/SavePPMGrid.h)
+list(APPEND SRC_H RollingGridSDF/LoadPPMGrid.h)
 
-        list(APPEND SRC_H RollingGridSDF/assimp/AssimpPCH.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/BaseImporter.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/ByteSwap.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/Exceptional.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/ParsingUtils.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/PlyExporter.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/PlyLoader.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/PlyParser.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/ScenePrivate.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/qnan.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/StreamReader.h)
-        list(APPEND SRC_H RollingGridSDF/assimp/StringComparison.h)
-
-
-
-        list(APPEND SRC_CU MarchingCubes.cu)
-        list(APPEND SRC_CU RollingGridSDF/MarchingCubesGrid.cpp)
-        list(APPEND SRC_CU RollingGridSDF/SaveRollingGridSDF.cpp)
-        list(APPEND SRC_CU RollingGridSDF/SaveMeshLabGrid.cpp)
-        list(APPEND SRC_CU RollingGridSDF/SaveMeshGrid.cpp)
-        list(APPEND SRC_CU RollingGridSDF/SavePPMGrid.cpp)
-        list(APPEND SRC_CU RollingGridSDF/LoadPPMGrid.cpp)
-
-        list(APPEND SRC_CU RollingGridSDF/assimp/AssimpPCH.cpp)
-        list(APPEND SRC_CU RollingGridSDF/assimp/BaseImporter.cpp)
-        list(APPEND SRC_CU RollingGridSDF/assimp/PlyExporter.cpp)
-        list(APPEND SRC_CU RollingGridSDF/assimp/PlyLoader.cpp)
-        list(APPEND SRC_CU RollingGridSDF/assimp/PlyParser.cpp)
-endif()
+list(APPEND SRC_CU MarchingCubes.cu)
+list(APPEND SRC_CU RollingGridSDF/MarchingCubesGrid.cpp)
+list(APPEND SRC_CU RollingGridSDF/SaveRollingGridSDF.cpp)
+list(APPEND SRC_CU RollingGridSDF/SaveMeshLabGrid.cpp)
+list(APPEND SRC_CU RollingGridSDF/SaveMeshGrid.cpp)
+list(APPEND SRC_CU RollingGridSDF/SavePPMGrid.cpp)
+list(APPEND SRC_CU RollingGridSDF/LoadPPMGrid.cpp)
 endif()
 
+find_package( GLM QUIET)
+if(GLM_FOUND)
+list(APPEND SRC_H RollingGridSDF/PLY_Loader.h)
+list(APPEND SRC_CU RollingGridSDF/PLY_Loader.cpp)
+endif()
 
 ################################################################################
 # Find required dependencies
@@ -154,6 +137,13 @@ if(ASSIMP_FOUND)
     set(HAVE_ASSIMP 1)
     list(APPEND INTERNAL_INC ${ASSIMP_INCLUDE_DIR})
     list(APPEND LINK_LIBS ${ASSIMP_LIBRARIES} )
+endif()
+
+## for load/save ply mesh
+find_package( GLM QUIET)
+if(GLM_FOUND)
+    list(APPEND INTERNAL_INC ${GLM_INCLUDE_DIRS})
+    list(APPEND LINK_LIBS ${GLM_LIBRARIES} )
 endif()
 
 find_package( OpenCV QUIET )

@@ -1,7 +1,5 @@
 #include "SaveMeshGrid.h"
-#include "assimp/PlyExporter.h"
 #include "boost/scoped_ptr.hpp"
-#include "assimp/IOStream.hpp"
 
 namespace roo
 {
@@ -76,20 +74,53 @@ bool SaveMeshGridToFile(
 
   std::cout<<"[SaveMeshGridToFile] scene has vertex color: "<< scene.mMeshes[0]->HasVertexColors(0)<<std::endl;
 
-  // try with PlyMeshExploer
-  // invoke the exporter
-//  Assimp::IOSystem* pIOSystem = new Assimp::FileSystemFilter(sFilename, NULL);
+  sFilename = sFilename + "." + sFormat;
+  aiReturn res = aiExportScene(&scene, sFormat.c_str(), sFilename.c_str(), 0);
 
-//  Assimp::ExportScenePly(sFilename.c_str(), pIOSystem, &scene);
+  if(res == 0)
+  {
+    std::cout << "[SaveMeshGridToFile] Mesh export success. File Name "<< sFilename <<std::endl;
+    return true;
+  }
+  else
+  {
+    std::cerr << "[SaveMeshGridToFile] Mesh export fail." << std::endl;
+    return false;
+  }
 
-//  std::cout<<"sFinish ave mesh to "<<sFilename.c_str()<<std::endl;
+  return true;
+}
 
+
+bool SaveMeshGridToFileAssimp(
+    std::string                                       sFilename,
+    aiMesh*                                           pMesh,
+    std::string                                       sFormat)
+{
+  // Create root node which indexes first mesh
+  aiNode* root = new aiNode();
+  root->mNumMeshes = 1;
+  root->mMeshes = new unsigned int[root->mNumMeshes];
+  root->mMeshes[0] = 0;
+  root->mName = "root";
+
+  aiMaterial* material = new aiMaterial();
+
+  // Create scene to contain root node and mesh
+  aiScene scene;
+  scene.mRootNode = root;
+  scene.mNumMeshes = 1;
+  scene.mMeshes = new aiMesh*[scene.mNumMeshes];
+  scene.mMeshes[0] = pMesh;
+  scene.mNumMaterials = 1;
+  scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
+  scene.mMaterials[0] = material;
+
+  std::cout<<"[SaveMeshGridToFile] scene has vertex color: "<< scene.mMeshes[0]->HasVertexColors(0)<<std::endl;
 
   sFilename = sFilename + "." + sFormat;
   aiReturn res = aiExportScene(&scene, sFormat.c_str(), sFilename.c_str(), 0);
 
-  //  Assimp::Exporter mExp;
-  //  aiReturn res = mExp.Export(&scene, sFormat.c_str(), sFilename.c_str(), 0);
   if(res == 0)
   {
     std::cout << "[SaveMeshGridToFile] Mesh export success. File Name "<< sFilename <<std::endl;

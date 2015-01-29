@@ -12,7 +12,14 @@ aiMesh* MeshFromListsVector(
     const std::vector<aiFace>&                        faces,
     const std::vector<aiColor4D>&                     colors);
 
-// here also support .obj file (strongly suuggest use .obj instead of using .ply).
+// notice ply format is the only one which support color mesh inside the .ply file.
+KANGAROO_EXPORT
+bool SaveMeshGridToFileAssimp(
+    std::string                                       sFilename,
+    aiMesh*                                           pMesh,
+    std::string                                       sFormat ="ply");
+
+// notice ply format is the only one which support color mesh inside the .ply file.
 KANGAROO_EXPORT
 bool SaveMeshGridToFile(
     std::string                                       sFilename,
@@ -158,7 +165,7 @@ void SaveMeshGrid(
   aiMesh* mesh = MeshFromListsVector(ObjMesh.verts,ObjMesh.norms,
                                      ObjMesh.faces,ObjMesh.colors);
 
-  SaveMeshGridToFile(filename, mesh, "obj");
+  SaveMeshGridToFileAssimp(filename, mesh, "obj");
 }
 
 // now do it for each grid instead of each voxel
