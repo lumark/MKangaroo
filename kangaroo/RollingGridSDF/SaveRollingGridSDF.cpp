@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "SaveRollingGridSDF.h"
 
 namespace roo {
@@ -359,11 +361,15 @@ bool SaveMeshFromPXMs(
 
   // 3 ---------------------------------------------------------------------------
   // Save mesh from memory to hard disk
-  aiMesh* mesh = MeshFromListsVector(ObjMesh.verts, ObjMesh.norms,
-                                     ObjMesh.faces, ObjMesh.colors);
+  //  aiMesh* mesh = MeshFromListsVector(ObjMesh.verts, ObjMesh.norms,
+  //                                     ObjMesh.faces, ObjMesh.colors);
 
   // to keep color for the mesh, we have to save it as ply format
-  return SaveMeshGridToFileAssimp(sMeshFileName, mesh, "ply");
+  //  return SaveMeshGridToFileAssimp(sMeshFileName, mesh, "ply");
+  //  return SaveMeshGridToFile(sMeshFileName, mesh, "ply");
+  return SaveMeshGridToFile(sMeshFileName, ObjMesh.verts, ObjMesh.norms,
+                            ObjMesh.faces, ObjMesh.colors, "ply");
+
 }
 
 

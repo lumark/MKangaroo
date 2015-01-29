@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "cu_sdffusion_extra.h"
 
 #include "kangaroo/MatUtils.h"

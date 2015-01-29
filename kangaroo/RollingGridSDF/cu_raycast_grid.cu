@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "cu_raycast_grid.h"
 
 namespace roo

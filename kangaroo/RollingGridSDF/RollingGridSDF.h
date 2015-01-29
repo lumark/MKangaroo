@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #ifndef ROLLINGGRIDSDFMesh_H
 #define ROLLINGGRIDSDFMesh_H
 

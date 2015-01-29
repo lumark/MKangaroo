@@ -33,7 +33,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <vector>
 #include <sstream>
 #include <string>
-
+#include <assimp/scene.h>
 
 struct data
 {
@@ -106,12 +106,27 @@ class PLYModel {
 public:
   PLYModel();
 
-  //To indicate if normal, color informations are present in the file respectively
-  void ReadStarnardPLY(const char *filename, bool isnormal, bool iscolor);
+  void ReadStarnardPLY(
+      const char*                filename,
+      bool                       isnormal,
+      bool                       iscolor);
+
   void ReadAssimpColorPLY(const char *filename);
 
-  // To indicate if normal, color informations are to be written in the file respectively
-  void PLYWrite(const char *filename, bool =1,bool =1);
+  void PLYWrite(
+      const char*                filename,
+      bool                       isNormal,
+      bool                       isColor);
+
+  bool PLYWrite(
+      std::vector<aiVector3D>&   r_verts,
+      std::vector<aiVector3D>&   r_norms,
+      std::vector<aiFace>&       r_face,
+      std::vector<aiColor4D>&    r_colors,
+      const char*                filename,
+      bool                       isNormal,
+      bool                       isColor);
+
   void FreeMemory();
 
 private:

@@ -92,8 +92,8 @@ endif()
 
 find_package( GLM QUIET)
 if(GLM_FOUND)
-list(APPEND SRC_H RollingGridSDF/PLY_Loader.h)
-list(APPEND SRC_CU RollingGridSDF/PLY_Loader.cpp)
+list(APPEND SRC_H RollingGridSDF/PLYIO.h)
+list(APPEND SRC_CU RollingGridSDF/PLYIO.cpp)
 endif()
 
 ################################################################################

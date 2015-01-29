@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #ifndef SAVEROLLINGGRIDSDF_H
 #define SAVEROLLINGGRIDSDF_H
 

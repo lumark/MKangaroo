@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "SaveMeshLabGrid.h"
 
 KANGAROO_EXPORT

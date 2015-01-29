@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "cu_rolling_sdf.h"
 #include "BoundedVolumeGrid.h"
 #include "kangaroo/MatUtils.h"

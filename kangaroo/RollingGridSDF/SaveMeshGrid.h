@@ -1,7 +1,10 @@
+// by lu.ma@colorado.edu
+
 #ifndef SAVEMESHGRID_H
 #define SAVEMESHGRID_H
 
 #include "MarchingCubesGrid.h"
+#include "PLYIO.h"
 #include <kangaroo/MarchingCubes.h>
 
 namespace roo {
@@ -23,7 +26,10 @@ bool SaveMeshGridToFileAssimp(
 KANGAROO_EXPORT
 bool SaveMeshGridToFile(
     std::string                                       sFilename,
-    aiMesh*                                           pMesh,
+    std::vector<aiVector3D>&                          verts,
+    std::vector<aiVector3D>&                          norms,
+    std::vector<aiFace>&                              faces,
+    std::vector<aiColor4D>&                           colors,
     std::string                                       sFormat ="ply");
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "SaveMeshGrid.h"
 #include "boost/scoped_ptr.hpp"
 
@@ -50,34 +52,17 @@ aiMesh* MeshFromListsVector(
 
 bool SaveMeshGridToFile(
     std::string                                       sFilename,
-    aiMesh*                                           pMesh,
+    std::vector<aiVector3D>&                          verts,
+    std::vector<aiVector3D>&                          norms,
+    std::vector<aiFace>&                              faces,
+    std::vector<aiColor4D>&                           colors,
     std::string                                       sFormat)
 {
-  // Create root node which indexes first mesh
-  aiNode* root = new aiNode();
-  root->mNumMeshes = 1;
-  root->mMeshes = new unsigned int[root->mNumMeshes];
-  root->mMeshes[0] = 0;
-  root->mName = "root";
-
-  aiMaterial* material = new aiMaterial();
-
-  // Create scene to contain root node and mesh
-  aiScene scene;
-  scene.mRootNode = root;
-  scene.mNumMeshes = 1;
-  scene.mMeshes = new aiMesh*[scene.mNumMeshes];
-  scene.mMeshes[0] = pMesh;
-  scene.mNumMaterials = 1;
-  scene.mMaterials = new aiMaterial*[scene.mNumMaterials];
-  scene.mMaterials[0] = material;
-
-  std::cout<<"[SaveMeshGridToFile] scene has vertex color: "<< scene.mMeshes[0]->HasVertexColors(0)<<std::endl;
-
   sFilename = sFilename + "." + sFormat;
-  aiReturn res = aiExportScene(&scene, sFormat.c_str(), sFilename.c_str(), 0);
+  PLYModel mModel;
+  bool res = mModel.PLYWrite(verts, norms, faces, colors, sFilename.c_str(), 1, 1);
 
-  if(res == 0)
+  if(res)
   {
     std::cout << "[SaveMeshGridToFile] Mesh export success. File Name "<< sFilename <<std::endl;
     return true;

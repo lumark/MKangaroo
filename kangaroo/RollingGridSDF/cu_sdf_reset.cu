@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "cu_sdf_reset.h"
 #include "kangaroo/MatUtils.h"
 #include "kangaroo/launch_utils.h"

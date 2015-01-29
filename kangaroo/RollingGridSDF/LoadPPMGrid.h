@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #ifndef LOADPPMGRID_H
 #define LOADPPMGRID_H
 

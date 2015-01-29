@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "LoadPPMGrid.h"
 
 KANGAROO_EXPORT

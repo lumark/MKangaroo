@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #pragma once
 
 #include "kangaroo/platform.h"

@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #include "cu_model_refinement_extra.h"
 #include "kangaroo/MatUtils.h"
 #include "kangaroo/launch_utils.h"

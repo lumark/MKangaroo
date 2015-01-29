@@ -24,11 +24,14 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+
+// modify by lu.ma@colorado.edu
+
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
 #include <string>
-#include "PLY_Loader.h"
+#include "PLYIO.h"
 
 using namespace glm;
 
@@ -36,7 +39,10 @@ PLYModel::PLYModel()
 {
 }
 
-void PLYModel::ReadStarnardPLY(const char* filename, bool isNormal, bool isColor) {
+void PLYModel::ReadStarnardPLY(
+    const char* filename,
+    bool isNormal,
+    bool isColor) {
 
   std::cout<<"[ReadStarnardPLY] Start Reading "<<filename<<std::endl;
   struct faceData F;
@@ -106,8 +112,8 @@ void PLYModel::ReadStarnardPLY(const char* filename, bool isNormal, bool isColor
     inputPly.read((char *)&Values,sizeof(Values));
 
     std::cout<<"\n"<<Values._x <<"\t"<< Values._y <<"\t"<< Values._z <<"\t"<<
-          Values._nx <<"\t"<< Values._ny <<"\t"<< Values._nz <<"\t"<<
-          (int)Values._r <<"\t"<< (int)Values._g <<"\t"<< (int)Values._b <<"\t"<< (int)Values._a<<std::endl;
+               Values._nx <<"\t"<< Values._ny <<"\t"<< Values._nz <<"\t"<<
+               (int)Values._r <<"\t"<< (int)Values._g <<"\t"<< (int)Values._b <<"\t"<< (int)Values._a<<std::endl;
 
     min = max = vec3(Values._x, Values._y, Values._z);
 
@@ -284,7 +290,8 @@ void PLYModel::ReadStarnardPLY(const char* filename, bool isNormal, bool isColor
 }
 
 // the ply file expolr from assimp has float r, g, b, which is not support by mashlab.
-void PLYModel::ReadAssimpColorPLY(const char* filename)
+void PLYModel::ReadAssimpColorPLY(
+    const char* filename)
 {
   bool isNormal = true;
   bool isColor = true;
@@ -360,9 +367,9 @@ void PLYModel::ReadAssimpColorPLY(const char* filename)
         Values._r >> Values._g >> Values._b >>Values._a;
 
     std::cout<<"\n"<<Values._x <<"\t"<< Values._y <<"\t"<< Values._z <<"\t"<<
-          Values._nx <<"\t"<< Values._ny <<"\t"<< Values._nz <<"\t"<<
-          (int)Values._r <<"\t"<< (int)Values._g <<"\t"<< (int)Values._b <<
-          "\t"<< (int)Values._a<<std::endl;
+               Values._nx <<"\t"<< Values._ny <<"\t"<< Values._nz <<"\t"<<
+               (int)Values._r <<"\t"<< (int)Values._g <<"\t"<< (int)Values._b <<
+               "\t"<< (int)Values._a<<std::endl;
 
     min = max = vec3(Values._x, Values._y, Values._z);
 
@@ -420,8 +427,8 @@ void PLYModel::ReadAssimpColorPLY(const char* filename)
       //make a stream for the line itself
       std::istringstream in(line);
       in >> numEdges >> F.a>> F.b >> F.c;
-//      inputPly.read((char *)&numEdges,sizeof(numEdges));
-//      inputPly.read((char *)&F,sizeof(F));
+      //      inputPly.read((char *)&numEdges,sizeof(numEdges));
+      //      inputPly.read((char *)&F,sizeof(F));
       faces.push_back(ivec3(F.a,F.b,F.c));
     }
 
@@ -431,7 +438,12 @@ void PLYModel::ReadAssimpColorPLY(const char* filename)
   inputPly.close();
 }
 
-void PLYModel::PLYWrite(const char* filename, bool isNormal, bool isColor)
+
+////////////////////////////////////////////////////////////////////////////////
+void PLYModel::PLYWrite(
+    const char* filename,
+    bool isNormal,
+    bool isColor)
 {
   std::cout<<"[PLYWrite] Start."<<std::endl;
 
@@ -516,6 +528,110 @@ void PLYModel::PLYWrite(const char* filename, bool isNormal, bool isColor)
   }
 
   std::cout<<"[PLYModel::PLYWrite] Write file to "<<filename<<std::endl;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool PLYModel::PLYWrite(
+    std::vector<aiVector3D>& r_verts,
+    std::vector<aiVector3D>& r_norms,
+    std::vector<aiFace>& r_face,
+    std::vector<aiColor4D>& r_colors,
+    const char* filename,
+    bool isNormal,
+    bool isColor)
+{
+  std::cout<<"[PLYWrite] Start."<<std::endl;
+
+  if(!isColor && isNormal)
+  {
+    FILE *outputPly;
+    outputPly=fopen(filename,"wb");
+
+    fprintf(outputPly,"ply\n");
+    fprintf(outputPly,"format binary_little_endian 1.0\n");
+    fprintf(outputPly,"comment This contains a Splatted Point Cloud\n");
+    fprintf(outputPly,"element vertex %d\n",static_cast<int>(r_verts.size()) );
+    fprintf(outputPly,"property float x\n");
+    fprintf(outputPly,"property float y\n");
+    fprintf(outputPly,"property float z\n");
+    fprintf(outputPly,"property float nx\n");
+    fprintf(outputPly,"property float ny\n");
+    fprintf(outputPly,"property float nz\n");
+    fprintf(outputPly,"element face %d\n",static_cast<int>(r_face.size()) );
+    fprintf(outputPly,"property list uchar int vertex_indices\n");
+    fprintf(outputPly,"end_header\n");
+
+    //write vertices and normals
+    for(unsigned long int i = 0; i < r_verts.size() ; i++)
+    {
+      fwrite(&r_verts[i],sizeof(aiVector3D),1,outputPly);
+      fwrite(&r_norms[i],sizeof(aiVector3D),1,outputPly);
+    }
+    // write faces
+    unsigned char sides=3;
+    glm::ivec3 tempFace;
+    for(unsigned int i=0;i<r_face.size();i++)
+    {
+      fwrite(&sides,sizeof(unsigned char),1,outputPly);
+      tempFace = ivec3(r_face[i].mIndices[0],r_face[i].mIndices[1],r_face[i].mIndices[2]);
+      fwrite(&tempFace,sizeof(glm::ivec3),1,outputPly);
+    }
+    fclose(outputPly);
+  }
+
+  if(isColor && isNormal)
+  {
+    FILE *outputPly;
+    struct colorData C;
+
+    outputPly=fopen(filename,"wb");
+
+    fprintf(outputPly,"ply\n");
+    fprintf(outputPly,"format binary_little_endian 1.0\n");
+    fprintf(outputPly,"comment This contains a Splatted Point Cloud\n");
+    fprintf(outputPly,"element vertex %d\n",static_cast<int>(r_verts.size()));
+    fprintf(outputPly,"property float x\n");
+    fprintf(outputPly,"property float y\n");
+    fprintf(outputPly,"property float z\n");
+    fprintf(outputPly,"property float nx\n");
+    fprintf(outputPly,"property float ny\n");
+    fprintf(outputPly,"property float nz\n");
+    fprintf(outputPly,"property uchar red\n");
+    fprintf(outputPly,"property uchar green\n");
+    fprintf(outputPly,"property uchar blue\n");
+    fprintf(outputPly,"property uchar alpha\n");
+    fprintf(outputPly,"element face %d\n",static_cast<int>(r_face.size()));
+    fprintf(outputPly,"property list uchar int vertex_indices\n");
+    fprintf(outputPly,"end_header\n");
+
+    //write vertices and normals
+    for(unsigned long int i = 0; i < r_verts.size() ; i++)
+    {
+      C.a=255;
+      C.r=static_cast<unsigned char>(r_colors[i][0]);
+      C.g=static_cast<unsigned char>(r_colors[i][1]);
+      C.b=static_cast<unsigned char>(r_colors[i][2]);
+
+      fwrite(&r_verts[i],sizeof(aiVector3D),1,outputPly);
+      fwrite(&r_norms[i],sizeof(aiVector3D),1,outputPly);
+      fwrite(&C,sizeof(struct colorData),1,outputPly);
+    }
+
+    // write faces
+    unsigned char sides=3;
+    glm::ivec3 tempFace;
+    for(unsigned int i=0;i<r_face.size();i++)
+    {
+      fwrite(&sides,sizeof(unsigned char),1,outputPly);
+      tempFace = ivec3(r_face[i].mIndices[0],r_face[i].mIndices[1],r_face[i].mIndices[2]);
+      fwrite(&tempFace,sizeof(glm::ivec3),1,outputPly);
+    }
+    fclose(outputPly);
+  }
+
+  std::cout<<"[PLYModel::PLYWrite] Write file to "<<filename<<std::endl;
+
+  return true;
 }
 
 void PLYModel::FreeMemory()

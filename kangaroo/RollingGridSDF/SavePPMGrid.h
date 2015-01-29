@@ -1,3 +1,5 @@
+// by lu.ma@colorado.edu
+
 #ifndef SAVEPPMGRID_H
 #define SAVEPPMGRID_H
 
